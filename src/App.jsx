@@ -19,6 +19,7 @@ import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
 import { readArrayFromStorage, readBooleanFromStorage, readNumberFromStorage, readStringFromStorage } from "./utils/localStorage.js"
 import { appendHistoryEntry, createHistoryEntry } from "./utils/historyUtils.js"
+import { calculateRoundXp, getLevelProgress } from "./utils/progressionUtils.js"
 import { calculateRoundCoins } from "./utils/roundRewards.js"
 import { canPurchaseShopItem, isShopItemOwned } from "./utils/shopUtils.js"
 
@@ -50,6 +51,11 @@ export default function App() {
   const [coins, setCoins] = useLocalStorageState({
     key: STORAGE_KEYS.coins,
     readValue: () => readNumberFromStorage(STORAGE_KEYS.coins),
+  })
+
+  const [levelXp, setLevelXp] = useLocalStorageState({
+    key: STORAGE_KEYS.levelXp,
+    readValue: () => readNumberFromStorage(STORAGE_KEYS.levelXp),
   })
 
   const [ownedItemIds, setOwnedItemIds] = useLocalStorageState({
@@ -99,6 +105,8 @@ export default function App() {
     [equippedArenaThemeId]
   )
 
+  const levelProgress = useMemo(() => getLevelProgress(levelXp), [levelXp])
+
   function handleLogin() {
     setIsAuthed(true)
   }
@@ -110,13 +118,25 @@ export default function App() {
   function handleRoundComplete({
     clicksScored,
     coinMultiplier = 1,
+    allowsCoinRewards = true,
+    allowsLevelProgression = true,
     hits = 0,
     misses = 0,
     score = 0,
     bestStreak = 0,
     difficultyId = "",
   }) {
-    const earnedCoins = calculateRoundCoins(clicksScored, coinMultiplier)
+    const earnedCoins = allowsCoinRewards
+      ? calculateRoundCoins(clicksScored, coinMultiplier)
+      : 0
+    const earnedXp = allowsLevelProgression
+      ? calculateRoundXp({
+        hits,
+        misses,
+        bestStreak,
+        score,
+      })
+      : 0
 
     const historyEntry = createHistoryEntry({
       score,
@@ -129,6 +149,10 @@ export default function App() {
 
     if (earnedCoins > 0) {
       setCoins((currentCoins) => currentCoins + earnedCoins)
+    }
+
+    if (earnedXp > 0) {
+      setLevelXp((currentXp) => currentXp + earnedXp)
     }
 
     setRoundHistory((currentHistory) =>
@@ -206,6 +230,10 @@ export default function App() {
                 onRoundComplete={handleRoundComplete}
                 selectedDifficultyId={selectedDifficultyId}
                 onDifficultyChange={handleDifficultyChange}
+                playerLevel={levelProgress.level}
+                playerXpIntoLevel={levelProgress.xpIntoLevel}
+                playerXpToNextLevel={levelProgress.xpToNextLevel}
+                playerLevelProgressPercent={levelProgress.progressPercent}
                 buttonSkinClass={equippedButtonSkin?.effectClass}
                 buttonSkinImageSrc={equippedButtonSkin?.imageSrc}
                 buttonSkinImageScale={

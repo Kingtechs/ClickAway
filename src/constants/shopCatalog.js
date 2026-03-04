@@ -42,12 +42,23 @@ function createArenaThemeItem({
   }
 }
 
+function applyIncrementalCosts(items = [], maxCost = 999) {
+  if (!Array.isArray(items) || items.length <= 1) return items
+
+  const lastIndex = items.length - 1
+
+  return items.map((item, index) => ({
+    ...item,
+    cost: Math.round((maxCost * index) / lastIndex),
+  }))
+}
+
 export const SHOP_CATEGORIES = [
   {
     id: "button_skins",
     title: "Button Skins",
     description: "Cosmetic styles for the main click target.",
-    items: [
+    items: applyIncrementalCosts([
       createButtonSkinItem({
         id: "skin_button",
         name: "Classic",
@@ -87,7 +98,7 @@ export const SHOP_CATEGORIES = [
         imageSrc: "/cd.png",
         gameImageScale: 100,
         shopImageScale: 90,
-        description: "CD.",
+        description: "Reflective disc finish with a retro-tech look.",
       }),
       createButtonSkinItem({
         id: "skin_earth",
@@ -97,7 +108,7 @@ export const SHOP_CATEGORIES = [
         imageSrc: "/earth.png",
         gameImageScale: 110,
         shopImageScale: 100,
-        description: "Earf.",
+        description: "Blue-green planet style with a calm orbital vibe.",
       }),
       createButtonSkinItem({
         id: "skin_melon",
@@ -107,7 +118,7 @@ export const SHOP_CATEGORIES = [
         imageSrc: "/melon.png",
         gameImageScale: 105,
         shopImageScale: 90,
-        description: "Melon.",
+        description: "Fresh summer palette with playful watermelon contrast.",
       }),
       createButtonSkinItem({
         id: "skin_moon",
@@ -117,7 +128,7 @@ export const SHOP_CATEGORIES = [
         imageSrc: "/moon.png",
         gameImageScale: 105,
         shopImageScale: 95,
-        description: "Earf.",
+        description: "Soft lunar texture with cool cratered highlights.",
       }),
       createButtonSkinItem({
         id: "skin_wheel",
@@ -127,7 +138,7 @@ export const SHOP_CATEGORIES = [
         imageSrc: "/wheel.png",
         gameImageScale: 115,
         shopImageScale: 105,
-        description: "wheel.",
+        description: "High-speed spoke pattern built for motion energy.",
       }),
       createButtonSkinItem({
         id: "skin_xboxbutton",
@@ -137,7 +148,7 @@ export const SHOP_CATEGORIES = [
         imageSrc: "/xboxbutton.png",
         gameImageScale: 105,
         shopImageScale: 95,
-        description: "xbox.",
+        description: "Controller-inspired button face with bold contrast.",
       }),
       createButtonSkinItem({
         id: "skin_coin",
@@ -149,13 +160,13 @@ export const SHOP_CATEGORIES = [
         shopImageScale: 130,
         description: "Classic arcade token style with metallic shine.",
       }),
-    ],
+    ]),
   },
   {
     id: "arena_themes",
     title: "Arena Themes",
     description: "Background/theme swaps for the game arena.",
-    items: [
+    items: applyIncrementalCosts([
       createArenaThemeItem({
         id: "theme_default",
         name: "Classic Arena",
@@ -185,7 +196,7 @@ export const SHOP_CATEGORIES = [
         effectClass: "theme-arcade",
         description: "Synthwave-inspired night lane with neon lane lines.",
       }),
-    ],
+    ]),
   },
 ]
 
