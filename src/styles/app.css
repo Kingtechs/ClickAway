@@ -978,7 +978,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 16px;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .gameOverCard {
@@ -990,6 +990,74 @@ body {
     padding: 22px;
     min-width: min(360px, 92vw);
     text-align: center;
+}
+
+.gameOverCardWithDifficulty {
+    min-width: min(900px, 96vw);
+    max-width: min(900px, 96vw);
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: clamp(16px, 2.5vh, 22px);
+    text-align: center;
+}
+
+.gameOverCardWithDifficulty > * {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.gameOverCardWithDifficulty h2 {
+    margin: 6px 0 12px;
+}
+
+.gameOverCardWithDifficulty .difficultyPicker {
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 820px;
+    justify-content: center;
+}
+
+.gameOverCardWithDifficulty .difficultyOption {
+    min-height: 188px;
+    padding: 12px 10px;
+    gap: 8px;
+}
+
+.gameOverCardWithDifficulty .difficultyName {
+    font-size: 16px;
+}
+
+.gameOverCardWithDifficulty .difficultyDescriptionLine {
+    font-size: 11px;
+    max-width: 220px;
+}
+
+.gameOverCardWithDifficulty .difficultyQuickStats {
+    gap: 8px;
+}
+
+.gameOverCardWithDifficulty .difficultyQuickStat {
+    min-width: 78px;
+    height: 40px;
+    padding: 5px 6px;
+}
+
+.gameOverCardWithDifficulty .difficultyQuickStat strong {
+    font-size: 12px;
+}
+
+.gameOverCardWithDifficulty .difficultyQuickStat small {
+    font-size: 9px;
+}
+
+.gameOverCardWithDifficulty .difficultySecondaryInfo {
+    font-size: 10px;
+    width: min(200px, 100%);
+}
+
+.gameOverCardWithDifficulty .difficultyDescription {
+    display: none;
 }
 
 .gameOverCard h2 {
@@ -1210,6 +1278,93 @@ body {
     line-height: 1.06;
 }
 
+@media (max-height: 860px) {
+    .gameOverlay {
+        padding: 12px;
+    }
+
+    .readyCard,
+    .gameOverCardWithDifficulty {
+        max-height: calc(100dvh - 24px);
+    }
+
+    .readyCardStack {
+        gap: 16px;
+    }
+
+    .readyLead,
+    .gameOverFeedback,
+    .difficultyHint {
+        font-size: 11px;
+    }
+
+    .difficultyPicker {
+        gap: 10px;
+    }
+
+    .difficultyOption {
+        min-height: 220px;
+        padding: 16px 14px;
+    }
+
+    .difficultyQuickStats {
+        gap: 8px;
+    }
+
+    .difficultyDescription {
+        display: none;
+    }
+
+    .gameOverCardWithDifficulty .difficultyPicker {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        max-width: 820px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .gameOverCardWithDifficulty .difficultyOption {
+        min-height: 176px;
+    }
+
+    .roundSummaryTable {
+        margin-bottom: 12px;
+    }
+
+    .roundSummaryTable th,
+    .roundSummaryTable td {
+        padding: 7px 10px;
+        font-size: 12px;
+    }
+
+    .gameOverCardWithDifficulty .gameOverHint {
+        margin-top: 16px;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-height: 740px) {
+    .readyCardStack {
+        gap: 12px;
+    }
+
+    .difficultyOption {
+        min-height: 200px;
+    }
+
+    .overlayActions {
+        gap: 8px;
+    }
+
+    .roundSummaryTable {
+        margin-bottom: 10px;
+    }
+
+    .roundSummaryTable th,
+    .roundSummaryTable td {
+        padding: 6px 9px;
+    }
+}
+
 .difficultyMood-easy {
     --ready-btn-start: #79f3bf;
     --ready-btn-end: #43bc88;
@@ -1289,18 +1444,6 @@ body {
     transform: translateY(1px);
 }
 
-.gameOverCardWithDifficulty {
-    min-width: min(900px, 96vw);
-    max-width: min(900px, 96vw);
-    max-height: calc(100dvh - 32px);
-    overflow-y: auto;
-    text-align: center;
-}
-
-.gameOverCardWithDifficulty .difficultyPicker {
-    justify-content: center;
-}
-
 .gameOverCardWithDifficulty .difficultyOption.selected {
     border-color: var(--ready-border);
     background: linear-gradient(160deg, var(--ready-selected-start), var(--ready-selected-end));
@@ -1312,11 +1455,11 @@ body {
 }
 
 .gameOverScore {
-    margin: 0 0 14px;
+    margin: 0 0 10px;
 }
 
 .gameOverFeedback {
-    margin: 0 auto 14px;
+    margin: 0 auto 12px;
     max-width: 560px;
     color: rgba(227, 238, 255, 0.9);
     font-size: 14px;
@@ -1334,7 +1477,7 @@ body {
 
 .roundSummaryTable {
     width: min(440px, 100%);
-    margin: 0 auto 16px;
+    margin: 0 auto 12px;
     border-collapse: separate;
     border-spacing: 0;
     border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1345,8 +1488,8 @@ body {
 
 .roundSummaryTable th,
 .roundSummaryTable td {
-    padding: 9px 12px;
-    font-size: 13px;
+    padding: 6px 10px;
+    font-size: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -1373,12 +1516,12 @@ body {
 }
 
 .gameOverHint {
-    margin: 14px auto 10px;
+    margin: 10px auto 10px;
 }
 
 .gameOverCardWithDifficulty .gameOverHint {
-    margin-top: 24px;
-    margin-bottom: 12px;
+    margin-top: 16px;
+    margin-bottom: 10px;
     text-align: center !important;
 }
 

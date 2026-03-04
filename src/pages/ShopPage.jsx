@@ -14,8 +14,7 @@ export default function ShopPage({
       <section className="card shopCard">
         <h1 className="cardTitle">Shop</h1>
         <p className="muted">
-          Spend coins earned from successful clicks. Add new items by updating the shared
-          shop catalog config.
+          Spend coins earned from successful clicks.
         </p>
 
         {SHOP_CATEGORIES.map((category) => (

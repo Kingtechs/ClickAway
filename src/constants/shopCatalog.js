@@ -137,7 +137,7 @@ export const SHOP_CATEGORIES = [
         imageSrc: "/xboxbutton.png",
         gameImageScale: 105,
         shopImageScale: 95,
-        description: "xboxbutton.",
+        description: "xbox.",
       }),
       createButtonSkinItem({
         id: "skin_coin",

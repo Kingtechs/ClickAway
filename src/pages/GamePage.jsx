@@ -438,6 +438,12 @@ export default function GamePage({
   useEffect(() => {
     function handleKeyDown(event) {
       if (event.repeat) return
+      if (import.meta.env.DEV && event.key.toLowerCase() === "g") {
+        hasAwardedRoundRef.current = true
+        setTimeLeft(0)
+        setPhase(ROUND_PHASE.GAME_OVER)
+        return
+      }
       tryUsePowerupKey(event.key)
     }
 

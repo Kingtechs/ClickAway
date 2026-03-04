@@ -151,6 +151,7 @@ export function ReadyOverlay({
           selectedDifficultyId={selectedDifficultyId}
           onSelectDifficulty={onSelectDifficulty}
           canChangeDifficulty={canChangeDifficulty}
+          compact
         />
 
         <p className="difficultyHint">
