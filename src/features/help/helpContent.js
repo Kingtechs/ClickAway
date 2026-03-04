@@ -1,69 +1,112 @@
 export const GETTING_STARTED_STEPS = [
-  "Go to Game from the top navigation.",
-  "Press Start Round and wait for the countdown.",
-  "Hit the moving button as many times as possible before time runs out.",
-  "Avoid clicking empty space in the arena to keep your streak alive.",
-  "Use earned power-ups during the round for better control.",
+  "Log in.",
+  "Open Game and check your mode.",
+  "Press Start Round and wait for the 3-second countdown.",
+  "Practice has no timer. Casual/Competitve are timed.",
+  "Review results, then press Play Again.",
 ]
 
 export const ROUND_FLOW_POINTS = [
-  "Each round starts with a short countdown.",
-  "The timer begins when gameplay starts and ends at 0.",
-  "The button shrinks as you keep landing hits.",
-  "A miss resets your streak and slows momentum.",
-  "At the end of the round, you get a full performance summary.",
+  "Ready: Start now or change mode.",
+  "Countdown: 3, 2, 1.",
+  "Live round: target moves and shrinks.",
+  "Miss: streak resets; score may drop.",
+  "Game Over: see score and key stats.",
 ]
 
 export const CONTROLS_ROWS = [
-  ["Hit Target", "Left click directly on the moving button."],
-  ["Miss", "Left click inside the arena but not on the button."],
-  ["Power-Up 1", "Press 1 when charges are available."],
-  ["Power-Up 2", "Press 2 when charges are available."],
-  ["Power-Up 3", "Press 3 when charges are available."],
+  ["Hit Target", "Left click directly on the moving target."],
+  ["Miss", "Left click the arena outside the target."],
+  ["End Practice Round", "Use the End Practice Round button during Practice."],
+  ["Use Time +2s", "Press 1 when charges are available."],
+  ["Use Grow +10", "Press 2 when charges are available."],
+  ["Use Freeze 1s", "Press 3 when charges are available."],
+  ["Change Mode", "Round Ready -> Change Mode button."],
+]
+
+export const NAVIGATION_ROWS = [
+  ["Game", "Play rounds and earn coins."],
+  ["Shop", "Buy and equip cosmetics."],
+  ["History", "See your past rounds."],
+  ["Leaderboard", "See rank-style stats from history."],
+  ["Help", "Open this guide."],
+  ["Logout", "Sign out."],
+]
+
+export const DIFFICULTY_ROWS = [
+  ["Practice", "No limit", "0", "Off", "Coins Off", "Level Off", "Rank Off"],
+  ["Casual", "15s", "1", "1.10x", "Coins On", "Level On", "Rank Off"],
+  ["Competitve", "12s", "2", "1.25x", "Coins On", "Level On", "Rank On"],
 ]
 
 export const SCORING_ROWS = [
-  ["Successful Hit", "Grants points based on base value and your combo multiplier."],
-  ["Miss Click", "Subtracts base points and resets your streak to 0."],
-  ["Combo Growth", "Multiplier increases as your streak grows."],
-  ["Coins", "Coins are awarded from successful hits when the round ends."],
+  ["Hit", "Gives points. Combo can boost them."],
+  ["Miss", "Resets streak. May remove points."],
+  ["Combo", "Grows with back-to-back hits."],
+  ["Coins", "End of round: floor(hits x coin rate)."],
+  ["Best Streak", "Your longest streak that round."],
 ]
 
 export const POWERUP_ROWS = [
-  ["1", "Time Boost", "Adds extra time to the round clock."],
-  ["2", "Size Boost", "Makes the button larger so hits are easier."],
-  ["3", "Freeze", "Stops target movement for 2 seconds."],
+  ["1", "Time +2s", "Every 5 streak", "Adds 2 seconds."],
+  ["2", "Grow +10", "Every 10 streak", "Makes target larger."],
+  ["3", "Freeze 1s", "Every 15 streak", "Stops movement briefly."],
 ]
 
 export const SHOP_POINTS = [
-  "Spend coins to unlock new button skins and arena themes.",
-  "Once an item is owned, you can equip it any time from the Shop page.",
-  "Only one button skin and one arena theme can be active at once.",
-  "Try different visual combinations to find what helps your focus most.",
+  "Two categories: Button Skins and Arena Themes.",
+  "Built-in items cost 0.",
+  "Buy unowned items with coins.",
+  "Owned items can be equipped anytime.",
+  "One skin and one theme can be active.",
+  "Cosmetics do not change gameplay stats.",
 ]
 
 export const PERFORMANCE_TIPS = [
-  "Prioritize accuracy first, then speed.",
-  "Protect streaks because combo growth drives higher scores.",
-  "Use size boost when the target gets tiny.",
-  "Save time boost for late-round pressure moments.",
+  "Accuracy first, speed second.",
+  "Protect streaks.",
+  "Use Grow when target is tiny.",
+  "Save Time +2s for late round.",
+  "Use Freeze for precision moments.",
+  "Use Practice mode, then move up.",
+]
+
+export const PROGRESSION_POINTS = [
+  "Progress is mode-based: Practice (training), Casual (coins + XP), Competitve (coins + XP + rank).",
+  "Leveling uses XP earned from round performance.",
+  "Rank/MMR changes only in Competitve mode.",
+  "History stores mode, XP earned, and rank delta each round.",
+  "Leaderboard uses Competitve rounds only.",
+  "Clearing browser storage resets progress.",
 ]
 
 export const FAQ_ITEMS = [
   {
-    question: "Do cosmetics affect score?",
-    answer: "No. Cosmetics are visual only.",
+    question: "What should I do first if I have never played?",
+    answer: "Start in Practice, then move to Casual once accuracy is stable.",
   },
   {
-    question: "Can I lose coins?",
-    answer: "Only when buying shop items.",
+    question: "How do I earn coins quickly?",
+    answer: "Play Casual/Competitve, land more hits, and protect streaks.",
   },
   {
-    question: "Can I switch equipped items anytime?",
-    answer: "Yes, as long as you own them.",
+    question: "When does rank change?",
+    answer: "Only in Competitve mode rounds.",
   },
   {
-    question: "What happens if I miss a lot?",
-    answer: "Your streak keeps resetting and score growth slows down.",
+    question: "Do I lose coins on misses?",
+    answer: "No. Coins are only spent in Shop.",
+  },
+  {
+    question: "Can I change cosmetics whenever I want?",
+    answer: "Yes. Once an item is owned, you can equip it again at any time from Shop.",
+  },
+  {
+    question: "Why does my data look reset?",
+    answer: "Progress is local. Clearing site data resets it.",
+  },
+  {
+    question: "Does Help reflect all current systems?",
+    answer: "Yes. It covers gameplay, controls, mode rules, power-ups, shop, and progress.",
   },
 ]

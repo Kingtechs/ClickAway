@@ -4,15 +4,26 @@ export const DIFFICULTY_IDS = {
   HARD: "hard",
 }
 
+export const PROGRESSION_MODE = {
+  PRACTICE: "practice",
+  NON_COMPETITIVE: "non_competitive",
+  COMPETITIVE: "competitive",
+}
+
 export const DEFAULT_DIFFICULTY_ID = DIFFICULTY_IDS.NORMAL
 
 // Keep difficulty tuning data-driven so adding new modes only requires config updates.
 export const DIFFICULTIES = [
   {
     id: DIFFICULTY_IDS.EASY,
-    label: "Easy",
-    description: "Longer timer and gentler pacing.",
-    playerHint: "Best for new players learning movement and timing.",
+    label: "Practice",
+    description: "Untimed training mode focused on mechanics.",
+    playerHint: "No coins or progression rewards. Use this mode to warm up and drill accuracy.",
+    progressionMode: PROGRESSION_MODE.PRACTICE,
+    isTimedRound: false,
+    allowsCoinRewards: false,
+    allowsLevelProgression: false,
+    allowsRankProgression: false,
     durationSeconds: 200,
     initialButtonSize: 110,
     minButtonSize: 24,
@@ -25,9 +36,14 @@ export const DIFFICULTIES = [
   },
   {
     id: DIFFICULTY_IDS.NORMAL,
-    label: "Normal",
+    label: "Casual",
     description: "Balanced timing and score pressure.",
-    playerHint: "Best for consistent score runs with moderate pressure.",
+    playerHint: "Coins and levels are enabled. Competitve rank is disabled.",
+    progressionMode: PROGRESSION_MODE.NON_COMPETITIVE,
+    isTimedRound: true,
+    allowsCoinRewards: true,
+    allowsLevelProgression: true,
+    allowsRankProgression: false,
     durationSeconds: 15,
     initialButtonSize: 100,
     minButtonSize: 12,
@@ -40,9 +56,14 @@ export const DIFFICULTIES = [
   },
   {
     id: DIFFICULTY_IDS.HARD,
-    label: "Hard",
+    label: "Competitve",
     description: "Faster shrink and harsher miss cost.",
-    playerHint: "Best for high-risk leaderboard pushes and short windows.",
+    playerHint: "Full progression mode: coins, levels, and Competitve rank are all enabled.",
+    progressionMode: PROGRESSION_MODE.COMPETITIVE,
+    isTimedRound: true,
+    allowsCoinRewards: true,
+    allowsLevelProgression: true,
+    allowsRankProgression: true,
     durationSeconds: 12,
     initialButtonSize: 96,
     minButtonSize: 10,
@@ -62,4 +83,16 @@ export const DIFFICULTIES_BY_ID = DIFFICULTIES.reduce((difficultiesById, difficu
 
 export function getDifficultyById(difficultyId) {
   return DIFFICULTIES_BY_ID[difficultyId] ?? DIFFICULTIES_BY_ID[DEFAULT_DIFFICULTY_ID]
+}
+
+export function getDifficultyProgressionRules(difficultyId) {
+  const difficulty = getDifficultyById(difficultyId)
+
+  return {
+    progressionMode: difficulty.progressionMode,
+    isTimedRound: difficulty.isTimedRound,
+    allowsCoinRewards: difficulty.allowsCoinRewards,
+    allowsLevelProgression: difficulty.allowsLevelProgression,
+    allowsRankProgression: difficulty.allowsRankProgression,
+  }
 }

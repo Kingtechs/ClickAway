@@ -36,7 +36,55 @@ function CoinVault({ coins }) {
   )
 }
 
-export default function Navbar({ isAuthed, onLogout, coins = 0 }) {
+function LevelPill({ level }) {
+  const normalizedLevel = Number.isFinite(level) ? Math.max(1, level) : 1
+
+  return (
+    <div className="levelPill" aria-label={`XP level ${normalizedLevel}`}>
+      <span className="levelPillLabel">XP Level</span>
+      <span className="levelPillValue">{normalizedLevel}</span>
+    </div>
+  )
+}
+
+function getRankImageSrc(rankLabel = "") {
+  const normalizedLabel = String(rankLabel).trim().toLowerCase()
+  return `/ranks/${normalizedLabel}.png`
+}
+
+function RankPill({ rankLabel, rankMmr }) {
+  const displayLabel = rankLabel || "Bronze"
+  const displayMmr = Number.isFinite(rankMmr) ? Math.max(0, rankMmr) : 0
+  const rankImageSrc = getRankImageSrc(displayLabel)
+
+  return (
+    <div className="rankPill" aria-label={`Competitve rank ${displayLabel} ${displayMmr} MMR`}>
+      <span className="rankPillIconSlot" aria-hidden="true">
+        <img
+          className="rankPillIcon"
+          src={rankImageSrc}
+          alt=""
+          onError={(event) => {
+            event.currentTarget.style.display = "none"
+          }}
+        />
+      </span>
+      <span className="rankPillText">
+        <span className="rankPillLabel">Competitve Rank</span>
+        <span className="rankPillValue">{displayLabel} · {displayMmr}</span>
+      </span>
+    </div>
+  )
+}
+
+export default function Navbar({
+  isAuthed,
+  onLogout,
+  coins = 0,
+  level = 1,
+  rankLabel = "Bronze",
+  rankMmr = 1000,
+}) {
   function handleLogout() {
     // App-level state owns auth; this callback keeps navbar behavior in sync with route guards.
     onLogout?.()
@@ -64,6 +112,8 @@ export default function Navbar({ isAuthed, onLogout, coins = 0 }) {
 
               <div className="navMeta">
                 <CoinVault coins={coins} />
+                <LevelPill level={level} />
+                <RankPill rankLabel={rankLabel} rankMmr={rankMmr} />
                 <button className="navButton" onClick={handleLogout}>
                   Logout
                 </button>

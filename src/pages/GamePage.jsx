@@ -23,6 +23,8 @@ import {
   getRandomPosition,
   getStreakAtmosphereTier,
 } from "../utils/gameMath.js"
+import { calculateRoundXp } from "../utils/progressionUtils.js"
+import { calculateRoundRankDelta } from "../utils/rankUtils.js"
 import GameArena from "../features/game/components/GameArena.jsx"
 import GameHud from "../features/game/components/GameHud.jsx"
 import PowerupTray from "../features/game/components/PowerupTray.jsx"
@@ -54,6 +56,13 @@ export default function GamePage({
   onRoundComplete,
   selectedDifficultyId = DEFAULT_DIFFICULTY_ID,
   onDifficultyChange,
+  playerLevel = 1,
+  playerXpIntoLevel = 0,
+  playerXpToNextLevel = 0,
+  playerLevelProgressPercent = 0,
+  playerRankLabel = "Bronze",
+  playerRankMmr = 0,
+  playerRankToNextTier = 0,
   buttonSkinClass = "skin-default",
   buttonSkinImageSrc = "",
   buttonSkinImageScale = 100,
@@ -91,6 +100,9 @@ export default function GamePage({
   const isPlaying = phase === ROUND_PHASE.PLAYING
   const canChangeDifficulty =
     phase === ROUND_PHASE.READY || phase === ROUND_PHASE.GAME_OVER
+  const isTimedRound = roundDifficulty.isTimedRound !== false
+  const allowsLevelProgression = roundDifficulty.allowsLevelProgression !== false
+  const allowsRankProgression = roundDifficulty.allowsRankProgression === true
 
   const comboMultiplier = useMemo(
     () => getComboMultiplier(streak, roundDifficulty.comboStep),
@@ -98,6 +110,24 @@ export default function GamePage({
   )
 
   const accuracy = useMemo(() => formatAccuracy(hits, misses), [hits, misses])
+  const roundXpEarned = useMemo(
+    () => (allowsLevelProgression
+      ? calculateRoundXp({ hits, misses, bestStreak, score })
+      : 0),
+    [allowsLevelProgression, bestStreak, hits, misses, score]
+  )
+  const roundRankDelta = useMemo(
+    () => calculateRoundRankDelta({
+      score,
+      hits,
+      misses,
+      bestStreak,
+      difficultyId: roundDifficulty.id,
+      progressionMode: roundDifficulty.progressionMode,
+      allowsRankProgression,
+    }),
+    [allowsRankProgression, bestStreak, hits, misses, roundDifficulty.id, roundDifficulty.progressionMode, score]
+  )
   const atmosphereTier = useMemo(() => getStreakAtmosphereTier(streak), [streak])
 
   const gameScreenClassName = useMemo(
@@ -258,9 +288,25 @@ export default function GamePage({
     setPhase(ROUND_PHASE.COUNTDOWN)
   }, [resetRoundState, selectedDifficulty])
 
+  const returnToReadyOverlay = useCallback(() => {
+    const nextRoundDifficulty = selectedDifficulty
+    setRoundDifficulty(nextRoundDifficulty)
+    resetRoundState(nextRoundDifficulty)
+    setPhase(ROUND_PHASE.READY)
+  }, [resetRoundState, selectedDifficulty])
+
+  const endCurrentRound = useCallback(() => {
+    if (phase !== ROUND_PHASE.PLAYING) return
+    setPhase(ROUND_PHASE.GAME_OVER)
+  }, [phase])
+
   const applyPowerup = useCallback(
     (powerupId) => {
       if (powerupId === "time_boost") {
+        if (!isTimedRound) {
+          addCenterFeedback("No Timer", "negative")
+          return
+        }
         setTimeLeft((currentTime) =>
           Math.min(roundDifficulty.maxTimeBufferSeconds, currentTime + 2)
         )
@@ -285,7 +331,7 @@ export default function GamePage({
         addCenterFeedback("Freeze", "positive")
       }
     },
-    [addCenterFeedback, roundDifficulty]
+    [addCenterFeedback, isTimedRound, roundDifficulty]
   )
 
   const tryUsePowerupKey = useCallback(
@@ -394,7 +440,7 @@ export default function GamePage({
   }, [phase])
 
   useEffect(() => {
-    if (!isPlaying) return
+    if (!isPlaying || !isTimedRound) return
 
     const roundTimerInterval = setInterval(() => {
       setTimeLeft((currentTime) => {
@@ -408,7 +454,7 @@ export default function GamePage({
     }, TIMER_TICK_MS)
 
     return () => clearInterval(roundTimerInterval)
-  }, [isPlaying])
+  }, [isPlaying, isTimedRound])
 
   useEffect(() => {
     if (phase !== ROUND_PHASE.GAME_OVER) return
@@ -422,7 +468,11 @@ export default function GamePage({
       score,
       bestStreak,
       difficultyId: roundDifficulty.id,
+      progressionMode: roundDifficulty.progressionMode,
       coinMultiplier: roundDifficulty.coinMultiplier,
+      allowsCoinRewards: roundDifficulty.allowsCoinRewards !== false,
+      allowsLevelProgression: roundDifficulty.allowsLevelProgression !== false,
+      allowsRankProgression: roundDifficulty.allowsRankProgression === true,
     })
   }, [
     bestStreak,
@@ -430,14 +480,24 @@ export default function GamePage({
     misses,
     onRoundComplete,
     phase,
+    roundDifficulty.allowsCoinRewards,
+    roundDifficulty.allowsLevelProgression,
+    roundDifficulty.allowsRankProgression,
     roundDifficulty.coinMultiplier,
     roundDifficulty.id,
+    roundDifficulty.progressionMode,
     score,
   ])
 
   useEffect(() => {
     function handleKeyDown(event) {
       if (event.repeat) return
+      if (import.meta.env.DEV && event.key.toLowerCase() === "g") {
+        hasAwardedRoundRef.current = true
+        setTimeLeft(0)
+        setPhase(ROUND_PHASE.GAME_OVER)
+        return
+      }
       tryUsePowerupKey(event.key)
     }
 
@@ -461,10 +521,21 @@ export default function GamePage({
       <GameHud
         score={score}
         timeLeft={timeLeft}
+        isTimedRound={isTimedRound}
         difficultyLabel={roundDifficulty.label}
+        playerLevel={playerLevel}
+        playerXpIntoLevel={playerXpIntoLevel}
+        playerXpToNextLevel={playerXpToNextLevel}
+        playerLevelProgressPercent={playerLevelProgressPercent}
+        playerRankLabel={playerRankLabel}
+        playerRankMmr={playerRankMmr}
+        playerRankToNextTier={playerRankToNextTier}
+        allowsRankProgression={allowsRankProgression}
         streak={streak}
         comboMultiplier={comboMultiplier}
         bestStreak={bestStreak}
+        isPlaying={isPlaying}
+        onEndRound={endCurrentRound}
       />
 
       <GameArena
@@ -507,11 +578,17 @@ export default function GamePage({
           powerupsUsed={powerupsUsed}
           accuracy={accuracy}
           difficultyLabel={roundDifficulty.label}
-          difficulties={DIFFICULTIES}
+          playerLevel={playerLevel}
+          playerXpIntoLevel={playerXpIntoLevel}
+          playerXpToNextLevel={playerXpToNextLevel}
+          roundXpEarned={roundXpEarned}
+          allowsLevelProgression={allowsLevelProgression}
+          playerRankLabel={playerRankLabel}
+          playerRankMmr={playerRankMmr}
+          roundRankDelta={roundRankDelta}
+          allowsRankProgression={allowsRankProgression}
           selectedDifficultyId={selectedDifficultyId}
-          onSelectDifficulty={handleDifficultySelect}
-          canChangeDifficulty={canChangeDifficulty}
-          onPlayAgain={startRoundWithCountdown}
+          onPlayAgain={returnToReadyOverlay}
         />
       ) : null}
     </div>

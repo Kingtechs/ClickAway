@@ -19,6 +19,8 @@ import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
 import { readArrayFromStorage, readBooleanFromStorage, readNumberFromStorage, readStringFromStorage } from "./utils/localStorage.js"
 import { appendHistoryEntry, createHistoryEntry } from "./utils/historyUtils.js"
+import { calculateRoundXp, getLevelProgress } from "./utils/progressionUtils.js"
+import { calculateRoundRankDelta, getRankProgress, INITIAL_RANK_MMR } from "./utils/rankUtils.js"
 import { calculateRoundCoins } from "./utils/roundRewards.js"
 import { canPurchaseShopItem, isShopItemOwned } from "./utils/shopUtils.js"
 
@@ -50,6 +52,16 @@ export default function App() {
   const [coins, setCoins] = useLocalStorageState({
     key: STORAGE_KEYS.coins,
     readValue: () => readNumberFromStorage(STORAGE_KEYS.coins),
+  })
+
+  const [levelXp, setLevelXp] = useLocalStorageState({
+    key: STORAGE_KEYS.levelXp,
+    readValue: () => readNumberFromStorage(STORAGE_KEYS.levelXp),
+  })
+
+  const [rankMmr, setRankMmr] = useLocalStorageState({
+    key: STORAGE_KEYS.rankMmr,
+    readValue: () => readNumberFromStorage(STORAGE_KEYS.rankMmr, INITIAL_RANK_MMR),
   })
 
   const [ownedItemIds, setOwnedItemIds] = useLocalStorageState({
@@ -99,6 +111,9 @@ export default function App() {
     [equippedArenaThemeId]
   )
 
+  const levelProgress = useMemo(() => getLevelProgress(levelXp), [levelXp])
+  const rankProgress = useMemo(() => getRankProgress(rankMmr), [rankMmr])
+
   function handleLogin() {
     setIsAuthed(true)
   }
@@ -110,13 +125,36 @@ export default function App() {
   function handleRoundComplete({
     clicksScored,
     coinMultiplier = 1,
+    allowsCoinRewards = true,
+    allowsLevelProgression = true,
+    allowsRankProgression = false,
+    progressionMode = "",
     hits = 0,
     misses = 0,
     score = 0,
     bestStreak = 0,
     difficultyId = "",
   }) {
-    const earnedCoins = calculateRoundCoins(clicksScored, coinMultiplier)
+    const earnedCoins = allowsCoinRewards
+      ? calculateRoundCoins(clicksScored, coinMultiplier)
+      : 0
+    const earnedXp = allowsLevelProgression
+      ? calculateRoundXp({
+        hits,
+        misses,
+        bestStreak,
+        score,
+      })
+      : 0
+    const rankDelta = calculateRoundRankDelta({
+      score,
+      hits,
+      misses,
+      bestStreak,
+      difficultyId,
+      progressionMode,
+      allowsRankProgression,
+    })
 
     const historyEntry = createHistoryEntry({
       score,
@@ -125,10 +163,21 @@ export default function App() {
       bestStreak,
       coinsEarned: earnedCoins,
       difficultyId,
+      progressionMode,
+      xpEarned: earnedXp,
+      rankDelta,
     })
 
     if (earnedCoins > 0) {
       setCoins((currentCoins) => currentCoins + earnedCoins)
+    }
+
+    if (earnedXp > 0) {
+      setLevelXp((currentXp) => currentXp + earnedXp)
+    }
+
+    if (rankDelta !== 0) {
+      setRankMmr((currentMmr) => Math.max(0, currentMmr + rankDelta))
     }
 
     setRoundHistory((currentHistory) =>
@@ -171,7 +220,18 @@ export default function App() {
 
   return (
     <Routes>
-      <Route element={<Layout isAuthed={isAuthed} onLogout={handleLogout} coins={coins} />}>
+      <Route
+        element={
+          <Layout
+            isAuthed={isAuthed}
+            onLogout={handleLogout}
+            coins={coins}
+            level={levelProgress.level}
+            rankLabel={rankProgress.tierLabel}
+            rankMmr={rankProgress.mmr}
+          />
+        }
+      >
         <Route path="/" element={<Navigate to={isAuthed ? "/game" : "/login"} replace />} />
         <Route
           path="/login"
@@ -206,6 +266,13 @@ export default function App() {
                 onRoundComplete={handleRoundComplete}
                 selectedDifficultyId={selectedDifficultyId}
                 onDifficultyChange={handleDifficultyChange}
+                playerLevel={levelProgress.level}
+                playerXpIntoLevel={levelProgress.xpIntoLevel}
+                playerXpToNextLevel={levelProgress.xpToNextLevel}
+                playerLevelProgressPercent={levelProgress.progressPercent}
+                playerRankLabel={rankProgress.tierLabel}
+                playerRankMmr={rankProgress.mmr}
+                playerRankToNextTier={rankProgress.mmrToNextTier}
                 buttonSkinClass={equippedButtonSkin?.effectClass}
                 buttonSkinImageSrc={equippedButtonSkin?.imageSrc}
                 buttonSkinImageScale={
@@ -243,7 +310,11 @@ export default function App() {
           path="/leaderboard"
           element={
             <ProtectedRoute isAuthed={isAuthed}>
-              <LeaderboardPage roundHistory={roundHistory} />
+              <LeaderboardPage
+                roundHistory={roundHistory}
+                playerRankLabel={rankProgress.tierLabel}
+                playerRankMmr={rankProgress.mmr}
+              />
             </ProtectedRoute>
           }
         />

@@ -1,7 +1,9 @@
+import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 
 function formatDifficultyLabel(difficulty) {
-  if (difficulty.id === "normal") return "Medium"
+  if (difficulty.id === "normal") return "Casual"
+  if (difficulty.id === "hard") return "Competitve"
   return difficulty.label
 }
 
@@ -36,6 +38,15 @@ function getRoundFeedbackMessage({ hits, misses, accuracy, bestStreak }) {
   return "Solid round. Cut a few misses and your score will climb quickly."
 }
 
+function getGameOverTone({ hits, misses, accuracy, bestStreak }) {
+  const accuracyValue = Number.parseInt(String(accuracy).replace("%", ""), 10)
+  const normalizedAccuracy = Number.isFinite(accuracyValue) ? accuracyValue : 0
+
+  if (normalizedAccuracy >= 90 && bestStreak >= 10) return "elite"
+  if (hits >= misses && normalizedAccuracy >= 65) return "steady"
+  return "recovery"
+}
+
 function DifficultyOptionCard({
   difficulty,
   isSelected,
@@ -45,6 +56,12 @@ function DifficultyOptionCard({
 }) {
   const displayLabel = formatDifficultyLabel(difficulty)
   const missPenaltyValue = difficulty.missPenalty > 0 ? `-${difficulty.missPenalty}` : "None"
+  const roundLengthValue = difficulty.isTimedRound === false
+    ? "No limit"
+    : `${difficulty.durationSeconds}s`
+  const coinBonusText = difficulty.allowsCoinRewards === false
+    ? "Coins: off"
+    : getCoinBonusText(difficulty.coinMultiplier)
 
   return (
     <button
@@ -61,7 +78,7 @@ function DifficultyOptionCard({
 
       <span className="difficultyQuickStats">
         <span className="difficultyQuickStat">
-          <strong>{difficulty.durationSeconds}s</strong>
+          <strong>{roundLengthValue}</strong>
           <small>Round</small>
         </span>
         <span className="difficultyQuickStat">
@@ -76,7 +93,7 @@ function DifficultyOptionCard({
 
       <span className="difficultySecondaryInfo">
         <span>Combo: every {difficulty.comboStep} hits</span>
-        <span>{getCoinBonusText(difficulty.coinMultiplier)}</span>
+        <span>{coinBonusText}</span>
       </span>
 
       {!compact ? (
@@ -97,7 +114,7 @@ function DifficultyPicker({
     <div
       className={`difficultyPicker ${compact ? "compact" : ""}`}
       role="radiogroup"
-      aria-label="Difficulty"
+      aria-label="Mode"
     >
       {difficulties.map((difficulty) => (
         <DifficultyOptionCard
@@ -113,13 +130,60 @@ function DifficultyPicker({
   )
 }
 
-function SummaryRow({ label, value }) {
-  return (
-    <tr>
-      <th scope="row">{label}</th>
-      <td>{value}</td>
-    </tr>
-  )
+function getReadyDifficultySummary(selectedDifficulty) {
+  if (!selectedDifficulty) {
+    return {
+      label: "Unknown",
+      round: "Mode details unavailable",
+      coinBonus: "Coins: base",
+    }
+  }
+
+  return {
+    label: formatDifficultyLabel(selectedDifficulty),
+    round: selectedDifficulty.isTimedRound === false
+      ? "No time limit"
+      : `${selectedDifficulty.durationSeconds}s round`,
+    coinBonus: selectedDifficulty.allowsCoinRewards === false
+      ? "Coins disabled"
+      : getCoinBonusText(selectedDifficulty.coinMultiplier),
+  }
+}
+
+function buildGameOverStats({
+  hits,
+  misses,
+  accuracy,
+  bestStreak,
+  powerupsUsed,
+  playerLevel,
+  roundXpEarned,
+  playerXpToNextLevel,
+  allowsLevelProgression,
+  playerRankLabel,
+  playerRankMmr,
+  roundRankDelta,
+  allowsRankProgression,
+}) {
+  const xpEarnedDisplay = allowsLevelProgression ? `+${roundXpEarned}` : "Off"
+  const nextLevelDisplay = allowsLevelProgression ? `${playerXpToNextLevel} XP` : "Off"
+  const rankDeltaDisplay = allowsRankProgression
+    ? `${roundRankDelta > 0 ? "+" : ""}${roundRankDelta}`
+    : "Off"
+
+  return [
+    { label: "Hits", value: hits },
+    { label: "Misses", value: misses },
+    { label: "Accuracy", value: accuracy },
+    { label: "Best Streak", value: bestStreak },
+    { label: "Power-ups Used", value: powerupsUsed },
+    { label: "Level", value: playerLevel },
+    { label: "XP Earned", value: xpEarnedDisplay },
+    { label: "Next Level", value: nextLevelDisplay },
+    { label: "Rank", value: allowsRankProgression ? playerRankLabel : "Unranked" },
+    { label: "MMR", value: allowsRankProgression ? playerRankMmr : "Off" },
+    { label: "Rank Delta", value: rankDeltaDisplay },
+  ]
 }
 
 export function ReadyOverlay({
@@ -129,6 +193,23 @@ export function ReadyOverlay({
   onSelectDifficulty,
   canChangeDifficulty = true,
 }) {
+  const [isChoosingDifficulty, setIsChoosingDifficulty] = useState(false)
+  const selectedDifficulty = useMemo(
+    () => difficulties.find((difficulty) => difficulty.id === selectedDifficultyId) ?? null,
+    [difficulties, selectedDifficultyId]
+  )
+
+  function handleOpenDifficultyPicker() {
+    if (!canChangeDifficulty) return
+    setIsChoosingDifficulty(true)
+  }
+
+  function handleBackToReady() {
+    setIsChoosingDifficulty(false)
+  }
+
+  const readyDifficultySummary = getReadyDifficultySummary(selectedDifficulty)
+
   return (
     <div
       className="gameOverlay"
@@ -139,32 +220,68 @@ export function ReadyOverlay({
       <section
         className={`gameOverCard readyCard readyCardStack difficultyMood-${selectedDifficultyId}`}
       >
-        <h2 id="round-ready-title" className="readyTitle">
-          Round Ready
-        </h2>
-        <p className="readyLead">
-          Pick your difficulty, protect your streak, and score as many clean hits as you can.
-        </p>
+        {!isChoosingDifficulty ? (
+          <>
+            <h2 id="round-ready-title" className="readyTitle">
+              Round Ready
+            </h2>
+            <p className="readyLead">
+              Jump in quickly or tune your mode before the next run.
+            </p>
 
-        <DifficultyPicker
-          difficulties={difficulties}
-          selectedDifficultyId={selectedDifficultyId}
-          onSelectDifficulty={onSelectDifficulty}
-          canChangeDifficulty={canChangeDifficulty}
-        />
+            <section className="readyCurrentDifficulty" aria-label="Selected mode">
+              <span className="readyCurrentDifficultyLabel">Selected Mode</span>
+              <strong className="readyCurrentDifficultyName">{readyDifficultySummary.label}</strong>
+              <div className="readyCurrentDifficultyMeta">
+                <span>{readyDifficultySummary.round}</span>
+                <span>{readyDifficultySummary.coinBonus}</span>
+              </div>
+            </section>
 
-        <p className="difficultyHint">
-          Difficulty affects timer length, miss penalties, combo growth pace, and coin reward.
-        </p>
+            <div className="overlayActions readyActions">
+              <button className="primaryButton" onClick={onStart}>
+                Start Round
+              </button>
+              <button
+                className="secondaryButton"
+                type="button"
+                onClick={handleOpenDifficultyPicker}
+                disabled={!canChangeDifficulty}
+              >
+                Change Mode
+              </button>
+              <Link className="secondaryButton" to="/help">
+                How To Play
+              </Link>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 id="round-ready-title" className="readyTitle">
+              Choose Mode
+            </h2>
+            <p className="readyLead">
+              Mode affects timer length, miss penalties, combo growth pace, and coin reward.
+            </p>
 
-        <div className="overlayActions readyActions">
-          <button className="primaryButton" onClick={onStart}>
-            Start Round
-          </button>
-          <Link className="secondaryButton" to="/help">
-            How To Play
-          </Link>
-        </div>
+            <DifficultyPicker
+              difficulties={difficulties}
+              selectedDifficultyId={selectedDifficultyId}
+              onSelectDifficulty={onSelectDifficulty}
+              canChangeDifficulty={canChangeDifficulty}
+              compact
+            />
+
+            <div className="overlayActions readyActions">
+              <button className="primaryButton" onClick={onStart}>
+                Start Round
+              </button>
+              <button className="secondaryButton" type="button" onClick={handleBackToReady}>
+                Back
+              </button>
+            </div>
+          </>
+        )}
       </section>
     </div>
   )
@@ -189,10 +306,16 @@ export function GameOverOverlay({
   powerupsUsed,
   accuracy,
   difficultyLabel,
-  difficulties = [],
+  playerLevel = 1,
+  playerXpIntoLevel = 0,
+  playerXpToNextLevel = 0,
+  roundXpEarned = 0,
+  allowsLevelProgression = false,
+  playerRankLabel = "Bronze",
+  playerRankMmr = 0,
+  roundRankDelta = 0,
+  allowsRankProgression = false,
   selectedDifficultyId,
-  onSelectDifficulty,
-  canChangeDifficulty = true,
   onPlayAgain,
 }) {
   const feedbackMessage = getRoundFeedbackMessage({
@@ -201,6 +324,23 @@ export function GameOverOverlay({
     accuracy,
     bestStreak,
   })
+  const stats = buildGameOverStats({
+    hits,
+    misses,
+    accuracy,
+    bestStreak,
+    powerupsUsed,
+    playerLevel,
+    roundXpEarned,
+    playerXpToNextLevel,
+    allowsLevelProgression,
+    playerRankLabel,
+    playerRankMmr,
+    roundRankDelta,
+    allowsRankProgression,
+  })
+  const tone = getGameOverTone({ hits, misses, accuracy, bestStreak })
+  const formattedScore = Number(score).toLocaleString()
 
   return (
     <div
@@ -210,33 +350,39 @@ export function GameOverOverlay({
       aria-labelledby="game-over-title"
     >
       <section
-        className={`gameOverCard gameOverCardWithDifficulty difficultyMood-${selectedDifficultyId}`}
+        className={`gameOverCard gameOverCardWithDifficulty difficultyMood-${selectedDifficultyId} gameOverTone-${tone}`}
       >
-        <h2 id="game-over-title">Game Over</h2>
-        <p className="gameOverScore">Final Score: {score}</p>
+        <header className="gameOverHeader">
+          <p className="gameOverEyebrow">Round Complete</p>
+          <h2 id="game-over-title" className="gameOverTitle">
+            Game Over
+          </h2>
+        </header>
+
+        <section className="gameOverScorePanel" aria-label="Final score summary">
+          <p className="gameOverScoreLabel">Final Score</p>
+          <p className="gameOverScoreValue">{formattedScore}</p>
+          <p className="gameOverDifficultyBadge">{difficultyLabel}</p>
+          <p className="gameOverLevelMeta">
+            Level {playerLevel} · XP {playerXpIntoLevel}/{playerXpIntoLevel + playerXpToNextLevel}
+          </p>
+          {allowsRankProgression ? (
+            <p className="gameOverRankMeta">
+              Rank {playerRankLabel} · {playerRankMmr} MMR
+            </p>
+          ) : null}
+        </section>
+
         <p className="gameOverFeedback">{feedbackMessage}</p>
 
-        <table className="roundSummaryTable" aria-label="Round summary">
-          <tbody>
-            <SummaryRow label="Difficulty" value={difficultyLabel} />
-            <SummaryRow label="Hits" value={hits} />
-            <SummaryRow label="Misses" value={misses} />
-            <SummaryRow label="Accuracy" value={accuracy} />
-            <SummaryRow label="Best Streak" value={bestStreak} />
-            <SummaryRow label="Power-ups Used" value={powerupsUsed} />
-          </tbody>
-        </table>
-
-        <DifficultyPicker
-          difficulties={difficulties}
-          selectedDifficultyId={selectedDifficultyId}
-          onSelectDifficulty={onSelectDifficulty}
-          canChangeDifficulty={canChangeDifficulty}
-        />
-
-        <p className="difficultyHint gameOverHint">
-          Select your next difficulty, then start another run.
-        </p>
+        <section className="gameOverStatGrid" aria-label="Round summary">
+          {stats.map((stat) => (
+            <article className="gameOverStatCard" key={stat.label}>
+              <p className="gameOverStatLabel">{stat.label}</p>
+              <p className="gameOverStatValue">{stat.value}</p>
+            </article>
+          ))}
+        </section>
 
         <div className="overlayActions gameOverActions">
           <button className="primaryButton" onClick={onPlayAgain}>
