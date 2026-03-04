@@ -220,7 +220,18 @@ export default function App() {
 
   return (
     <Routes>
-      <Route element={<Layout isAuthed={isAuthed} onLogout={handleLogout} coins={coins} />}>
+      <Route
+        element={
+          <Layout
+            isAuthed={isAuthed}
+            onLogout={handleLogout}
+            coins={coins}
+            level={levelProgress.level}
+            rankLabel={rankProgress.tierLabel}
+            rankMmr={rankProgress.mmr}
+          />
+        }
+      >
         <Route path="/" element={<Navigate to={isAuthed ? "/game" : "/login"} replace />} />
         <Route
           path="/login"

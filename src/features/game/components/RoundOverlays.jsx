@@ -2,7 +2,8 @@ import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 
 function formatDifficultyLabel(difficulty) {
-  if (difficulty.id === "normal") return "Medium"
+  if (difficulty.id === "normal") return "Casual"
+  if (difficulty.id === "hard") return "Competitve"
   return difficulty.label
 }
 
@@ -113,7 +114,7 @@ function DifficultyPicker({
     <div
       className={`difficultyPicker ${compact ? "compact" : ""}`}
       role="radiogroup"
-      aria-label="Difficulty"
+      aria-label="Mode"
     >
       {difficulties.map((difficulty) => (
         <DifficultyOptionCard
@@ -133,7 +134,7 @@ function getReadyDifficultySummary(selectedDifficulty) {
   if (!selectedDifficulty) {
     return {
       label: "Unknown",
-      round: "Round length unavailable",
+      round: "Mode details unavailable",
       coinBonus: "Coins: base",
     }
   }
@@ -225,11 +226,11 @@ export function ReadyOverlay({
               Round Ready
             </h2>
             <p className="readyLead">
-              Jump in quickly or tune your difficulty before the next run.
+              Jump in quickly or tune your mode before the next run.
             </p>
 
-            <section className="readyCurrentDifficulty" aria-label="Selected difficulty">
-              <span className="readyCurrentDifficultyLabel">Selected Difficulty</span>
+            <section className="readyCurrentDifficulty" aria-label="Selected mode">
+              <span className="readyCurrentDifficultyLabel">Selected Mode</span>
               <strong className="readyCurrentDifficultyName">{readyDifficultySummary.label}</strong>
               <div className="readyCurrentDifficultyMeta">
                 <span>{readyDifficultySummary.round}</span>
@@ -247,7 +248,7 @@ export function ReadyOverlay({
                 onClick={handleOpenDifficultyPicker}
                 disabled={!canChangeDifficulty}
               >
-                Change Difficulty
+                Change Mode
               </button>
               <Link className="secondaryButton" to="/help">
                 How To Play
@@ -257,10 +258,10 @@ export function ReadyOverlay({
         ) : (
           <>
             <h2 id="round-ready-title" className="readyTitle">
-              Choose Difficulty
+              Choose Mode
             </h2>
             <p className="readyLead">
-              Difficulty affects timer length, miss penalties, combo growth pace, and coin reward.
+              Mode affects timer length, miss penalties, combo growth pace, and coin reward.
             </p>
 
             <DifficultyPicker

@@ -1,13 +1,13 @@
 export const GETTING_STARTED_STEPS = [
   "Log in.",
-  "Open Game and check your difficulty.",
+  "Open Game and check your mode.",
   "Press Start Round and wait for the 3-second countdown.",
-  "Practice has no timer. Medium/Hard are timed.",
+  "Practice has no timer. Casual/Competitve are timed.",
   "Review results, then press Play Again.",
 ]
 
 export const ROUND_FLOW_POINTS = [
-  "Ready: Start now or change difficulty.",
+  "Ready: Start now or change mode.",
   "Countdown: 3, 2, 1.",
   "Live round: target moves and shrinks.",
   "Miss: streak resets; score may drop.",
@@ -21,7 +21,7 @@ export const CONTROLS_ROWS = [
   ["Use Time +2s", "Press 1 when charges are available."],
   ["Use Grow +10", "Press 2 when charges are available."],
   ["Use Freeze 1s", "Press 3 when charges are available."],
-  ["Change Difficulty", "Round Ready -> Change Difficulty button."],
+  ["Change Mode", "Round Ready -> Change Mode button."],
 ]
 
 export const NAVIGATION_ROWS = [
@@ -35,8 +35,8 @@ export const NAVIGATION_ROWS = [
 
 export const DIFFICULTY_ROWS = [
   ["Practice", "No limit", "0", "Off", "Coins Off", "Level Off", "Rank Off"],
-  ["Medium", "15s", "1", "1.10x", "Coins On", "Level On", "Rank Off"],
-  ["Hard", "12s", "2", "1.25x", "Coins On", "Level On", "Rank On"],
+  ["Casual", "15s", "1", "1.10x", "Coins On", "Level On", "Rank Off"],
+  ["Competitve", "12s", "2", "1.25x", "Coins On", "Level On", "Rank On"],
 ]
 
 export const SCORING_ROWS = [
@@ -72,26 +72,26 @@ export const PERFORMANCE_TIPS = [
 ]
 
 export const PROGRESSION_POINTS = [
-  "Progress is mode-based: Practice (training), Medium (coins + XP), Hard (coins + XP + rank).",
+  "Progress is mode-based: Practice (training), Casual (coins + XP), Competitve (coins + XP + rank).",
   "Leveling uses XP earned from round performance.",
-  "Rank/MMR changes only in Hard mode.",
+  "Rank/MMR changes only in Competitve mode.",
   "History stores mode, XP earned, and rank delta each round.",
-  "Leaderboard uses competitive (Hard) rounds only.",
+  "Leaderboard uses Competitve rounds only.",
   "Clearing browser storage resets progress.",
 ]
 
 export const FAQ_ITEMS = [
   {
     question: "What should I do first if I have never played?",
-    answer: "Start in Practice, then move to Medium once accuracy is stable.",
+    answer: "Start in Practice, then move to Casual once accuracy is stable.",
   },
   {
     question: "How do I earn coins quickly?",
-    answer: "Play Medium/Hard, land more hits, and protect streaks.",
+    answer: "Play Casual/Competitve, land more hits, and protect streaks.",
   },
   {
     question: "When does rank change?",
-    answer: "Only in Hard mode rounds.",
+    answer: "Only in Competitve mode rounds.",
   },
   {
     question: "Do I lose coins on misses?",
@@ -107,6 +107,6 @@ export const FAQ_ITEMS = [
   },
   {
     question: "Does Help reflect all current systems?",
-    answer: "Yes. It covers gameplay, controls, difficulty, power-ups, shop, and progress.",
+    answer: "Yes. It covers gameplay, controls, mode rules, power-ups, shop, and progress.",
   },
 ]

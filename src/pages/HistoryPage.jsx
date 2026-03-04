@@ -4,11 +4,11 @@ import { HISTORY_INSIGHTS, MOCK_HISTORY } from "../features/history/historyData.
 function formatModeLabel(round = {}) {
   const progressionMode = round.progressionMode ?? ""
   if (progressionMode === "practice") return "Practice"
-  if (progressionMode === "competitive") return "Competitive"
-  if (progressionMode === "non_competitive") return "Medium"
+  if (progressionMode === "competitive") return "Competitve"
+  if (progressionMode === "non_competitive") return "Casual"
   if (round.difficultyId === "easy") return "Practice"
-  if (round.difficultyId === "hard") return "Competitive"
-  if (round.difficultyId === "normal") return "Medium"
+  if (round.difficultyId === "hard") return "Competitve"
+  if (round.difficultyId === "normal") return "Casual"
   return "Unknown"
 }
 

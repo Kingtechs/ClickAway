@@ -39,6 +39,6 @@ export const MOCK_HISTORY = [
 
 export const HISTORY_INSIGHTS = [
   "Practice rounds are for training only (no coins, no XP, no rank).",
-  "Medium rounds build coins and XP without affecting competitive rank.",
-  "Hard rounds are the only mode that changes rank/MMR.",
+  "Casual rounds build coins and XP without affecting Competitve rank.",
+  "Competitve rounds are the only mode that changes rank/MMR.",
 ]

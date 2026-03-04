@@ -48,7 +48,7 @@ export default function LeaderboardPage({
       <section className="card">
         <h1 className="cardTitle">Leaderboard</h1>
         <p className="muted">
-          Competitive leaderboard. Only Hard mode rounds affect rank/MMR placement.
+          Competitve leaderboard. Only Competitve mode rounds affect rank/MMR placement.
         </p>
 
         <InfoStrip points={LEADERBOARD_INSIGHTS} />

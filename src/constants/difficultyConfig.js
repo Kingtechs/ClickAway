@@ -36,9 +36,9 @@ export const DIFFICULTIES = [
   },
   {
     id: DIFFICULTY_IDS.NORMAL,
-    label: "Medium",
+    label: "Casual",
     description: "Balanced timing and score pressure.",
-    playerHint: "Coins and levels are enabled. Competitive rank is disabled.",
+    playerHint: "Coins and levels are enabled. Competitve rank is disabled.",
     progressionMode: PROGRESSION_MODE.NON_COMPETITIVE,
     isTimedRound: true,
     allowsCoinRewards: true,
@@ -56,9 +56,9 @@ export const DIFFICULTIES = [
   },
   {
     id: DIFFICULTY_IDS.HARD,
-    label: "Hard",
+    label: "Competitve",
     description: "Faster shrink and harsher miss cost.",
-    playerHint: "Full progression mode: coins, levels, and competitive rank are all enabled.",
+    playerHint: "Full progression mode: coins, levels, and Competitve rank are all enabled.",
     progressionMode: PROGRESSION_MODE.COMPETITIVE,
     isTimedRound: true,
     allowsCoinRewards: true,

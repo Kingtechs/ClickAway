@@ -39,9 +39,9 @@ export default function GameHud({
 
       <div
         className="difficultyHudTag"
-        aria-label={`Current difficulty ${difficultyLabel}`}
+        aria-label={`Current mode ${difficultyLabel}`}
       >
-        Difficulty: {difficultyLabel}
+        Mode: {difficultyLabel}
       </div>
 
       <div
