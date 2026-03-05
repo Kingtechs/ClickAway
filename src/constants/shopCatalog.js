@@ -42,6 +42,29 @@ function createArenaThemeItem({
   }
 }
 
+function createProfileImageItem({
+  id,
+  name,
+  cost,
+  effectClass,
+  imageSrc = "",
+  shopImageScale = 100,
+  description,
+  builtIn = false,
+}) {
+  return {
+    id,
+    type: "profile_image",
+    name,
+    cost,
+    effectClass,
+    imageSrc,
+    shopImageScale,
+    description,
+    builtIn,
+  }
+}
+
 function applyIncrementalCosts(items = [], maxCost = 999) {
   if (!Array.isArray(items) || items.length <= 1) return items
 
@@ -195,6 +218,48 @@ export const SHOP_CATEGORIES = [
         cost: 999,
         effectClass: "theme-arcade",
         description: "Synthwave-inspired night lane with neon lane lines.",
+      }),
+    ]),
+  },
+  {
+    id: "profile_images",
+    title: "Profile Images",
+    description: "Equip portraits for your player profile card.",
+    items: applyIncrementalCosts([
+      createProfileImageItem({
+        id: "profile_default",
+        name: "Identity Gradient",
+        cost: 0,
+        builtIn: true,
+        effectClass: "profile-image-default",
+        description: "Dynamic initials tile keyed to your username.",
+      }),
+      createProfileImageItem({
+        id: "profile_compass",
+        name: "Compass Mark",
+        cost: 35,
+        effectClass: "profile-image-compass",
+        imageSrc: "/pointerimage.png",
+        shopImageScale: 78,
+        description: "Clean directional marker portrait with a subtle glow.",
+      }),
+      createProfileImageItem({
+        id: "profile_lunar",
+        name: "Lunar Core",
+        cost: 45,
+        effectClass: "profile-image-lunar",
+        imageSrc: "/moon.png",
+        shopImageScale: 132,
+        description: "Moonlit portrait plate with cool crater texture.",
+      }),
+      createProfileImageItem({
+        id: "profile_gold",
+        name: "Gold Crest",
+        cost: 999,
+        effectClass: "profile-image-gold",
+        imageSrc: "/coin.png",
+        shopImageScale: 128,
+        description: "High-tier token emblem for a premium profile finish.",
       }),
     ]),
   },

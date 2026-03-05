@@ -5,8 +5,8 @@ import Layout from "./components/Layout.jsx"
 import ProtectedRoute from "./components/routing/ProtectedRoute.jsx"
 import { DEFAULT_EQUIPPED_IDS, STORAGE_KEYS } from "./constants/appStorage.js"
 import {
-  DEFAULT_DIFFICULTY_ID,
-  DIFFICULTIES_BY_ID,
+  DEFAULT_DIFFICULTY_ID as DEFAULT_MODE_ID,
+  DIFFICULTIES_BY_ID as MODES_BY_ID,
 } from "./constants/difficultyConfig.js"
 import { SHOP_ITEMS_BY_ID } from "./constants/shopCatalog.js"
 import { useLocalStorageState } from "./hooks/useLocalStorageState.js"
@@ -15,28 +15,38 @@ import HelpPage from "./pages/HelpPage.jsx"
 import HistoryPage from "./pages/HistoryPage.jsx"
 import LeaderboardPage from "./pages/LeaderboardPage.jsx"
 import LoginPage from "./pages/LoginPage.jsx"
+import ProfilePage from "./pages/ProfilePage.jsx"
 import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
 import { readArrayFromStorage, readBooleanFromStorage, readNumberFromStorage, readStringFromStorage } from "./utils/localStorage.js"
 import { appendHistoryEntry, createHistoryEntry } from "./utils/historyUtils.js"
+import { isCompetitiveModeEntry } from "./utils/modeUtils.js"
 import { calculateRoundXp, getLevelProgress } from "./utils/progressionUtils.js"
-import { calculateRoundRankDelta, getRankProgress, INITIAL_RANK_MMR } from "./utils/rankUtils.js"
+import {
+  calculateRoundRankDelta,
+  getRankProgressWithPlacement,
+  INITIAL_RANK_MMR,
+} from "./utils/rankUtils.js"
 import { calculateRoundCoins } from "./utils/roundRewards.js"
 import { canPurchaseShopItem, isShopItemOwned } from "./utils/shopUtils.js"
 
-function readSelectedDifficultyId() {
-  const storedDifficultyId = readStringFromStorage(
+function readSelectedModeId() {
+  const storedModeId = readStringFromStorage(
     STORAGE_KEYS.selectedDifficulty,
-    DEFAULT_DIFFICULTY_ID
+    DEFAULT_MODE_ID
   )
 
-  return DIFFICULTIES_BY_ID[storedDifficultyId]
-    ? storedDifficultyId
-    : DEFAULT_DIFFICULTY_ID
+  return MODES_BY_ID[storedModeId]
+    ? storedModeId
+    : DEFAULT_MODE_ID
 }
 
-function isValidDifficultyId(difficultyId) {
-  return Boolean(DIFFICULTIES_BY_ID[difficultyId])
+function isValidModeId(modeId) {
+  return Boolean(MODES_BY_ID[modeId])
+}
+
+function normalizeUsername(username = "") {
+  return String(username).trim()
 }
 
 function getEquippedShopItem(itemId, fallbackItemId) {
@@ -47,6 +57,11 @@ export default function App() {
   const [isAuthed, setIsAuthed] = useLocalStorageState({
     key: STORAGE_KEYS.auth,
     readValue: () => readBooleanFromStorage(STORAGE_KEYS.auth),
+  })
+
+  const [playerUsername, setPlayerUsername] = useLocalStorageState({
+    key: STORAGE_KEYS.playerUsername,
+    readValue: () => readStringFromStorage(STORAGE_KEYS.playerUsername, "Player"),
   })
 
   const [coins, setCoins] = useLocalStorageState({
@@ -88,9 +103,18 @@ export default function App() {
       ),
   })
 
-  const [selectedDifficultyId, setSelectedDifficultyId] = useLocalStorageState({
+  const [equippedProfileImageId, setEquippedProfileImageId] = useLocalStorageState({
+    key: STORAGE_KEYS.equippedProfileImage,
+    readValue: () =>
+      readStringFromStorage(
+        STORAGE_KEYS.equippedProfileImage,
+        DEFAULT_EQUIPPED_IDS.profileImage
+      ),
+  })
+
+  const [selectedModeId, setSelectedModeId] = useLocalStorageState({
     key: STORAGE_KEYS.selectedDifficulty,
-    readValue: readSelectedDifficultyId,
+    readValue: readSelectedModeId,
   })
 
   const [roundHistory, setRoundHistory] = useLocalStorageState({
@@ -111,10 +135,37 @@ export default function App() {
     [equippedArenaThemeId]
   )
 
-  const levelProgress = useMemo(() => getLevelProgress(levelXp), [levelXp])
-  const rankProgress = useMemo(() => getRankProgress(rankMmr), [rankMmr])
+  const equippedProfileImage = useMemo(
+    () =>
+      getEquippedShopItem(
+        equippedProfileImageId,
+        DEFAULT_EQUIPPED_IDS.profileImage
+      ),
+    [equippedProfileImageId]
+  )
 
-  function handleLogin() {
+  const levelProgress = useMemo(() => getLevelProgress(levelXp), [levelXp])
+  const hasCompetitiveHistory = useMemo(
+    () => roundHistory.some((entry) => isCompetitiveModeEntry(entry)),
+    [roundHistory]
+  )
+  const rankProgress = useMemo(
+    () => getRankProgressWithPlacement(rankMmr, hasCompetitiveHistory),
+    [hasCompetitiveHistory, rankMmr]
+  )
+
+  function handleLogin(username = "") {
+    const normalizedUsername = normalizeUsername(username)
+    // Keep signup as the source of truth unless no username has been created yet.
+    if (normalizedUsername && !normalizeUsername(playerUsername)) {
+      setPlayerUsername(normalizedUsername)
+    }
+    setIsAuthed(true)
+  }
+
+  function handleSignup(username = "") {
+    const normalizedUsername = normalizeUsername(username) || "Player"
+    setPlayerUsername(normalizedUsername)
     setIsAuthed(true)
   }
 
@@ -133,7 +184,7 @@ export default function App() {
     misses = 0,
     score = 0,
     bestStreak = 0,
-    difficultyId = "",
+    modeId = "",
   }) {
     const earnedCoins = allowsCoinRewards
       ? calculateRoundCoins(clicksScored, coinMultiplier)
@@ -151,7 +202,7 @@ export default function App() {
       hits,
       misses,
       bestStreak,
-      difficultyId,
+      modeId,
       progressionMode,
       allowsRankProgression,
     })
@@ -162,7 +213,7 @@ export default function App() {
       misses,
       bestStreak,
       coinsEarned: earnedCoins,
-      difficultyId,
+      modeId,
       progressionMode,
       xpEarned: earnedXp,
       rankDelta,
@@ -185,9 +236,9 @@ export default function App() {
     )
   }
 
-  function handleDifficultyChange(nextDifficultyId) {
-    if (!isValidDifficultyId(nextDifficultyId)) return
-    setSelectedDifficultyId(nextDifficultyId)
+  function handleModeChange(nextModeId) {
+    if (!isValidModeId(nextModeId)) return
+    setSelectedModeId(nextModeId)
   }
 
   function handlePurchase(item) {
@@ -215,6 +266,11 @@ export default function App() {
       return true
     }
 
+    if (item.type === "profile_image") {
+      setEquippedProfileImageId(item.id)
+      return true
+    }
+
     return false
   }
 
@@ -224,7 +280,6 @@ export default function App() {
         element={
           <Layout
             isAuthed={isAuthed}
-            onLogout={handleLogout}
             coins={coins}
             level={levelProgress.level}
             rankLabel={rankProgress.tierLabel}
@@ -245,7 +300,7 @@ export default function App() {
             isAuthed ? (
               <Navigate to="/game" replace />
             ) : (
-              <SignupPage onSignup={handleLogin} />
+              <SignupPage onSignup={handleSignup} />
             )
           }
         />
@@ -264,8 +319,8 @@ export default function App() {
             <ProtectedRoute isAuthed={isAuthed}>
               <GamePage
                 onRoundComplete={handleRoundComplete}
-                selectedDifficultyId={selectedDifficultyId}
-                onDifficultyChange={handleDifficultyChange}
+                selectedModeId={selectedModeId}
+                onModeChange={handleModeChange}
                 playerLevel={levelProgress.level}
                 playerXpIntoLevel={levelProgress.xpIntoLevel}
                 playerXpToNextLevel={levelProgress.xpToNextLevel}
@@ -294,6 +349,7 @@ export default function App() {
                 onEquip={handleEquip}
                 equippedButtonSkinId={equippedButtonSkinId}
                 equippedArenaThemeId={equippedArenaThemeId}
+                equippedProfileImageId={equippedProfileImageId}
               />
             </ProtectedRoute>
           }
@@ -314,6 +370,24 @@ export default function App() {
                 roundHistory={roundHistory}
                 playerRankLabel={rankProgress.tierLabel}
                 playerRankMmr={rankProgress.mmr}
+                playerCoins={coins}
+                playerLevel={levelProgress.level}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute isAuthed={isAuthed}>
+              <ProfilePage
+                onLogout={handleLogout}
+                playerName={playerUsername}
+                coins={coins}
+                levelProgress={levelProgress}
+                rankProgress={rankProgress}
+                roundHistory={roundHistory}
+                equippedProfileImage={equippedProfileImage}
               />
             </ProtectedRoute>
           }

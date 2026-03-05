@@ -8,7 +8,7 @@ export default function LoginPage({ onLogin }) {
 
   function handleSubmit(event) {
     event.preventDefault()
-    onLogin?.()
+    onLogin?.(username.trim())
     // Temporary client-side auth success until backend login/token flow is available.
     navigate("/game")
   }

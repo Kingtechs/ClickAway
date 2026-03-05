@@ -1,22 +1,18 @@
 import InfoStrip from "../components/InfoStrip.jsx"
+import PlayerHoverCard from "../components/PlayerHoverCard.jsx"
 import {
   LEADERBOARD_INSIGHTS,
   MOCK_LEADERBOARD,
 } from "../features/leaderboard/leaderboardData.js"
 import { buildPlayerLeaderboardStats } from "../utils/historyUtils.js"
-
-function isCompetitiveHistoryEntry(entry = {}) {
-  if (!entry || typeof entry !== "object") return false
-  if (entry.progressionMode === "competitive") return true
-  return entry.difficultyId === "hard"
-}
+import { isCompetitiveModeEntry } from "../utils/modeUtils.js"
 
 function getCompetitiveHistory(roundHistory) {
   if (!Array.isArray(roundHistory)) return []
-  return roundHistory.filter(isCompetitiveHistoryEntry)
+  return roundHistory.filter(isCompetitiveModeEntry)
 }
 
-function getLeaderboardRows(roundHistory, playerRankLabel, playerRankMmr) {
+function getLeaderboardRows(roundHistory, playerRankLabel, playerRankMmr, playerCoins, playerLevel) {
   const competitiveHistory = getCompetitiveHistory(roundHistory)
   const playerStats = buildPlayerLeaderboardStats(competitiveHistory)
   const mergedRows = [
@@ -27,6 +23,8 @@ function getLeaderboardRows(roundHistory, playerRankLabel, playerRankMmr) {
       accuracy: playerStats.accuracy,
       rankLabel: playerRankLabel,
       mmr: playerRankMmr,
+      coins: playerCoins,
+      level: playerLevel,
     },
     ...MOCK_LEADERBOARD,
   ]
@@ -38,22 +36,30 @@ function getLeaderboardRows(roundHistory, playerRankLabel, playerRankMmr) {
 
 export default function LeaderboardPage({
   roundHistory = [],
-  playerRankLabel = "Bronze",
-  playerRankMmr = 1000,
+  playerRankLabel = "Unranked",
+  playerRankMmr = 0,
+  playerCoins = 0,
+  playerLevel = 1,
 }) {
-  const leaderboardRows = getLeaderboardRows(roundHistory, playerRankLabel, playerRankMmr)
+  const leaderboardRows = getLeaderboardRows(
+    roundHistory,
+    playerRankLabel,
+    playerRankMmr,
+    playerCoins,
+    playerLevel,
+  )
 
   return (
     <div className="pageCenter">
       <section className="card">
         <h1 className="cardTitle">Leaderboard</h1>
         <p className="muted">
-          Competitve leaderboard. Only Competitve mode rounds affect rank/MMR placement.
+          Ranked leaderboard. Only Ranked mode rounds affect rank/MMR placement.
         </p>
 
         <InfoStrip points={LEADERBOARD_INSIGHTS} />
 
-        <table className="table helpTable">
+        <table className="table helpTable leaderboardTable">
           <thead>
             <tr>
               <th>Rank</th>
@@ -67,9 +73,21 @@ export default function LeaderboardPage({
           </thead>
           <tbody>
             {leaderboardRows.map((player, index) => (
-              <tr key={player.username}>
+              <tr key={player.username} className="leaderboardTableRow">
                 <td>{index + 1}</td>
-                <td>{player.username}</td>
+                <td>
+                  <div className="leaderboardEntryHoverWrap">
+                    <span>{player.username}</span>
+                    <div className="leaderboardEntryHoverCard">
+                      <PlayerHoverCard
+                        rankLabel={player.rankLabel}
+                        rankMmr={player.mmr}
+                        coins={player.coins}
+                        level={player.level}
+                      />
+                    </div>
+                  </div>
+                </td>
                 <td>{player.rankLabel}</td>
                 <td>{player.mmr}</td>
                 <td>{player.bestScore}</td>

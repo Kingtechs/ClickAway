@@ -1,16 +1,6 @@
 import InfoStrip from "../components/InfoStrip.jsx"
 import { HISTORY_INSIGHTS, MOCK_HISTORY } from "../features/history/historyData.js"
-
-function formatModeLabel(round = {}) {
-  const progressionMode = round.progressionMode ?? ""
-  if (progressionMode === "practice") return "Practice"
-  if (progressionMode === "competitive") return "Competitve"
-  if (progressionMode === "non_competitive") return "Casual"
-  if (round.difficultyId === "easy") return "Practice"
-  if (round.difficultyId === "hard") return "Competitve"
-  if (round.difficultyId === "normal") return "Casual"
-  return "Unknown"
-}
+import { getModeLabelFromHistoryEntry } from "../utils/modeUtils.js"
 
 function formatRankDelta(rankDelta = 0) {
   const normalizedDelta = Number.isFinite(rankDelta) ? rankDelta : 0
@@ -22,6 +12,7 @@ function getHistoryRows(roundHistory) {
     return roundHistory
   }
 
+  // Keep the page useful for first-time users before they have real matches logged.
   return MOCK_HISTORY
 }
 
@@ -56,7 +47,7 @@ export default function HistoryPage({ roundHistory = [] }) {
             {historyRows.map((round) => (
               <tr key={round.id}>
                 <td>{round.playedAt}</td>
-                <td>{formatModeLabel(round)}</td>
+                <td>{getModeLabelFromHistoryEntry(round)}</td>
                 <td>{round.score}</td>
                 <td>{round.hits}</td>
                 <td>{round.misses}</td>

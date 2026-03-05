@@ -1,41 +1,65 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
+import { getModeLabelFromModeConfig } from "../../../utils/modeUtils.js"
+import { getRankTierFromMmr } from "../../../utils/rankUtils.js"
 
-function formatDifficultyLabel(difficulty) {
-  if (difficulty.id === "normal") return "Casual"
-  if (difficulty.id === "hard") return "Competitve"
-  return difficulty.label
-}
+const MODE_ORDER = ["Practice", "Casual", "Ranked"]
+const MODE_COPY = [
+  {
+    name: "Practice",
+    description: "Train mechanics. No rewards.",
+    badge: "Training",
+    glyph: "P",
+  },
+  {
+    name: "Casual",
+    description: "Earn XP + coins. No rank.",
+    badge: "Standard",
+    glyph: "C",
+  },
+  {
+    name: "Ranked",
+    description: "Earn XP + coins + rank. Harder penalties.",
+    badge: "Ranked",
+    glyph: "R",
+  },
+]
+const MODE_COPY_BY_NAME = MODE_COPY.reduce((accumulator, mode) => {
+  accumulator[mode.name] = mode
+  return accumulator
+}, {})
 
 function getShrinkPaceLabel(shrinkFactor) {
   if (shrinkFactor >= 0.98) return "Relaxed"
-  if (shrinkFactor >= 0.965) return "Balanced"
   return "Aggressive"
 }
 
-function getCoinBonusText(coinMultiplier) {
-  const bonusPercent = Math.round((coinMultiplier - 1) * 100)
-  if (bonusPercent <= 0) return "Coins: base"
-  return `Coins: +${bonusPercent}%`
+function getModeFooterText(mode) {
+  if (!mode) return ""
+  const bonusPercent = Math.round((mode.coinMultiplier - 1) * 100)
+  const coinBonusText = bonusPercent > 0 ? `Coin bonus +${bonusPercent}%` : "Coin bonus none"
+  return `Combo every ${mode.comboStep} hits, ${coinBonusText}`
 }
 
-function getRoundFeedbackMessage({ hits, misses, accuracy, bestStreak }) {
-  if (hits === 0) {
-    return "No hits landed this round. Focus on tracking the target first."
+function toModeSlide(mode) {
+  if (!mode) return null
+  const name = getModeLabelFromModeConfig(mode)
+  const copy = MODE_COPY_BY_NAME[name]
+  const round = mode.isTimedRound === false ? "No limit" : `${mode.durationSeconds}s`
+  const miss = mode.missPenalty > 0 ? `-${mode.missPenalty}` : "None"
+
+  return {
+    id: mode.id,
+    name,
+    tone: name.toLowerCase(),
+    badge: copy?.badge ?? "Mode",
+    glyph: copy?.glyph ?? name.charAt(0),
+    description: copy?.description ?? mode.playerHint,
+    round,
+    miss,
+    shrink: getShrinkPaceLabel(mode.shrinkFactor),
+    footer: getModeFooterText(mode),
   }
-
-  const accuracyValue = Number.parseInt(String(accuracy).replace("%", ""), 10)
-  const normalizedAccuracy = Number.isFinite(accuracyValue) ? accuracyValue : 0
-
-  if (normalizedAccuracy >= 85 && bestStreak >= 8) {
-    return "Strong run. Keep that rhythm and push for a longer streak."
-  }
-
-  if (misses > hits) {
-    return "Misses outweighed hits. Slow down slightly and prioritize clean clicks."
-  }
-
-  return "Solid round. Cut a few misses and your score will climb quickly."
 }
 
 function getGameOverTone({ hits, misses, accuracy, bestStreak }) {
@@ -47,168 +71,260 @@ function getGameOverTone({ hits, misses, accuracy, bestStreak }) {
   return "recovery"
 }
 
-function DifficultyOptionCard({
-  difficulty,
-  isSelected,
-  onSelectDifficulty,
-  canChangeDifficulty,
-  compact,
-}) {
-  const displayLabel = formatDifficultyLabel(difficulty)
-  const missPenaltyValue = difficulty.missPenalty > 0 ? `-${difficulty.missPenalty}` : "None"
-  const roundLengthValue = difficulty.isTimedRound === false
-    ? "No limit"
-    : `${difficulty.durationSeconds}s`
-  const coinBonusText = difficulty.allowsCoinRewards === false
-    ? "Coins: off"
-    : getCoinBonusText(difficulty.coinMultiplier)
+function ModePreviewContent({ mode, animationClass = "" }) {
+  if (!mode) return null
 
   return (
-    <button
-      type="button"
-      className={`difficultyOption ${isSelected ? "selected" : ""}`}
-      aria-pressed={isSelected}
-      onClick={() => onSelectDifficulty?.(difficulty.id)}
-      disabled={!canChangeDifficulty}
-    >
-      <span className="difficultyTop">
-        <span className="difficultyName">{displayLabel}</span>
-      </span>
-      <span className="difficultyDescriptionLine">{difficulty.description}</span>
-
-      <span className="difficultyQuickStats">
-        <span className="difficultyQuickStat">
-          <strong>{roundLengthValue}</strong>
-          <small>Round</small>
-        </span>
-        <span className="difficultyQuickStat">
-          <strong>{missPenaltyValue}</strong>
-          <small>Miss</small>
-        </span>
-        <span className="difficultyQuickStat">
-          <strong>{getShrinkPaceLabel(difficulty.shrinkFactor)}</strong>
-          <small>Shrink</small>
-        </span>
-      </span>
-
-      <span className="difficultySecondaryInfo">
-        <span>Combo: every {difficulty.comboStep} hits</span>
-        <span>{coinBonusText}</span>
-      </span>
-
-      {!compact ? (
-        <span className="difficultyDescription">{difficulty.playerHint}</span>
-      ) : null}
-    </button>
+    <article className={`modeCard modeCard-${mode.tone} ${animationClass}`}>
+      <header className="modeCardHeader">
+        <div className="modeCardTitleGroup">
+          <span className="modeCardGlyph" aria-hidden="true">{mode.glyph}</span>
+          <h3 className="modeCardTitle">{mode.name}</h3>
+        </div>
+        <span className="modeCardBadge">{mode.badge}</span>
+      </header>
+      <p className="modeCardDescription">{mode.description}</p>
+      <div className="modeCardStats">
+        <div className="modeCardStat">
+          <span className="modeCardStatLabel">Round</span>
+          <strong className="modeCardStatValue">{mode.round}</strong>
+        </div>
+        <div className="modeCardStat">
+          <span className="modeCardStatLabel">Miss</span>
+          <strong className="modeCardStatValue">{mode.miss}</strong>
+        </div>
+        <div className="modeCardStat">
+          <span className="modeCardStatLabel">Shrink</span>
+          <strong className="modeCardStatValue">{mode.shrink}</strong>
+        </div>
+      </div>
+      {mode.footer ? <p className="modeCardFooter">{mode.footer}</p> : null}
+    </article>
   )
 }
 
-function DifficultyPicker({
-  difficulties = [],
-  selectedDifficultyId,
-  onSelectDifficulty,
-  canChangeDifficulty,
-  compact = false,
-}) {
-  return (
-    <div
-      className={`difficultyPicker ${compact ? "compact" : ""}`}
-      role="radiogroup"
-      aria-label="Mode"
-    >
-      {difficulties.map((difficulty) => (
-        <DifficultyOptionCard
-          key={difficulty.id}
-          difficulty={difficulty}
-          isSelected={difficulty.id === selectedDifficultyId}
-          onSelectDifficulty={onSelectDifficulty}
-          canChangeDifficulty={canChangeDifficulty}
-          compact={compact}
-        />
-      ))}
-    </div>
-  )
+function formatSignedValue(value = 0) {
+  const normalized = Number(value) || 0
+  return `${normalized > 0 ? "+" : ""}${normalized}`
 }
 
-function getReadyDifficultySummary(selectedDifficulty) {
-  if (!selectedDifficulty) {
-    return {
-      label: "Unknown",
-      round: "Mode details unavailable",
-      coinBonus: "Coins: base",
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => (
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ))
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
+
+    function handleChange(event) {
+      setPrefersReducedMotion(event.matches)
     }
-  }
 
-  return {
-    label: formatDifficultyLabel(selectedDifficulty),
-    round: selectedDifficulty.isTimedRound === false
-      ? "No time limit"
-      : `${selectedDifficulty.durationSeconds}s round`,
-    coinBonus: selectedDifficulty.allowsCoinRewards === false
-      ? "Coins disabled"
-      : getCoinBonusText(selectedDifficulty.coinMultiplier),
-  }
+    mediaQuery.addEventListener("change", handleChange)
+    return () => mediaQuery.removeEventListener("change", handleChange)
+  }, [])
+
+  return prefersReducedMotion
 }
 
-function buildGameOverStats({
-  hits,
-  misses,
-  accuracy,
-  bestStreak,
-  powerupsUsed,
-  playerLevel,
-  roundXpEarned,
-  playerXpToNextLevel,
+function easeOutCubic(progress) {
+  return 1 - ((1 - progress) ** 3)
+}
+
+function useCountUpNumber(targetValue, { durationMs, delayMs = 0, disabled = false }) {
+  const [displayValue, setDisplayValue] = useState(targetValue)
+
+  useEffect(() => {
+    if (disabled) {
+      return undefined
+    }
+
+    const absoluteTarget = Math.abs(targetValue)
+    let animationFrameId = 0
+    let timeoutId = 0
+    const direction = targetValue >= 0 ? 1 : -1
+
+    // We use RAF so animation pace stays smooth across different refresh rates.
+    function startAnimation() {
+      setDisplayValue(0)
+      const startTimestamp = performance.now()
+
+      function animateFrame(now) {
+        const elapsed = now - startTimestamp
+        const progress = Math.min(1, elapsed / durationMs)
+        const easedProgress = easeOutCubic(progress)
+        const nextValue = Math.round(absoluteTarget * easedProgress) * direction
+        setDisplayValue(nextValue)
+
+        if (progress < 1) {
+          animationFrameId = window.requestAnimationFrame(animateFrame)
+        } else {
+          setDisplayValue(targetValue)
+        }
+      }
+
+      animationFrameId = window.requestAnimationFrame(animateFrame)
+    }
+
+    timeoutId = window.setTimeout(startAnimation, delayMs)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+      window.cancelAnimationFrame(animationFrameId)
+    }
+  }, [delayMs, disabled, durationMs, targetValue])
+
+  return displayValue
+}
+
+function getModeRewardsSummary({
+  allowsCoinRewards,
   allowsLevelProgression,
-  playerRankLabel,
-  playerRankMmr,
-  roundRankDelta,
   allowsRankProgression,
 }) {
-  const xpEarnedDisplay = allowsLevelProgression ? `+${roundXpEarned}` : "Off"
-  const nextLevelDisplay = allowsLevelProgression ? `${playerXpToNextLevel} XP` : "Off"
-  const rankDeltaDisplay = allowsRankProgression
-    ? `${roundRankDelta > 0 ? "+" : ""}${roundRankDelta}`
-    : "Off"
+  if (!allowsCoinRewards && !allowsLevelProgression && !allowsRankProgression) {
+    return "Rewards: None (aim practice)"
+  }
 
-  return [
-    { label: "Hits", value: hits },
-    { label: "Misses", value: misses },
-    { label: "Accuracy", value: accuracy },
-    { label: "Best Streak", value: bestStreak },
-    { label: "Power-ups Used", value: powerupsUsed },
-    { label: "Level", value: playerLevel },
-    { label: "XP Earned", value: xpEarnedDisplay },
-    { label: "Next Level", value: nextLevelDisplay },
-    { label: "Rank", value: allowsRankProgression ? playerRankLabel : "Unranked" },
-    { label: "MMR", value: allowsRankProgression ? playerRankMmr : "Off" },
-    { label: "Rank Delta", value: rankDeltaDisplay },
-  ]
+  if (allowsRankProgression) {
+    return "Rewards: XP, Coins, Rank"
+  }
+
+  return "Rewards: XP, Coins"
+}
+
+function GameOverSection({ title, rows = [], panelType = "neutral" }) {
+  if (!rows.length) return null
+
+  return (
+    <section className={`gameOverSection panel-${panelType}`} aria-label={title}>
+      <h3 className="gameOverSectionTitle">{title}</h3>
+      <div className="gameOverList">
+        {rows.map((row) => (
+          <article
+            key={row.label}
+            className={`gameOverListRow ${row.group ? `group-${row.group}` : ""}`}
+          >
+            <span className="gameOverListLabel">{row.label}</span>
+            <strong className={`gameOverListValue ${row.highlight ? "isReward" : ""}`}>
+              {row.value}
+            </strong>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 export function ReadyOverlay({
   onStart,
-  difficulties = [],
-  selectedDifficultyId,
-  onSelectDifficulty,
-  canChangeDifficulty = true,
+  modes = [],
+  selectedModeId,
+  onSelectMode,
+  canChangeMode = true,
+  onClose,
 }) {
-  const [isChoosingDifficulty, setIsChoosingDifficulty] = useState(false)
-  const selectedDifficulty = useMemo(
-    () => difficulties.find((difficulty) => difficulty.id === selectedDifficultyId) ?? null,
-    [difficulties, selectedDifficultyId]
-  )
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const modeSlides = useMemo(() => {
+    const orderedModes = MODE_ORDER.map((modeName) =>
+      modes.find((mode) => getModeLabelFromModeConfig(mode) === modeName)
+    ).filter(Boolean)
+    return orderedModes.map((mode) => toModeSlide(mode)).filter(Boolean)
+  }, [modes])
+  const modeCount = modeSlides.length
+  const [selectedIndex, setSelectedIndex] = useState(() => {
+    const initialIndex = modeSlides.findIndex((mode) => mode.id === selectedModeId)
+    return initialIndex >= 0 ? initialIndex : 0
+  })
+  const [transitionDirection, setTransitionDirection] = useState("right")
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [animationClass, setAnimationClass] = useState("")
+  const overlayCardRef = useRef(null)
+  const animationTimeoutRef = useRef(null)
 
-  function handleOpenDifficultyPicker() {
-    if (!canChangeDifficulty) return
-    setIsChoosingDifficulty(true)
+  const activeIndex = modeCount ? Math.min(selectedIndex, modeCount - 1) : 0
+  const selectedMode = modeSlides[activeIndex] ?? null
+
+  useEffect(() => {
+    overlayCardRef.current?.focus()
+
+    return () => {
+      if (animationTimeoutRef.current) {
+        window.clearTimeout(animationTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  function startTransition(direction) {
+    if (prefersReducedMotion) return
+
+    if (animationTimeoutRef.current) {
+      window.clearTimeout(animationTimeoutRef.current)
+    }
+
+    setTransitionDirection(direction)
+    setAnimationClass(`slide-in-${direction}`)
+    setIsAnimating(true)
+
+    animationTimeoutRef.current = window.setTimeout(() => {
+      setIsAnimating(false)
+      setAnimationClass("")
+    }, 230)
   }
 
-  function handleBackToReady() {
-    setIsChoosingDifficulty(false)
+  function selectModeByIndex(index, direction) {
+    if (!canChangeMode || !modeCount || isAnimating) return
+
+    const wrappedIndex = ((index % modeCount) + modeCount) % modeCount
+    if (wrappedIndex === activeIndex) return
+
+    const nextMode = modeSlides[wrappedIndex]
+    if (!nextMode) return
+
+    setSelectedIndex(wrappedIndex)
+    onSelectMode?.(nextMode.id)
+    startTransition(direction)
   }
 
-  const readyDifficultySummary = getReadyDifficultySummary(selectedDifficulty)
+  function goPrev() {
+    selectModeByIndex((activeIndex - 1 + modeCount) % modeCount, "left")
+  }
+
+  function goNext() {
+    selectModeByIndex((activeIndex + 1) % modeCount, "right")
+  }
+
+  function handleStartSelectedMode() {
+    if (!selectedMode || isAnimating) return
+    onStart?.()
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault()
+      goPrev()
+      return
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault()
+      goNext()
+      return
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault()
+      handleStartSelectedMode()
+      return
+    }
+
+    if (event.key === "Escape") {
+      onClose?.()
+    }
+  }
+
+  const startButtonLabel = selectedMode ? `Start ${selectedMode.name}` : "Start Round"
+  const currentModePosition = modeCount ? activeIndex + 1 : 0
 
   return (
     <div
@@ -218,70 +334,72 @@ export function ReadyOverlay({
       aria-labelledby="round-ready-title"
     >
       <section
-        className={`gameOverCard readyCard readyCardStack difficultyMood-${selectedDifficultyId}`}
+        className="gameOverCard readyCard readyCardStack readyCardChoosing"
+        ref={overlayCardRef}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
       >
-        {!isChoosingDifficulty ? (
-          <>
-            <h2 id="round-ready-title" className="readyTitle">
-              Round Ready
-            </h2>
-            <p className="readyLead">
-              Jump in quickly or tune your mode before the next run.
-            </p>
-
-            <section className="readyCurrentDifficulty" aria-label="Selected mode">
-              <span className="readyCurrentDifficultyLabel">Selected Mode</span>
-              <strong className="readyCurrentDifficultyName">{readyDifficultySummary.label}</strong>
-              <div className="readyCurrentDifficultyMeta">
-                <span>{readyDifficultySummary.round}</span>
-                <span>{readyDifficultySummary.coinBonus}</span>
-              </div>
-            </section>
-
-            <div className="overlayActions readyActions">
-              <button className="primaryButton" onClick={onStart}>
-                Start Round
-              </button>
-              <button
-                className="secondaryButton"
-                type="button"
-                onClick={handleOpenDifficultyPicker}
-                disabled={!canChangeDifficulty}
-              >
-                Change Mode
-              </button>
-              <Link className="secondaryButton" to="/help">
-                How To Play
-              </Link>
-            </div>
-          </>
-        ) : (
-          <>
-            <h2 id="round-ready-title" className="readyTitle">
-              Choose Mode
-            </h2>
-            <p className="readyLead">
-              Mode affects timer length, miss penalties, combo growth pace, and coin reward.
-            </p>
-
-            <DifficultyPicker
-              difficulties={difficulties}
-              selectedDifficultyId={selectedDifficultyId}
-              onSelectDifficulty={onSelectDifficulty}
-              canChangeDifficulty={canChangeDifficulty}
-              compact
+        <h2 id="round-ready-title" className="readyTitle">
+          Choose Mode
+        </h2>
+        <p className="readyLead">
+          Use left and right to cycle modes, then press Enter to start.
+        </p>
+        <div className="modeProgressDots" aria-label={`Mode ${currentModePosition} of ${modeCount}`}>
+          {modeSlides.map((mode, index) => (
+            <span
+              key={`mode-dot-${mode.id}`}
+              className={`modeProgressDot ${index === activeIndex ? "active" : ""}`}
+              aria-hidden="true"
             />
+          ))}
+        </div>
 
-            <div className="overlayActions readyActions">
-              <button className="primaryButton" onClick={onStart}>
-                Start Round
-              </button>
-              <button className="secondaryButton" type="button" onClick={handleBackToReady}>
-                Back
-              </button>
+        <div className="modeCarousel" aria-label="Mode navigation controls">
+          <button
+            className="modeArrowButton"
+            type="button"
+            onClick={goPrev}
+            disabled={!canChangeMode || !modeCount || isAnimating}
+            aria-label="Select previous mode"
+          >
+            <span aria-hidden="true">&#8249;</span>
+          </button>
+
+          <div className="modeDeckViewport" role="listbox" aria-label="Mode carousel">
+            <p className="modeSelectionLive" aria-live="polite">
+              Selected mode: {selectedMode?.name ?? "Unknown"}
+            </p>
+            <div className="modeDeckCard" role="option" aria-selected="true">
+              <ModePreviewContent
+                mode={selectedMode}
+                animationClass={prefersReducedMotion ? "" : animationClass}
+                key={`${selectedMode?.id ?? "unknown"}-${transitionDirection}`}
+              />
             </div>
-          </>
-        )}
+          </div>
+
+          <button
+            className="modeArrowButton"
+            type="button"
+            onClick={goNext}
+            disabled={!canChangeMode || !modeCount || isAnimating}
+            aria-label="Select next mode"
+          >
+            <span aria-hidden="true">&#8250;</span>
+          </button>
+        </div>
+
+        <div className="overlayActions readyActions">
+          <div className="readyPrimaryActionGroup">
+            <button className="primaryButton" onClick={handleStartSelectedMode} disabled={!selectedMode || isAnimating}>
+              {startButtonLabel}
+            </button>
+            <Link className="secondaryButton readyHelpLink" to="/help">
+              How To Play
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   )
@@ -300,47 +418,102 @@ export function CountdownOverlay({ countdownValue }) {
 
 export function GameOverOverlay({
   score,
+  bestScore = null,
   hits,
   misses,
   bestStreak,
-  powerupsUsed,
   accuracy,
-  difficultyLabel,
-  playerLevel = 1,
+  modeLabel,
   playerXpIntoLevel = 0,
   playerXpToNextLevel = 0,
   roundXpEarned = 0,
+  roundCoinsEarned = 0,
+  allowsCoinRewards = false,
   allowsLevelProgression = false,
-  playerRankLabel = "Bronze",
   playerRankMmr = 0,
   roundRankDelta = 0,
   allowsRankProgression = false,
-  selectedDifficultyId,
+  selectedModeId,
   onPlayAgain,
+  onChooseMode,
 }) {
-  const feedbackMessage = getRoundFeedbackMessage({
-    hits,
-    misses,
-    accuracy,
-    bestStreak,
-  })
-  const stats = buildGameOverStats({
-    hits,
-    misses,
-    accuracy,
-    bestStreak,
-    powerupsUsed,
-    playerLevel,
-    roundXpEarned,
-    playerXpToNextLevel,
+  const rewardsSummaryText = getModeRewardsSummary({
+    allowsCoinRewards,
     allowsLevelProgression,
-    playerRankLabel,
-    playerRankMmr,
-    roundRankDelta,
     allowsRankProgression,
   })
+  const isPracticeMode = !allowsCoinRewards && !allowsLevelProgression && !allowsRankProgression
+  const hasPriorBestScore = Number.isFinite(bestScore)
+  const isNewBestScore = hasPriorBestScore && score > bestScore
+  const hasCleanRun = misses === 0
+  const scoreBadgeText = isNewBestScore ? "New Best" : hasCleanRun ? "Clean Run" : ""
+  const projectedMmr = Math.max(0, playerRankMmr + roundRankDelta)
+  const projectedRankLabel = getRankTierFromMmr(projectedMmr).label
+  const levelXpCap = playerXpIntoLevel + playerXpToNextLevel
+  const levelXpAfterRound = Math.min(levelXpCap, playerXpIntoLevel + roundXpEarned)
+
+  const performanceRows = [
+    { label: "Hits", value: hits },
+    { label: "Misses", value: misses },
+    { label: "Accuracy", value: accuracy },
+    { label: "Best Streak", value: bestStreak },
+  ]
+
+  const rewardRows = []
+  if (allowsLevelProgression) {
+    rewardRows.push({
+      label: "Level Progress",
+      value: `${levelXpAfterRound}/${levelXpCap} XP`,
+      group: "status",
+    })
+  }
+  if (allowsRankProgression) {
+    rewardRows.push({ label: "MMR After Match", value: `${projectedMmr}`, group: "status" })
+    rewardRows.push({ label: "New Rank", value: projectedRankLabel, group: "status" })
+  }
   const tone = getGameOverTone({ hits, misses, accuracy, bestStreak })
-  const formattedScore = Number(score).toLocaleString()
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const animatedScore = useCountUpNumber(score, {
+    durationMs: 700,
+    disabled: prefersReducedMotion,
+  })
+  const animatedXp = useCountUpNumber(roundXpEarned, {
+    durationMs: 500,
+    delayMs: 70,
+    disabled: prefersReducedMotion,
+  })
+  const animatedCoins = useCountUpNumber(roundCoinsEarned, {
+    durationMs: 500,
+    delayMs: 130,
+    disabled: prefersReducedMotion,
+  })
+  const animatedRankDelta = useCountUpNumber(roundRankDelta, {
+    durationMs: 500,
+    delayMs: 190,
+    disabled: prefersReducedMotion,
+  })
+  const isScoreAnimationDone = prefersReducedMotion || animatedScore === score
+  const formattedScore = Number(animatedScore).toLocaleString()
+
+  const summaryRewardRows = []
+  if (allowsLevelProgression) {
+    summaryRewardRows.push({
+      label: "XP Earned",
+      value: `+${animatedXp}`,
+    })
+  }
+  if (allowsCoinRewards) {
+    summaryRewardRows.push({
+      label: "Coins Earned",
+      value: `+${animatedCoins}`,
+    })
+  }
+  if (allowsRankProgression) {
+    summaryRewardRows.push({
+      label: "Rank Delta",
+      value: formatSignedValue(animatedRankDelta),
+    })
+  }
 
   return (
     <div
@@ -350,46 +523,69 @@ export function GameOverOverlay({
       aria-labelledby="game-over-title"
     >
       <section
-        className={`gameOverCard gameOverCardWithDifficulty difficultyMood-${selectedDifficultyId} gameOverTone-${tone}`}
+        className={`gameOverCard gameOverCardWithDifficulty difficultyMood-${selectedModeId} gameOverTone-${tone}`}
       >
         <header className="gameOverHeader">
-          <p className="gameOverEyebrow">Round Complete</p>
           <h2 id="game-over-title" className="gameOverTitle">
-            Game Over
+            Round Complete
           </h2>
         </header>
 
-        <section className="gameOverScorePanel" aria-label="Final score summary">
+        <section
+          className={`gameOverScorePanel ${isScoreAnimationDone ? "isComplete" : ""}`}
+          aria-label="Final score summary"
+        >
           <p className="gameOverScoreLabel">Final Score</p>
           <p className="gameOverScoreValue">{formattedScore}</p>
-          <p className="gameOverDifficultyBadge">{difficultyLabel}</p>
-          <p className="gameOverLevelMeta">
-            Level {playerLevel} · XP {playerXpIntoLevel}/{playerXpIntoLevel + playerXpToNextLevel}
-          </p>
-          {allowsRankProgression ? (
-            <p className="gameOverRankMeta">
-              Rank {playerRankLabel} · {playerRankMmr} MMR
+          {scoreBadgeText ? (
+            <p className="gameOverScoreBadge" aria-label="Score highlight">
+              {scoreBadgeText}
             </p>
           ) : null}
+          <p className="gameOverDifficultyBadge">{modeLabel}</p>
+          {summaryRewardRows.length ? (
+            <div className="gameOverSummaryRewards" aria-label={rewardsSummaryText}>
+              {summaryRewardRows.map((row) => (
+                <p key={row.label} className="gameOverSummaryRewardRow">
+                  <span className="gameOverSummaryRewardLabel">{row.label}</span>
+                  <strong className="gameOverSummaryRewardValue">{row.value}</strong>
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="gameOverRewardsLine">{rewardsSummaryText}</p>
+          )}
         </section>
 
-        <p className="gameOverFeedback">{feedbackMessage}</p>
-
-        <section className="gameOverStatGrid" aria-label="Round summary">
-          {stats.map((stat) => (
-            <article className="gameOverStatCard" key={stat.label}>
-              <p className="gameOverStatLabel">{stat.label}</p>
-              <p className="gameOverStatValue">{stat.value}</p>
-            </article>
-          ))}
-        </section>
+        <div className="gameOverBody">
+          <div className="gameOverSections" aria-label="Round summary">
+            <GameOverSection title="Performance" rows={performanceRows} panelType="performance" />
+            <GameOverSection title="Rewards" rows={rewardRows} panelType="rewards" />
+          </div>
+          {isPracticeMode ? (
+            <p className="gameOverPracticeNote">Rewards are not earned in Practice mode.</p>
+          ) : null}
+        </div>
 
         <div className="overlayActions gameOverActions">
           <button className="primaryButton" onClick={onPlayAgain}>
             Play Again
           </button>
+          {isPracticeMode ? (
+            <button className="secondaryButton" type="button" onClick={onChooseMode}>
+              Back to Modes
+            </button>
+          ) : (
+            <Link className="secondaryButton" to="/history">
+              View History
+            </Link>
+          )}
         </div>
       </section>
     </div>
   )
 }
+
+
+
+

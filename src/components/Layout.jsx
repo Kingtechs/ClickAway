@@ -5,7 +5,13 @@ import { useBodyClass } from "../hooks/useBodyClass.js"
 const GAME_ROUTE_PREFIX = "/game"
 const GAME_ROUTE_BODY_CLASS = "gameRouteActive"
 
-export default function Layout({ isAuthed, onLogout, coins, level, rankLabel, rankMmr }) {
+export default function Layout({
+  isAuthed,
+  coins,
+  level,
+  rankLabel,
+  rankMmr,
+}) {
   const location = useLocation()
   const isGameRoute = location.pathname.startsWith(GAME_ROUTE_PREFIX)
   useBodyClass(GAME_ROUTE_BODY_CLASS, isGameRoute)
@@ -15,7 +21,6 @@ export default function Layout({ isAuthed, onLogout, coins, level, rankLabel, ra
       {/* Navbar visibility/links are driven by auth state from App-level routing. */}
       <Navbar
         isAuthed={isAuthed}
-        onLogout={onLogout}
         coins={coins}
         level={level}
         rankLabel={rankLabel}

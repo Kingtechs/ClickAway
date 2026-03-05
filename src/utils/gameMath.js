@@ -45,12 +45,12 @@ export function getRandomPosition(arenaRect, itemSize) {
 /**
  * Calculates the next button size after a successful hit.
  * @param {number} currentSize
- * @param {Object} difficultySettings
+ * @param {Object} modeSettings
  * @returns {number}
  */
-export function getNextButtonSize(currentSize, difficultySettings = {}) {
-  const minButtonSize = difficultySettings.minButtonSize ?? MIN_BUTTON_SIZE
-  const shrinkFactor = difficultySettings.shrinkFactor ?? BUTTON_SHRINK_FACTOR
+export function getNextButtonSize(currentSize, modeSettings = {}) {
+  const minButtonSize = modeSettings.minButtonSize ?? MIN_BUTTON_SIZE
+  const shrinkFactor = modeSettings.shrinkFactor ?? BUTTON_SHRINK_FACTOR
   return Math.max(minButtonSize, Math.floor(currentSize * shrinkFactor))
 }
 

@@ -24,7 +24,7 @@ function formatCoins(value) {
   return Number.isFinite(value) ? value.toLocaleString() : "0"
 }
 
-function getFooterText({ item, isOwned, isEquipped, canAfford, coins }) {
+function getFooterText({ item, isOwned, isEquipped, canAfford }) {
   if (isEquipped) return ""
   if (isOwned) return ""
   if (!canAfford) return ""
@@ -56,6 +56,7 @@ export default function ShopItemCard({
   onEquip,
   equippedButtonSkinId,
   equippedArenaThemeId,
+  equippedProfileImageId,
 }) {
   const { isOwned, canAfford, isEquipped } = getShopItemStatus({
     item,
@@ -63,6 +64,7 @@ export default function ShopItemCard({
     ownedItemIds,
     equippedButtonSkinId,
     equippedArenaThemeId,
+    equippedProfileImageId,
   })
 
   const { label: actionLabel, isDisabled: isActionDisabled } = getActionState({
@@ -85,7 +87,7 @@ export default function ShopItemCard({
   const previewClassName = `shopPreview ${hasImage ? "" : item.effectClass} ${hasImage ? "hasImage" : ""}`
   const cardClassName = `shopItemCard shopItemCard-${visualState}`
   const actionButtonClassName = `primaryButton shopActionButton ${isOwned ? "isEquip" : "isBuy"}`
-  const footerText = getFooterText({ item, isOwned, isEquipped, canAfford, coins })
+  const footerText = getFooterText({ item, isOwned, isEquipped, canAfford })
   const actionLabelDisplay = getActionLabel({
     item,
     isOwned,

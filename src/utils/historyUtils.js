@@ -51,6 +51,7 @@ export function formatPlayedAtLabel(playedDate) {
  * @param {number} roundSummary.misses
  * @param {number} roundSummary.bestStreak
  * @param {number} roundSummary.coinsEarned
+ * @param {string} roundSummary.modeId
  * @param {string} roundSummary.difficultyId
  * @returns {Object}
  */
@@ -60,12 +61,14 @@ export function createHistoryEntry({
   misses = 0,
   bestStreak = 0,
   coinsEarned = 0,
+  modeId = "",
   difficultyId = "",
   progressionMode = "",
   xpEarned = 0,
   rankDelta = 0,
 }) {
   const playedDate = new Date()
+  const resolvedModeId = modeId || difficultyId
 
   return {
     id: `r-${playedDate.getTime()}-${Math.random().toString(16).slice(2, 6)}`,
@@ -77,7 +80,8 @@ export function createHistoryEntry({
     bestStreak,
     accuracy: formatAccuracy(hits, misses),
     coinsEarned,
-    difficultyId,
+    modeId: resolvedModeId,
+    difficultyId: resolvedModeId,
     progressionMode,
     xpEarned,
     rankDelta,

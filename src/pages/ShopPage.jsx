@@ -11,6 +11,7 @@ export default function ShopPage({
   onEquip,
   equippedButtonSkinId = "skin_button",
   equippedArenaThemeId = "theme_default",
+  equippedProfileImageId = "profile_default",
 }) {
   const [activeCategoryId, setActiveCategoryId] = useState(ALL_TAB_ID)
   const [actionFeedback, setActionFeedback] = useState(null)
@@ -172,6 +173,7 @@ export default function ShopPage({
                   onEquip={handleEquip}
                   equippedButtonSkinId={equippedButtonSkinId}
                   equippedArenaThemeId={equippedArenaThemeId}
+                  equippedProfileImageId={equippedProfileImageId}
                 />
               ))}
             </div>

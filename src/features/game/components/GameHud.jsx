@@ -1,18 +1,9 @@
-import GameStatusRow from "./GameStatusRow.jsx"
+﻿import GameStatusRow from "./GameStatusRow.jsx"
 
 export default function GameHud({
   score,
   timeLeft,
   isTimedRound = true,
-  difficultyLabel,
-  playerLevel = 1,
-  playerXpIntoLevel = 0,
-  playerXpToNextLevel = 0,
-  playerLevelProgressPercent = 0,
-  playerRankLabel = "Bronze",
-  playerRankMmr = 0,
-  playerRankToNextTier = 0,
-  allowsRankProgression = false,
   streak,
   comboMultiplier,
   bestStreak,
@@ -36,29 +27,6 @@ export default function GameHud({
           <div className="timerText">{timerDisplay}</div>
         </div>
       </div>
-
-      <div
-        className="difficultyHudTag"
-        aria-label={`Current mode ${difficultyLabel}`}
-      >
-        Mode: {difficultyLabel}
-      </div>
-
-      <div
-        className="levelHudTag"
-        aria-label={`Current level ${playerLevel}, ${playerLevelProgressPercent}% to next level`}
-      >
-        Level {playerLevel} · XP {playerXpIntoLevel}/{playerXpIntoLevel + playerXpToNextLevel}
-      </div>
-
-      {allowsRankProgression ? (
-        <div
-          className="rankHudTag"
-          aria-label={`Current rank ${playerRankLabel}, rating ${playerRankMmr}`}
-        >
-          Rank: {playerRankLabel} · {playerRankMmr} MMR · {playerRankToNextTier} to next
-        </div>
-      ) : null}
 
       <GameStatusRow
         streak={streak}

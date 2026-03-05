@@ -31,6 +31,7 @@ export function canPurchaseShopItem(item, coins, ownedItemIds) {
  * @param {string[]} options.ownedItemIds
  * @param {string} options.equippedButtonSkinId
  * @param {string} options.equippedArenaThemeId
+ * @param {string} options.equippedProfileImageId
  * @returns {{isOwned: boolean, canAfford: boolean, isEquipped: boolean}}
  */
 export function getShopItemStatus({
@@ -39,12 +40,14 @@ export function getShopItemStatus({
   ownedItemIds,
   equippedButtonSkinId,
   equippedArenaThemeId,
+  equippedProfileImageId,
 }) {
   const isOwned = isShopItemOwned(item, ownedItemIds)
   const canAfford = coins >= item.cost
   const isEquipped =
     (item.type === "button_skin" && item.id === equippedButtonSkinId) ||
-    (item.type === "arena_theme" && item.id === equippedArenaThemeId)
+    (item.type === "arena_theme" && item.id === equippedArenaThemeId) ||
+    (item.type === "profile_image" && item.id === equippedProfileImageId)
 
   return { isOwned, canAfford, isEquipped }
 }

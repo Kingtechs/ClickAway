@@ -17,7 +17,7 @@ export default function SignupPage({ onSignup }) {
     }
 
     setError("")
-    onSignup?.()
+    onSignup?.(username.trim())
     // Temporary client-side signup success until backend registration is available.
     navigate("/game")
   }

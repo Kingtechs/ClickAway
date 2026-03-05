@@ -1,14 +1,12 @@
 import { DIFFICULTY_IDS, PROGRESSION_MODE } from "../constants/difficultyConfig.js"
 
 export const INITIAL_RANK_MMR = 1000
+export const UNRANKED_LABEL = "Unranked"
 
 const RANK_TIERS = [
   { id: "bronze", label: "Bronze", minMmr: 0 },
   { id: "silver", label: "Silver", minMmr: 1200 },
   { id: "gold", label: "Gold", minMmr: 1500 },
-  { id: "platinum", label: "Platinum", minMmr: 1850 },
-  { id: "diamond", label: "Diamond", minMmr: 2250 },
-  { id: "master", label: "Master", minMmr: 2700 },
 ]
 
 function clampNonNegative(value) {
@@ -51,7 +49,49 @@ export function getRankProgress(mmr = INITIAL_RANK_MMR) {
     tierLabel: tier.label,
     nextTierLabel: nextTier?.label ?? "Max",
     mmrToNextTier,
+    isUnranked: false,
   }
+}
+
+export function getUnrankedProgress() {
+  return {
+    mmr: 0,
+    tierId: "unranked",
+    tierLabel: UNRANKED_LABEL,
+    nextTierLabel: RANK_TIERS[0]?.label ?? "Bronze",
+    mmrToNextTier: 0,
+    isUnranked: true,
+  }
+}
+
+export function getRankProgressWithPlacement(mmr = INITIAL_RANK_MMR, hasCompetitiveHistory = false) {
+  if (!hasCompetitiveHistory) {
+    return getUnrankedProgress()
+  }
+
+  const normalizedMmr = clampNonNegative(mmr)
+  const tier = getRankTierFromMmr(normalizedMmr)
+  const currentTierIndex = RANK_TIERS.findIndex((tierItem) => tierItem.id === tier.id)
+  const nextTier = RANK_TIERS[currentTierIndex + 1] ?? null
+  const mmrToNextTier = nextTier ? Math.max(0, nextTier.minMmr - normalizedMmr) : 0
+
+  return {
+    mmr: normalizedMmr,
+    tierId: tier.id,
+    tierLabel: tier.label,
+    nextTierLabel: nextTier?.label ?? "Max",
+    mmrToNextTier,
+    isUnranked: false,
+  }
+}
+
+export function getRankImageSrc(rankLabel = "") {
+  const normalizedLabel = String(rankLabel).trim().toLowerCase()
+  if (!normalizedLabel || normalizedLabel === UNRANKED_LABEL.toLowerCase()) {
+    return ""
+  }
+
+  return `/ranks/${normalizedLabel}.png`
 }
 
 export function calculateRoundRankDelta({
@@ -59,11 +99,13 @@ export function calculateRoundRankDelta({
   hits = 0,
   misses = 0,
   bestStreak = 0,
+  modeId = "",
   difficultyId = "",
   progressionMode = "",
   allowsRankProgression = false,
 }) {
-  const isHardMode = difficultyId === DIFFICULTY_IDS.HARD
+  const resolvedModeId = modeId || difficultyId
+  const isHardMode = resolvedModeId === DIFFICULTY_IDS.HARD
   const isCompetitiveMode = progressionMode === PROGRESSION_MODE.COMPETITIVE
 
   if (!allowsRankProgression || !isHardMode || !isCompetitiveMode) {

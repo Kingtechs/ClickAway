@@ -2,7 +2,7 @@ export const GETTING_STARTED_STEPS = [
   "Log in.",
   "Open Game and check your mode.",
   "Press Start Round and wait for the 3-second countdown.",
-  "Practice has no timer. Casual/Competitve are timed.",
+  "Practice has no timer. Casual/Ranked are timed.",
   "Review results, then press Play Again.",
 ]
 
@@ -35,8 +35,8 @@ export const NAVIGATION_ROWS = [
 
 export const DIFFICULTY_ROWS = [
   ["Practice", "No limit", "0", "Off", "Coins Off", "Level Off", "Rank Off"],
-  ["Casual", "15s", "1", "1.10x", "Coins On", "Level On", "Rank Off"],
-  ["Competitve", "12s", "2", "1.25x", "Coins On", "Level On", "Rank On"],
+  ["Casual", "30s", "1", "1.00x", "Coins On", "Level On", "Rank Off"],
+  ["Ranked", "15s", "2", "1.50x", "Coins On", "Level On", "Rank On"],
 ]
 
 export const SCORING_ROWS = [
@@ -72,11 +72,11 @@ export const PERFORMANCE_TIPS = [
 ]
 
 export const PROGRESSION_POINTS = [
-  "Progress is mode-based: Practice (training), Casual (coins + XP), Competitve (coins + XP + rank).",
+  "Progress is mode-based: Practice (training), Casual (coins + XP), Ranked (coins + XP + rank).",
   "Leveling uses XP earned from round performance.",
-  "Rank/MMR changes only in Competitve mode.",
+  "Rank/MMR changes only in Ranked mode.",
   "History stores mode, XP earned, and rank delta each round.",
-  "Leaderboard uses Competitve rounds only.",
+  "Leaderboard uses Ranked rounds only.",
   "Clearing browser storage resets progress.",
 ]
 
@@ -87,11 +87,11 @@ export const FAQ_ITEMS = [
   },
   {
     question: "How do I earn coins quickly?",
-    answer: "Play Casual/Competitve, land more hits, and protect streaks.",
+    answer: "Play Casual/Ranked, land more hits, and protect streaks.",
   },
   {
     question: "When does rank change?",
-    answer: "Only in Competitve mode rounds.",
+    answer: "Only in Ranked mode rounds.",
   },
   {
     question: "Do I lose coins on misses?",

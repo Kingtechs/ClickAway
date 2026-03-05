@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-import { DEFAULT_DIFFICULTY_ID, DIFFICULTIES, getDifficultyById } from "../constants/difficultyConfig.js"
+import {
+  DEFAULT_DIFFICULTY_ID as DEFAULT_MODE_ID,
+  DIFFICULTIES as MODES,
+  getDifficultyById as getModeById,
+} from "../constants/difficultyConfig.js"
 import {
   FEEDBACK_LIFETIME_MS,
   FEEDBACK_OFFSET,
@@ -25,6 +29,7 @@ import {
 } from "../utils/gameMath.js"
 import { calculateRoundXp } from "../utils/progressionUtils.js"
 import { calculateRoundRankDelta } from "../utils/rankUtils.js"
+import { calculateRoundCoins } from "../utils/roundRewards.js"
 import GameArena from "../features/game/components/GameArena.jsx"
 import GameHud from "../features/game/components/GameHud.jsx"
 import PowerupTray from "../features/game/components/PowerupTray.jsx"
@@ -54,13 +59,13 @@ function buildClickFeedbackId() {
 
 export default function GamePage({
   onRoundComplete,
-  selectedDifficultyId = DEFAULT_DIFFICULTY_ID,
-  onDifficultyChange,
+  selectedModeId = DEFAULT_MODE_ID,
+  onModeChange,
   playerLevel = 1,
   playerXpIntoLevel = 0,
   playerXpToNextLevel = 0,
   playerLevelProgressPercent = 0,
-  playerRankLabel = "Bronze",
+  playerRankLabel = "Unranked",
   playerRankMmr = 0,
   playerRankToNextTier = 0,
   buttonSkinClass = "skin-default",
@@ -74,9 +79,9 @@ export default function GamePage({
   const shakeTimeoutRef = useRef(null)
   const freezeMovementUntilRef = useRef(0)
 
-  const selectedDifficulty = useMemo(
-    () => getDifficultyById(selectedDifficultyId),
-    [selectedDifficultyId]
+  const selectedMode = useMemo(
+    () => getModeById(selectedModeId),
+    [selectedModeId]
   )
 
   const [phase, setPhase] = useState(ROUND_PHASE.READY)
@@ -88,25 +93,25 @@ export default function GamePage({
   const [bestStreak, setBestStreak] = useState(0)
   const [hits, setHits] = useState(0)
   const [misses, setMisses] = useState(0)
-  const [powerupsUsed, setPowerupsUsed] = useState(0)
 
-  const [roundDifficulty, setRoundDifficulty] = useState(selectedDifficulty)
-  const [buttonSize, setButtonSize] = useState(selectedDifficulty.initialButtonSize)
+  const [roundMode, setRoundMode] = useState(selectedMode)
+  const [buttonSize, setButtonSize] = useState(selectedMode.initialButtonSize)
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 })
-  const [timeLeft, setTimeLeft] = useState(selectedDifficulty.durationSeconds)
+  const [timeLeft, setTimeLeft] = useState(selectedMode.durationSeconds)
   const [clickFeedbackItems, setClickFeedbackItems] = useState([])
   const [powerupCharges, setPowerupCharges] = useState(buildInitialPowerupCharges)
 
   const isPlaying = phase === ROUND_PHASE.PLAYING
-  const canChangeDifficulty =
+  const canChangeMode =
     phase === ROUND_PHASE.READY || phase === ROUND_PHASE.GAME_OVER
-  const isTimedRound = roundDifficulty.isTimedRound !== false
-  const allowsLevelProgression = roundDifficulty.allowsLevelProgression !== false
-  const allowsRankProgression = roundDifficulty.allowsRankProgression === true
+  const isTimedRound = roundMode.isTimedRound !== false
+  const allowsCoinRewards = roundMode.allowsCoinRewards !== false
+  const allowsLevelProgression = roundMode.allowsLevelProgression !== false
+  const allowsRankProgression = roundMode.allowsRankProgression === true
 
   const comboMultiplier = useMemo(
-    () => getComboMultiplier(streak, roundDifficulty.comboStep),
-    [roundDifficulty.comboStep, streak]
+    () => getComboMultiplier(streak, roundMode.comboStep),
+    [roundMode.comboStep, streak]
   )
 
   const accuracy = useMemo(() => formatAccuracy(hits, misses), [hits, misses])
@@ -122,11 +127,15 @@ export default function GamePage({
       hits,
       misses,
       bestStreak,
-      difficultyId: roundDifficulty.id,
-      progressionMode: roundDifficulty.progressionMode,
+      modeId: roundMode.id,
+      progressionMode: roundMode.progressionMode,
       allowsRankProgression,
     }),
-    [allowsRankProgression, bestStreak, hits, misses, roundDifficulty.id, roundDifficulty.progressionMode, score]
+    [allowsRankProgression, bestStreak, hits, misses, roundMode.id, roundMode.progressionMode, score]
+  )
+  const roundCoinsEarned = useMemo(
+    () => (allowsCoinRewards ? calculateRoundCoins(hits, roundMode.coinMultiplier) : 0),
+    [allowsCoinRewards, hits, roundMode.coinMultiplier]
   )
   const atmosphereTier = useMemo(() => getStreakAtmosphereTier(streak), [streak])
 
@@ -258,42 +267,41 @@ export default function GamePage({
   )
 
   const resetRoundState = useCallback(
-    (difficultySettings) => {
+    (modeSettings) => {
       setScore(0)
       setStreak(0)
       setBestStreak(0)
       setHits(0)
       setMisses(0)
-      setPowerupsUsed(0)
-      setButtonSize(difficultySettings.initialButtonSize)
-      setTimeLeft(difficultySettings.durationSeconds)
+      setButtonSize(modeSettings.initialButtonSize)
+      setTimeLeft(modeSettings.durationSeconds)
       setClickFeedbackItems([])
       setPowerupCharges(buildInitialPowerupCharges())
       freezeMovementUntilRef.current = 0
       setIsShakeActive(false)
       clearShakeTimeout()
       clearFeedbackTimeouts()
-      centerButtonPosition(difficultySettings.initialButtonSize)
+      centerButtonPosition(modeSettings.initialButtonSize)
     },
     [centerButtonPosition, clearFeedbackTimeouts, clearShakeTimeout]
   )
 
   const startRoundWithCountdown = useCallback(() => {
-    const nextRoundDifficulty = selectedDifficulty
+    const nextRoundMode = selectedMode
 
-    setRoundDifficulty(nextRoundDifficulty)
-    resetRoundState(nextRoundDifficulty)
+    setRoundMode(nextRoundMode)
+    resetRoundState(nextRoundMode)
     hasAwardedRoundRef.current = false
     setCountdownValue(READY_COUNTDOWN_START)
     setPhase(ROUND_PHASE.COUNTDOWN)
-  }, [resetRoundState, selectedDifficulty])
+  }, [resetRoundState, selectedMode])
 
   const returnToReadyOverlay = useCallback(() => {
-    const nextRoundDifficulty = selectedDifficulty
-    setRoundDifficulty(nextRoundDifficulty)
-    resetRoundState(nextRoundDifficulty)
+    const nextRoundMode = selectedMode
+    setRoundMode(nextRoundMode)
+    resetRoundState(nextRoundMode)
     setPhase(ROUND_PHASE.READY)
-  }, [resetRoundState, selectedDifficulty])
+  }, [resetRoundState, selectedMode])
 
   const endCurrentRound = useCallback(() => {
     if (phase !== ROUND_PHASE.PLAYING) return
@@ -308,7 +316,7 @@ export default function GamePage({
           return
         }
         setTimeLeft((currentTime) =>
-          Math.min(roundDifficulty.maxTimeBufferSeconds, currentTime + 2)
+          Math.min(roundMode.maxTimeBufferSeconds, currentTime + 2)
         )
         addCenterFeedback("+2s", "positive")
         return
@@ -317,7 +325,7 @@ export default function GamePage({
       if (powerupId === "size_boost") {
         setButtonSize((currentButtonSize) => {
           const nextButtonSize = Math.min(
-            roundDifficulty.initialButtonSize,
+            roundMode.initialButtonSize,
             currentButtonSize + 10
           )
           return nextButtonSize
@@ -331,7 +339,7 @@ export default function GamePage({
         addCenterFeedback("Freeze", "positive")
       }
     },
-    [addCenterFeedback, isTimedRound, roundDifficulty]
+    [addCenterFeedback, isTimedRound, roundMode]
   )
 
   const tryUsePowerupKey = useCallback(
@@ -348,7 +356,6 @@ export default function GamePage({
         ...currentCharges,
         [powerup.id]: Math.max(0, (currentCharges[powerup.id] ?? 0) - 1),
       }))
-      setPowerupsUsed((currentPowerupsUsed) => currentPowerupsUsed + 1)
       applyPowerup(powerup.id)
     },
     [applyPowerup, isPlaying, powerupCharges]
@@ -361,8 +368,8 @@ export default function GamePage({
 
       const nextStreak = streak + 1
       const pointsEarned =
-        roundDifficulty.basePointsPerHit *
-        getComboMultiplier(nextStreak, roundDifficulty.comboStep)
+        roundMode.basePointsPerHit *
+        getComboMultiplier(nextStreak, roundMode.comboStep)
 
       setStreak(nextStreak)
       setBestStreak((currentBestStreak) => Math.max(currentBestStreak, nextStreak))
@@ -373,7 +380,7 @@ export default function GamePage({
       awardPowerupCharges(nextStreak)
 
       setButtonSize((currentButtonSize) => {
-        const nextButtonSize = getNextButtonSize(currentButtonSize, roundDifficulty)
+        const nextButtonSize = getNextButtonSize(currentButtonSize, roundMode)
         queueButtonReposition(nextButtonSize)
         return nextButtonSize
       })
@@ -383,7 +390,7 @@ export default function GamePage({
       awardPowerupCharges,
       isPlaying,
       queueButtonReposition,
-      roundDifficulty,
+      roundMode,
       streak,
     ]
   )
@@ -392,7 +399,7 @@ export default function GamePage({
     (event) => {
       if (!isPlaying) return
 
-      const missPenalty = roundDifficulty.missPenalty
+      const missPenalty = roundMode.missPenalty
       setStreak(0)
       setMisses((currentMisses) => currentMisses + 1)
       triggerScreenShake()
@@ -405,21 +412,21 @@ export default function GamePage({
 
       addClickFeedback(event.clientX, event.clientY, "Miss", "negative")
     },
-    [addClickFeedback, isPlaying, roundDifficulty, triggerScreenShake]
+    [addClickFeedback, isPlaying, roundMode, triggerScreenShake]
   )
 
-  const handleDifficultySelect = useCallback(
-    (difficultyId) => {
-      onDifficultyChange?.(difficultyId)
+  const handleModeSelect = useCallback(
+    (modeId) => {
+      onModeChange?.(modeId)
       if (phase !== ROUND_PHASE.READY) return
 
-      const nextDifficulty = getDifficultyById(difficultyId)
-      setRoundDifficulty(nextDifficulty)
-      setButtonSize(nextDifficulty.initialButtonSize)
-      setTimeLeft(nextDifficulty.durationSeconds)
-      centerButtonPosition(nextDifficulty.initialButtonSize)
+      const nextMode = getModeById(modeId)
+      setRoundMode(nextMode)
+      setButtonSize(nextMode.initialButtonSize)
+      setTimeLeft(nextMode.durationSeconds)
+      centerButtonPosition(nextMode.initialButtonSize)
     },
-    [centerButtonPosition, onDifficultyChange, phase]
+    [centerButtonPosition, onModeChange, phase]
   )
 
   useEffect(() => {
@@ -467,12 +474,12 @@ export default function GamePage({
       misses,
       score,
       bestStreak,
-      difficultyId: roundDifficulty.id,
-      progressionMode: roundDifficulty.progressionMode,
-      coinMultiplier: roundDifficulty.coinMultiplier,
-      allowsCoinRewards: roundDifficulty.allowsCoinRewards !== false,
-      allowsLevelProgression: roundDifficulty.allowsLevelProgression !== false,
-      allowsRankProgression: roundDifficulty.allowsRankProgression === true,
+      modeId: roundMode.id,
+      progressionMode: roundMode.progressionMode,
+      coinMultiplier: roundMode.coinMultiplier,
+      allowsCoinRewards: roundMode.allowsCoinRewards !== false,
+      allowsLevelProgression: roundMode.allowsLevelProgression !== false,
+      allowsRankProgression: roundMode.allowsRankProgression === true,
     })
   }, [
     bestStreak,
@@ -480,12 +487,12 @@ export default function GamePage({
     misses,
     onRoundComplete,
     phase,
-    roundDifficulty.allowsCoinRewards,
-    roundDifficulty.allowsLevelProgression,
-    roundDifficulty.allowsRankProgression,
-    roundDifficulty.coinMultiplier,
-    roundDifficulty.id,
-    roundDifficulty.progressionMode,
+    roundMode.allowsCoinRewards,
+    roundMode.allowsLevelProgression,
+    roundMode.allowsRankProgression,
+    roundMode.coinMultiplier,
+    roundMode.id,
+    roundMode.progressionMode,
     score,
   ])
 
@@ -506,8 +513,8 @@ export default function GamePage({
   }, [tryUsePowerupKey])
 
   useEffect(() => {
-    centerButtonPosition(selectedDifficulty.initialButtonSize)
-  }, [centerButtonPosition, selectedDifficulty.initialButtonSize])
+    centerButtonPosition(selectedMode.initialButtonSize)
+  }, [centerButtonPosition, selectedMode.initialButtonSize])
 
   useEffect(() => {
     return () => {
@@ -522,7 +529,7 @@ export default function GamePage({
         score={score}
         timeLeft={timeLeft}
         isTimedRound={isTimedRound}
-        difficultyLabel={roundDifficulty.label}
+        modeLabel={roundMode.label}
         playerLevel={playerLevel}
         playerXpIntoLevel={playerXpIntoLevel}
         playerXpToNextLevel={playerXpToNextLevel}
@@ -558,10 +565,10 @@ export default function GamePage({
       {phase === ROUND_PHASE.READY ? (
         <ReadyOverlay
           onStart={startRoundWithCountdown}
-          difficulties={DIFFICULTIES}
-          selectedDifficultyId={selectedDifficultyId}
-          onSelectDifficulty={handleDifficultySelect}
-          canChangeDifficulty={canChangeDifficulty}
+          modes={MODES}
+          selectedModeId={selectedModeId}
+          onSelectMode={handleModeSelect}
+          canChangeMode={canChangeMode}
         />
       ) : null}
 
@@ -575,22 +582,23 @@ export default function GamePage({
           hits={hits}
           misses={misses}
           bestStreak={bestStreak}
-          powerupsUsed={powerupsUsed}
           accuracy={accuracy}
-          difficultyLabel={roundDifficulty.label}
-          playerLevel={playerLevel}
+          modeLabel={roundMode.label}
           playerXpIntoLevel={playerXpIntoLevel}
           playerXpToNextLevel={playerXpToNextLevel}
           roundXpEarned={roundXpEarned}
+          roundCoinsEarned={roundCoinsEarned}
+          allowsCoinRewards={allowsCoinRewards}
           allowsLevelProgression={allowsLevelProgression}
-          playerRankLabel={playerRankLabel}
           playerRankMmr={playerRankMmr}
           roundRankDelta={roundRankDelta}
           allowsRankProgression={allowsRankProgression}
-          selectedDifficultyId={selectedDifficultyId}
+          selectedModeId={selectedModeId}
           onPlayAgain={returnToReadyOverlay}
+          onChooseMode={returnToReadyOverlay}
         />
       ) : null}
     </div>
   )
 }
+

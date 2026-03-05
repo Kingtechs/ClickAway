@@ -18,7 +18,10 @@ export function readBooleanFromStorage(key, fallback = false) {
 export function readNumberFromStorage(key, fallback = 0) {
   if (typeof window === "undefined") return fallback
 
-  const parsedValue = Number(window.localStorage.getItem(key))
+  const rawValue = window.localStorage.getItem(key)
+  if (rawValue === null || rawValue === "") return fallback
+
+  const parsedValue = Number(rawValue)
   return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : fallback
 }
 
