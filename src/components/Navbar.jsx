@@ -30,6 +30,7 @@ export default function Navbar({
   isAuthed,
   coins = 0,
   level = 1,
+  accuracy = "0%",
   rankLabel = "Unranked",
   rankMmr = 0,
 }) {
@@ -57,7 +58,7 @@ export default function Navbar({
                   <NavLink to="/profile" className={({ isActive }) => `navButton profileNavButton ${isActive ? "active" : ""}`}>
                     Profile
                   </NavLink>
-                  <PlayerHoverCard rankLabel={rankLabel} rankMmr={rankMmr} coins={coins} level={level} />
+                  <PlayerHoverCard rankLabel={rankLabel} rankMmr={rankMmr} coins={coins} level={level} accuracy={accuracy} />
                 </div>
               </div>
             </>

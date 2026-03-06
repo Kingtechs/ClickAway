@@ -10,6 +10,7 @@ export const STORAGE_KEYS = {
   equippedProfileImage: "clickaway_equipped_profile_image",
   selectedDifficulty: "clickaway_selected_difficulty",
   roundHistory: "clickaway_round_history",
+  achievementsUnlocked: "clickaway_achievements_unlocked",
 }
 
 export const DEFAULT_EQUIPPED_IDS = {

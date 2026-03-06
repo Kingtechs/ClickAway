@@ -1,3 +1,7 @@
+import { useMemo } from "react"
+
+import AchievementsCarousel from "../components/achievements/AchievementsCarousel.jsx"
+import { evaluateAchievements } from "../game/achievements/evaluateAchievements.js"
 import { formatAccuracy } from "../utils/gameMath.js"
 import { isCompetitiveModeEntry } from "../utils/modeUtils.js"
 import { getRankImageSrc } from "../utils/rankUtils.js"
@@ -123,14 +127,14 @@ function StatCard({ label, value, tooltip = "", tone = "neutral", isFeatured = f
   )
 }
 
-function StatsSection({ title, description, stats = [] }) {
+function StatsSection({ title, description, stats = [], gridClassName = "" }) {
   return (
     <section className="profileStatsSection" aria-label={title}>
       <header className="profileStatsSectionHeader">
         <h2 className="profileStatsSectionTitle">{title}</h2>
         <p className="profileStatsSectionDescription">{description}</p>
       </header>
-      <div className="profileStatsGrid">
+      <div className={`profileStatsGrid ${gridClassName}`.trim()}>
         {stats.map((stat) => (
           <StatCard
             key={stat.label}
@@ -159,7 +163,15 @@ export default function ProfilePage({
   rankProgress = {},
   roundHistory = [],
   equippedProfileImage = null,
+  achievementStats = {},
+  persistedAchievementIds = [],
 }) {
+  const evaluatedAchievements = useMemo(
+    () => evaluateAchievements(achievementStats, {
+      persistedUnlockedIds: persistedAchievementIds,
+    }),
+    [achievementStats, persistedAchievementIds]
+  )
   const profileStats = buildProfileStats(roundHistory)
   const competitiveInsights = buildCompetitiveInsights(roundHistory)
   const rankLabel = rankProgress.tierLabel ?? "Unranked"
@@ -205,31 +217,6 @@ export default function ProfilePage({
     },
   ]
 
-  const competitiveStats = [
-    {
-      label: "Rank",
-      value: rankLabel,
-      tooltip: rankProgress.isUnranked
-        ? "Play Ranked mode to place into a rank."
-        : `${formatNumber(rankMmr)} MMR skill rating.`,
-      tone: "rank",
-      isFeatured: true,
-    },
-    {
-      label: "Ranked Rounds",
-      value: formatNumber(profileStats.competitiveRounds),
-      tooltip: "Rounds completed in Ranked (Hard) mode.",
-      tone: "competitive",
-    },
-    {
-      label: "Accuracy",
-      value: profileStats.overallAccuracy,
-      tooltip: "Hit rate across all rounds based on hits versus misses.",
-      tone: "accuracy",
-      isFeatured: true,
-    },
-  ]
-
   const performanceStats = [
     {
       label: "Best Score",
@@ -246,6 +233,7 @@ export default function ProfilePage({
       isFeatured: true,
     },
   ]
+  const combinedSummaryStats = [...playerProgressStats, ...performanceStats]
 
   return (
     <div className="pageCenter">
@@ -351,20 +339,22 @@ export default function ProfilePage({
 
         <div className="profileStatsSections">
           <StatsSection
-            title="Player Progress"
-            description="Long-term account progression and economy."
-            stats={playerProgressStats}
+            title="Player Summary"
+            description="Progression and performance in one view."
+            stats={combinedSummaryStats}
+            gridClassName="isFiveColumns"
           />
-          <StatsSection
-            title="Ranked Stats"
-            description="Ranked skill and queue outcomes."
-            stats={competitiveStats}
-          />
-          <StatsSection
-            title="Performance"
-            description="Your best execution benchmarks."
-            stats={performanceStats}
-          />
+
+          <section className="profileStatsSection profileAchievementsSection" aria-label="Achievements">
+            <header className="profileStatsSectionHeader">
+              <h2 className="profileStatsSectionTitle">Achievements</h2>
+              <p className="profileStatsSectionDescription">
+                Track unlock progress across level, consistency, and ranked play.
+              </p>
+            </header>
+
+            <AchievementsCarousel achievements={evaluatedAchievements} />
+          </section>
         </div>
       </section>
     </div>

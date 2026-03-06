@@ -15,23 +15,36 @@ export default function LoginPage({ onLogin }) {
 
   return (
     <div className="pageCenter">
-      <section className="cardWide">
-        <h1 className="cardTitle">Login</h1>
+      <section className="cardWide authCard">
+        <h1 className="cardTitle authTitle">Login</h1>
 
-        <form onSubmit={handleSubmit} className="formGrid">
-          <label className="labelRow">
-            <span>Username:</span>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} className="input" required />
+        <form onSubmit={handleSubmit} className="authForm">
+          <label className="authField">
+            <span className="authLabel">Username</span>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="authInput"
+              autoComplete="username"
+              placeholder="Enter username"
+              required
+            />
           </label>
 
-          <label className="labelRow">
-            <span>Password:</span>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required />
+          <label className="authField">
+            <span className="authLabel">Password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="authInput"
+              autoComplete="current-password"
+              placeholder="Enter password"
+              required
+            />
           </label>
 
-          <div>
-            <button className="primaryButton" type="submit">Login</button>
-          </div>
+          <button className="primaryButton authButton" type="submit">Login</button>
         </form>
       </section>
     </div>

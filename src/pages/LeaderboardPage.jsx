@@ -84,6 +84,7 @@ export default function LeaderboardPage({
                         rankMmr={player.mmr}
                         coins={player.coins}
                         level={player.level}
+                        accuracy={player.accuracy}
                       />
                     </div>
                   </div>

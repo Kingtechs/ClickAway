@@ -873,19 +873,23 @@
     background: rgba(107, 181, 245, 0.2);
 }
 
+.modeCard-ranked,
 .modeCard-competitive {
-    border-color: rgba(255, 164, 130, 0.36);
-    background: linear-gradient(170deg, rgba(238, 137, 98, 0.16), rgba(255, 255, 255, 0.04));
+    border-color: rgba(203, 120, 120, 0.42);
+    background: linear-gradient(170deg, rgba(153, 78, 78, 0.24), rgba(255, 255, 255, 0.04));
 }
 
+.modeCard-ranked::before,
 .modeCard-competitive::before {
-    background: rgba(255, 162, 126, 0.9);
+    background: rgba(219, 134, 134, 0.9);
 }
 
+.modeCard-ranked .modeCardGlyph,
+.modeCard-ranked .modeCardBadge,
 .modeCard-competitive .modeCardGlyph,
 .modeCard-competitive .modeCardBadge {
-    border-color: rgba(255, 172, 141, 0.46);
-    background: rgba(245, 145, 106, 0.2);
+    border-color: rgba(214, 147, 147, 0.5);
+    background: rgba(190, 104, 104, 0.24);
 }
 
 .modeCardStats {

@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
 
 import Layout from "./components/Layout.jsx"
@@ -18,8 +18,13 @@ import LoginPage from "./pages/LoginPage.jsx"
 import ProfilePage from "./pages/ProfilePage.jsx"
 import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
+import {
+  buildAchievementStats,
+  evaluateAchievements,
+  getUnlockedAchievementIds,
+} from "./game/achievements/evaluateAchievements.js"
 import { readArrayFromStorage, readBooleanFromStorage, readNumberFromStorage, readStringFromStorage } from "./utils/localStorage.js"
-import { appendHistoryEntry, createHistoryEntry } from "./utils/historyUtils.js"
+import { appendHistoryEntry, buildPlayerLeaderboardStats, createHistoryEntry } from "./utils/historyUtils.js"
 import { isCompetitiveModeEntry } from "./utils/modeUtils.js"
 import { calculateRoundXp, getLevelProgress } from "./utils/progressionUtils.js"
 import {
@@ -51,6 +56,27 @@ function normalizeUsername(username = "") {
 
 function getEquippedShopItem(itemId, fallbackItemId) {
   return SHOP_ITEMS_BY_ID[itemId] ?? SHOP_ITEMS_BY_ID[fallbackItemId]
+}
+
+function mergeUnlockedAchievementIds(currentIds, nextUnlockedIds) {
+  const currentList = Array.isArray(currentIds)
+    ? currentIds.filter((id) => typeof id === "string")
+    : []
+  const nextList = Array.isArray(nextUnlockedIds)
+    ? nextUnlockedIds.filter((id) => typeof id === "string")
+    : []
+  const mergedSet = new Set(currentList)
+  let hasChanges = currentList.length !== (Array.isArray(currentIds) ? currentIds.length : 0)
+
+  nextList.forEach((id) => {
+    if (!mergedSet.has(id)) {
+      mergedSet.add(id)
+      hasChanges = true
+    }
+  })
+
+  if (!hasChanges) return currentIds
+  return Array.from(mergedSet)
 }
 
 export default function App() {
@@ -123,6 +149,12 @@ export default function App() {
     serialize: JSON.stringify,
   })
 
+  const [unlockedAchievementIds, setUnlockedAchievementIds] = useLocalStorageState({
+    key: STORAGE_KEYS.achievementsUnlocked,
+    readValue: () => readArrayFromStorage(STORAGE_KEYS.achievementsUnlocked),
+    serialize: JSON.stringify,
+  })
+
   const equippedButtonSkin = useMemo(
     () =>
       getEquippedShopItem(equippedButtonSkinId, DEFAULT_EQUIPPED_IDS.buttonSkin),
@@ -153,6 +185,34 @@ export default function App() {
     () => getRankProgressWithPlacement(rankMmr, hasCompetitiveHistory),
     [hasCompetitiveHistory, rankMmr]
   )
+  const playerLeaderboardStats = useMemo(
+    () => buildPlayerLeaderboardStats(roundHistory),
+    [roundHistory]
+  )
+  const achievementStats = useMemo(
+    () => buildAchievementStats({
+      levelProgress,
+      roundHistory,
+      coins,
+    }),
+    [coins, levelProgress, roundHistory]
+  )
+  const evaluatedAchievements = useMemo(
+    () => evaluateAchievements(achievementStats, {
+      persistedUnlockedIds: unlockedAchievementIds,
+    }),
+    [achievementStats, unlockedAchievementIds]
+  )
+  const unlockedAchievementIdsFromStats = useMemo(
+    () => getUnlockedAchievementIds(evaluatedAchievements),
+    [evaluatedAchievements]
+  )
+
+  useEffect(() => {
+    setUnlockedAchievementIds((currentIds) =>
+      mergeUnlockedAchievementIds(currentIds, unlockedAchievementIdsFromStats)
+    )
+  }, [setUnlockedAchievementIds, unlockedAchievementIdsFromStats])
 
   function handleLogin(username = "") {
     const normalizedUsername = normalizeUsername(username)
@@ -282,6 +342,7 @@ export default function App() {
             isAuthed={isAuthed}
             coins={coins}
             level={levelProgress.level}
+            accuracy={playerLeaderboardStats.accuracy}
             rankLabel={rankProgress.tierLabel}
             rankMmr={rankProgress.mmr}
           />
@@ -388,6 +449,8 @@ export default function App() {
                 rankProgress={rankProgress}
                 roundHistory={roundHistory}
                 equippedProfileImage={equippedProfileImage}
+                achievementStats={achievementStats}
+                persistedAchievementIds={unlockedAchievementIds}
               />
             </ProtectedRoute>
           }

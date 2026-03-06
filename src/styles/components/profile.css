@@ -433,6 +433,10 @@
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 
+.profileStatsGrid.isFiveColumns {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .profileStatsSections {
     margin-top: 18px;
     display: grid;
@@ -635,6 +639,10 @@
 
     .profileStatCard {
         min-height: 120px;
+    }
+
+    .profileStatsGrid.isFiveColumns {
+        grid-template-columns: 1fr;
     }
 
     .profileStatsSection {
