@@ -1,0 +1,21 @@
+/*
+  Candidate-unused selectors and keyframes kept for safe rollback.
+  This file is intentionally NOT imported by app.css.
+
+  Removed from active styles during the cleanup refactor:
+  - Legacy navbar pills: .coinPill*, .levelPill*, .rankPill*
+  - Legacy hover action: .profileHoverLogoutButton
+  - Legacy help note: .helpNote
+  - Legacy profile badges/highlights/round table:
+    .profileBadge*, .profileRankSubMeta, .profileHighlight*, .profileStatHelper,
+    .profileRecentRounds*, .profileLevelProgressMetaRow
+  - Legacy game text/meta: .ppcText, .gameOverEyebrow, .gameOverLevelMeta, .gameOverRankMeta
+  - Legacy difficulty-card UI:
+    .difficultyPicker*, .difficultyOption*, .difficultyTop*, .difficultyName*,
+    .difficultyTagline, .difficultyModeTag, .difficultySelectedTag,
+    .difficultyDescriptionLine, .difficultyRewards*, .difficultyQuick*,
+    .difficultySecondaryInfo, .difficultyDescription, .difficultyHint
+  - Legacy ready selection panel: .readyCurrentDifficulty*
+  - Legacy mode accent classes: .mode-accent-easy, .mode-accent-normal, .mode-accent-hard
+  - Unused keyframes: modeSelectSnap, modeCardOutLeft, modeCardOutRight
+*/

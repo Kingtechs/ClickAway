@@ -225,7 +225,7 @@ export const SHOP_CATEGORIES = [
     id: "profile_images",
     title: "Profile Images",
     description: "Equip portraits for your player profile card.",
-    items: applyIncrementalCosts([
+    items: [
       createProfileImageItem({
         id: "profile_default",
         name: "Identity Gradient",
@@ -235,33 +235,66 @@ export const SHOP_CATEGORIES = [
         description: "Dynamic initials tile keyed to your username.",
       }),
       createProfileImageItem({
-        id: "profile_compass",
-        name: "Compass Mark",
-        cost: 35,
-        effectClass: "profile-image-compass",
-        imageSrc: "/pointerimage.png",
-        shopImageScale: 78,
-        description: "Clean directional marker portrait with a subtle glow.",
+        id: "profile_racoon",
+        name: "Raccoon Scout",
+        cost: 100,
+        effectClass: "profile-image-racoon",
+        imageSrc: "/racoon.png",
+        shopImageScale: 96,
+        description:
+          "A sharp-eyed midnight scavenger portrait.",
       }),
       createProfileImageItem({
-        id: "profile_lunar",
-        name: "Lunar Core",
-        cost: 45,
-        effectClass: "profile-image-lunar",
-        imageSrc: "/moon.png",
-        shopImageScale: 132,
-        description: "Moonlit portrait plate with cool crater texture.",
+        id: "profile_lock",
+        name: "Secure Lock",
+        cost: 100,
+        effectClass: "profile-image-lock",
+        imageSrc: "/lock.png",
+        shopImageScale: 94,
+        description:
+          "A no-compromise defense mindset.",
       }),
       createProfileImageItem({
-        id: "profile_gold",
-        name: "Gold Crest",
-        cost: 999,
-        effectClass: "profile-image-gold",
-        imageSrc: "/coin.png",
-        shopImageScale: 128,
-        description: "High-tier token emblem for a premium profile finish.",
+        id: "profile_heart",
+        name: "Heart Pulse",
+        cost: 100,
+        effectClass: "profile-image-heart",
+        imageSrc: "/heart.png",
+        shopImageScale: 95,
+        description:
+          "A bright heart icon with warm glow accents.",
       }),
-    ]),
+      createProfileImageItem({
+        id: "profile_ghost",
+        name: "Phantom Drift",
+        cost: 100,
+        effectClass: "profile-image-ghost",
+        imageSrc: "/ghost.png",
+        shopImageScale: 95,
+        description:
+          "A mischievous ghost portrait, haunting arcade style.",
+      }),
+      createProfileImageItem({
+        id: "profile_grape",
+        name: "Grape Burst",
+        cost: 100,
+        effectClass: "profile-image-grape",
+        imageSrc: "/grape.png",
+        shopImageScale: 93,
+        description:
+          "A juicy grape cluster badge with bold color depth.",
+      }),
+      createProfileImageItem({
+        id: "profile_flashlight",
+        name: "Night Beam",
+        cost: 100,
+        effectClass: "profile-image-flashlight",
+        imageSrc: "/flashlight.png",
+        shopImageScale: 94,
+        description:
+          "A tactical flashlight portrait casting a focused beam.",
+      }),
+    ],
   },
 ]
 

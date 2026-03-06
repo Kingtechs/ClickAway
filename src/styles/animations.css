@@ -1,0 +1,112 @@
+/* Shared keyframes used across the app. */
+@keyframes clickFeedbackFloat {
+    from {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translate(14px, -20px) scale(1.08);
+    }
+}
+
+@keyframes readyModalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes modeCardInRight {
+    from {
+        transform: translateX(16px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes modeCardInLeft {
+    from {
+        transform: translateX(-16px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes scorePanelSettle {
+    0% {
+        transform: scale(0.992);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 rgba(120, 190, 255, 0);
+    }
+
+    65% {
+        transform: scale(1.008);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 22px rgba(120, 190, 255, 0.2);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 0 rgba(120, 190, 255, 0);
+    }
+}
+
+@keyframes arenaPulse {
+    0%,
+    100% {
+        opacity: 0.45;
+        transform: scale(0.9);
+    }
+
+    50% {
+        opacity: 0.85;
+        transform: scale(1);
+    }
+}
+
+@keyframes scoreBreath {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.045);
+    }
+}
+
+@keyframes comboShake {
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    20% {
+        transform: translate(-2px, 1px);
+    }
+
+    40% {
+        transform: translate(2px, -1px);
+    }
+
+    60% {
+        transform: translate(-1px, -1px);
+    }
+
+    80% {
+        transform: translate(1px, 1px);
+    }
+}

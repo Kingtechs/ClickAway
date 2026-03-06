@@ -14,7 +14,7 @@ function CompetitiveHoverRank({ rankLabel, rankMmr }) {
   const displayMmr = Number.isFinite(rankMmr) ? Math.max(0, rankMmr) : 0
   const isUnranked = displayLabel.toLowerCase() === "unranked"
   const rankImageSrc = getRankImageSrc(displayLabel)
-  const mmrText = isUnranked ? "Place in Ranked" : `${displayMmr.toLocaleString()} MMR`
+  const mmrText = isUnranked ? "Play 5 games to get placed in Ranked" : `${displayMmr.toLocaleString()} MMR`
 
   return (
     <section className="profileHoverRankBlock" aria-label={`Ranked rating ${displayLabel} ${displayMmr} MMR`}>

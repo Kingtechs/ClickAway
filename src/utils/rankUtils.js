@@ -1,11 +1,11 @@
 import { DIFFICULTY_IDS, PROGRESSION_MODE } from "../constants/difficultyConfig.js"
 
-export const INITIAL_RANK_MMR = 1000
+export const INITIAL_RANK_MMR = 0
 export const UNRANKED_LABEL = "Unranked"
 
 const RANK_TIERS = [
   { id: "bronze", label: "Bronze", minMmr: 0 },
-  { id: "silver", label: "Silver", minMmr: 1200 },
+  { id: "silver", label: "Silver", minMmr: 500 },
   { id: "gold", label: "Gold", minMmr: 1500 },
 ]
 
@@ -116,18 +116,29 @@ export function calculateRoundRankDelta({
   const normalizedHits = clampNonNegative(hits)
   const normalizedMisses = clampNonNegative(misses)
   const normalizedBestStreak = clampNonNegative(bestStreak)
+
   const totalAttempts = normalizedHits + normalizedMisses
   const accuracyPercent = totalAttempts > 0 ? (normalizedHits / totalAttempts) * 100 : 0
   const normalizedAccuracy = parseAccuracyPercent(accuracyPercent)
 
   let delta = 0
-  delta += Math.floor(normalizedScore / 20)
-  delta += Math.floor(normalizedBestStreak / 2)
 
-  if (normalizedAccuracy >= 85) delta += 8
-  else if (normalizedAccuracy >= 70) delta += 3
-  else if (normalizedAccuracy < 55) delta -= 8
+  // 1) Score scaling:
+  delta += Math.floor(normalizedScore / 40)
 
+  // 2) Streak scaling:
+  delta += Math.floor(normalizedBestStreak / 3)
+
+  // 3) Accuracy tiers:
+  if (normalizedAccuracy >= 99) delta += 8
+  else if (normalizedAccuracy >= 95) delta += 6
+  else if (normalizedAccuracy >= 90) delta += 3
+  else if (normalizedAccuracy >= 85) delta += 1
+  else if (normalizedAccuracy >= 75) delta -= 3
+  else if (normalizedAccuracy >= 60) delta -= 6
+  else delta -= 10
+
+  // 4) Penalties
   if (normalizedMisses >= 18) delta -= 10
   if (normalizedHits <= 8) delta -= 12
 

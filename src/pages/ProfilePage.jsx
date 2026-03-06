@@ -98,6 +98,15 @@ function getAvatarStyle(seedText = "") {
   }
 }
 
+function getRankToneClass(rankLabel = "", isUnranked = false) {
+  if (isUnranked) return "rank-unranked"
+  const normalizedRank = String(rankLabel).trim().toLowerCase()
+  if (normalizedRank === "bronze" || normalizedRank === "silver" || normalizedRank === "gold") {
+    return `rank-${normalizedRank}`
+  }
+  return "rank-unranked"
+}
+
 function StatCard({ label, value, tooltip = "", tone = "neutral", isFeatured = false }) {
   const ariaDescription = tooltip ? `${label}: ${value}. ${tooltip}` : `${label}: ${value}`
 
@@ -156,6 +165,7 @@ export default function ProfilePage({
   const rankLabel = rankProgress.tierLabel ?? "Unranked"
   const rankMmr = rankProgress.mmr ?? 0
   const rankIconSrc = getRankImageSrc(rankLabel)
+  const rankToneClass = getRankToneClass(rankLabel, rankProgress.isUnranked)
   const levelValue = levelProgress.level ?? 1
   const xpIntoLevel = levelProgress.xpIntoLevel ?? 0
   const xpToNextLevel = levelProgress.xpToNextLevel ?? 0
@@ -291,7 +301,7 @@ export default function ProfilePage({
             </div>
           </div>
 
-          <aside className="profileRankShowcase">
+          <aside className={`profileRankShowcase ${rankToneClass}`}>
             <div className="profileRankPrimary">
               <div className={`profileRankCrest ${rankProgress.isUnranked ? "isUnranked" : ""}`}>
                 {rankIconSrc ? (

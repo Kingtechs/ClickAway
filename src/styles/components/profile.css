@@ -1,0 +1,644 @@
+/* Profile page visuals: hero, rank card, and profile stat cards. */
+.profileCard {
+    --profile-accent: #69c5ff;
+    --profile-accent-soft: rgba(105, 197, 255, 0.18);
+    --profile-border-soft: rgba(182, 214, 248, 0.22);
+    width: min(980px, 100%);
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 92% 4%, rgba(105, 197, 255, 0.14) 0%, rgba(105, 197, 255, 0) 42%),
+        radial-gradient(circle at 4% 92%, rgba(105, 197, 255, 0.08) 0%, rgba(105, 197, 255, 0) 44%),
+        linear-gradient(175deg, rgba(16, 25, 44, 0.98), rgba(13, 20, 37, 0.98));
+}
+
+.profileCard::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 10% 100%, rgba(105, 197, 255, 0.07) 0%, rgba(105, 197, 255, 0) 40%),
+        radial-gradient(circle at 100% 72%, rgba(105, 197, 255, 0.06) 0%, rgba(105, 197, 255, 0) 42%);
+    opacity: 0.55;
+}
+
+.profileCard > * {
+    position: relative;
+    z-index: 1;
+}
+
+.profileLogoutButton {
+    width: 100%;
+}
+
+.profileHero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+    gap: 18px;
+    align-items: stretch;
+}
+
+.profileHeroMain {
+    border: 1px solid var(--profile-border-soft);
+    border-radius: 18px;
+    padding: clamp(16px, 2.7vw, 22px);
+    background:
+        linear-gradient(165deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+        radial-gradient(circle at 100% 0%, rgba(105, 197, 255, 0.11), rgba(105, 197, 255, 0) 45%);
+}
+
+.profileEyebrow {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.56px;
+    text-transform: uppercase;
+    color: rgba(204, 225, 250, 0.86);
+}
+
+.profileTitle {
+    margin-top: 8px;
+    margin-bottom: 6px;
+    font-size: clamp(26px, 3vw, 36px);
+}
+
+.profileIdentityRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.profileAvatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: 0 8px 18px rgba(6, 14, 28, 0.36);
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f8fcff;
+    display: grid;
+    place-items: center;
+}
+
+.profileAvatar.hasImage {
+    padding: 3px;
+    overflow: hidden;
+    background: linear-gradient(155deg, rgba(54, 89, 138, 0.9), rgba(40, 123, 173, 0.82));
+}
+
+.profileAvatarImage {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    object-fit: cover;
+    display: block;
+}
+
+.profileAvatar.profile-image-compass {
+    border-color: rgba(160, 226, 255, 0.64);
+    box-shadow: 0 8px 18px rgba(8, 25, 40, 0.45);
+}
+
+.profileAvatar.profile-image-lunar {
+    border-color: rgba(194, 204, 255, 0.5);
+    box-shadow: 0 8px 18px rgba(12, 14, 32, 0.46);
+}
+
+.profileAvatar.profile-image-gold {
+    border-color: rgba(255, 220, 144, 0.66);
+    box-shadow: 0 8px 18px rgba(48, 31, 8, 0.46);
+}
+
+.profileIdentityText {
+    display: grid;
+    gap: 3px;
+}
+
+.profilePlayerName {
+    margin: 0;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: 28px;
+    line-height: 1;
+    color: #f7fbff;
+}
+
+.profilePlayerTitle {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(226, 240, 255, 0.68);
+    letter-spacing: 0.28px;
+    text-transform: uppercase;
+}
+
+.profileLead {
+    margin: 12px 0 0;
+    max-width: 640px;
+    color: rgba(220, 234, 254, 0.92);
+    line-height: 1.45;
+}
+
+.profileHeroChips {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.profileHeroChip {
+    border: 1px solid rgba(170, 207, 246, 0.36);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+    color: rgba(231, 243, 255, 0.94);
+    background: linear-gradient(135deg, rgba(105, 197, 255, 0.16), rgba(105, 197, 255, 0.08));
+}
+
+.profileLevelProgress {
+    margin-top: 14px;
+    border: 1px solid var(--profile-border-soft);
+    border-radius: 16px;
+    padding: 13px 14px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(105, 197, 255, 0.13), rgba(105, 197, 255, 0) 46%),
+        linear-gradient(165deg, rgba(10, 19, 37, 0.64), rgba(13, 24, 45, 0.62));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.profileLevelProgressTop {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.profileLevelProgressTitleGroup {
+    display: grid;
+    gap: 3px;
+}
+
+.profileLevelProgressLabel {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.46px;
+    color: rgba(207, 223, 244, 0.84);
+    font-weight: 700;
+}
+
+.profileLevelProgressPercent {
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: 28px;
+    line-height: 1;
+    color: #f3f9ff;
+}
+
+.profileLevelProgressXpSummary {
+    font-size: 12px;
+    color: rgba(216, 233, 252, 0.88);
+    font-weight: 600;
+}
+
+.profileLevelProgressEnds {
+    margin-top: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.24px;
+    color: rgba(213, 229, 249, 0.86);
+}
+
+.profileLevelProgressTrack {
+    margin-top: 8px;
+    width: 100%;
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+}
+
+.profileLevelProgressFill {
+    position: relative;
+    height: 100%;
+    display: block;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(105, 197, 255, 0.95), rgba(86, 175, 255, 0.92));
+    box-shadow: 0 0 10px rgba(105, 197, 255, 0.24);
+}
+
+.profileLevelProgressFill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0));
+    pointer-events: none;
+}
+
+.profileRankShowcase {
+    --rank-card-border: var(--profile-border-soft);
+    --rank-card-highlight: rgba(105, 197, 255, 0.16);
+    --rank-card-fill-top: rgba(255, 255, 255, 0.09);
+    --rank-card-fill-bottom: rgba(255, 255, 255, 0.035);
+    --rank-crest-border: rgba(255, 255, 255, 0.28);
+    --rank-crest-top: rgba(255, 255, 255, 0.22);
+    --rank-crest-start: rgba(101, 172, 255, 0.26);
+    --rank-crest-end: rgba(73, 108, 198, 0.16);
+    --rank-label-color: rgba(205, 222, 246, 0.82);
+    --rank-title-color: #f3f8ff;
+    --rank-meta-color: rgba(219, 235, 253, 0.9);
+    --rank-insight-border: rgba(166, 204, 245, 0.16);
+    --rank-insight-bg: rgba(11, 20, 38, 0.22);
+    border: 1px solid var(--profile-border-soft);
+    border-radius: 18px;
+    padding: 16px;
+    background:
+        linear-gradient(180deg, var(--rank-card-fill-top), var(--rank-card-fill-bottom)),
+        radial-gradient(circle at 100% 0%, var(--rank-card-highlight), rgba(105, 197, 255, 0) 48%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-color: var(--rank-card-border);
+}
+
+.profileRankPrimary {
+    width: 100%;
+    display: grid;
+    justify-items: center;
+    gap: 11px;
+}
+
+.profileRankPrimaryText {
+    display: grid;
+    gap: 4px;
+    justify-items: center;
+}
+
+.profileRankCrest {
+    width: 106px;
+    height: 106px;
+    border-radius: 50%;
+    border: 1px solid var(--rank-crest-border);
+    background:
+        radial-gradient(circle at 35% 24%, var(--rank-crest-top), rgba(255, 255, 255, 0) 52%),
+        linear-gradient(160deg, var(--rank-crest-start), var(--rank-crest-end));
+    display: grid;
+    place-items: center;
+    box-shadow: 0 8px 16px rgba(4, 12, 25, 0.28);
+}
+
+.profileRankCrestImage {
+    width: 74%;
+    height: 74%;
+    object-fit: contain;
+}
+
+.profileRankCrestFallback {
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: rgba(232, 242, 255, 0.92);
+}
+
+.profileRankCrest.isUnranked {
+    border-style: dashed;
+    opacity: 0.85;
+}
+
+.profileRankLabel {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--rank-label-color);
+}
+
+.profileRankTitle {
+    margin: 0;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: 29px;
+    line-height: 1;
+    color: var(--rank-title-color);
+}
+
+.profileRankMeta {
+    margin: 0;
+    font-size: 13px;
+    color: var(--rank-meta-color);
+    font-weight: 600;
+}
+
+.profileRankInsights {
+    width: 100%;
+    margin-top: 7px;
+    display: grid;
+    gap: 6px;
+}
+
+.profileRankInsightItem {
+    border: 1px solid var(--rank-insight-border);
+    border-radius: 10px;
+    padding: 7px 8px;
+    background: var(--rank-insight-bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+}
+
+.profileRankShowcase.rank-bronze {
+    --rank-card-border: rgba(206, 141, 93, 0.55);
+    --rank-card-highlight: rgba(255, 255, 255, 0.28);
+    --rank-card-fill-top: rgba(195, 123, 74, 0.22);
+    --rank-card-fill-bottom: rgba(99, 58, 33, 0.28);
+    --rank-crest-border: rgba(227, 169, 123, 0.66);
+    --rank-crest-top: rgba(255, 230, 205, 0.42);
+    --rank-crest-start: rgba(210, 133, 82, 0.5);
+    --rank-crest-end: rgba(127, 72, 40, 0.36);
+    --rank-label-color: rgba(255, 255, 255, 0.88);
+    --rank-title-color: #ffffff;
+    --rank-meta-color: rgba(255, 255, 255, 0.9);
+    --rank-insight-border: rgba(227, 166, 118, 0.34);
+    --rank-insight-bg: rgba(61, 34, 18, 0.36);
+}
+
+.profileRankShowcase.rank-silver {
+    --rank-card-border: rgba(185, 196, 214, 0.62);
+    --rank-card-highlight: rgba(228, 236, 248, 0.32);
+    --rank-card-fill-top: rgba(148, 163, 186, 0.23);
+    --rank-card-fill-bottom: rgba(83, 95, 118, 0.28);
+    --rank-crest-border: rgba(217, 227, 243, 0.72);
+    --rank-crest-top: rgba(255, 255, 255, 0.48);
+    --rank-crest-start: rgba(203, 213, 229, 0.54);
+    --rank-crest-end: rgba(129, 144, 168, 0.35);
+    --rank-label-color: rgba(228, 236, 247, 0.9);
+    --rank-title-color: #f3f7ff;
+    --rank-meta-color: rgba(229, 238, 250, 0.93);
+    --rank-insight-border: rgba(201, 213, 231, 0.34);
+    --rank-insight-bg: rgba(43, 52, 71, 0.3);
+}
+
+.profileRankShowcase.rank-gold {
+    --rank-card-border: rgba(243, 201, 102, 0.68);
+    --rank-card-highlight: rgba(255, 227, 138, 0.33);
+    --rank-card-fill-top: rgba(236, 182, 61, 0.24);
+    --rank-card-fill-bottom: rgba(130, 89, 18, 0.3);
+    --rank-crest-border: rgba(255, 229, 143, 0.76);
+    --rank-crest-top: rgba(255, 248, 201, 0.5);
+    --rank-crest-start: rgba(255, 214, 103, 0.56);
+    --rank-crest-end: rgba(182, 126, 24, 0.4);
+    --rank-label-color: rgba(255, 236, 170, 0.92);
+    --rank-title-color: #ffe7a8;
+    --rank-meta-color: rgba(255, 233, 164, 0.95);
+    --rank-insight-border: rgba(255, 214, 122, 0.35);
+    --rank-insight-bg: rgba(73, 48, 9, 0.35);
+}
+
+.profileRankInsightLabel {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.38px;
+    text-transform: uppercase;
+    color: rgba(199, 217, 241, 0.46);
+}
+
+.profileRankInsightValue {
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: 15px;
+    line-height: 1;
+    color: rgba(237, 247, 255, 0.75);
+}
+
+.profileRankActionsDivider {
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.16);
+    margin-top: 2px;
+}
+
+.profileStatsGrid {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.profileStatsSections {
+    margin-top: 18px;
+    display: grid;
+    gap: 10px;
+}
+
+.profileStatsSection {
+    border: 1px solid rgba(167, 204, 244, 0.18);
+    border-radius: 14px;
+    padding: 9px;
+    background: rgba(9, 16, 31, 0.3);
+}
+
+.profileStatsSectionHeader {
+    margin-bottom: 11px;
+    display: grid;
+    gap: 2px;
+}
+
+.profileStatsSectionTitle {
+    margin: 0;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: 18px;
+    line-height: 1.1;
+    color: #f3f9ff;
+}
+
+.profileStatsSectionDescription {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(196, 215, 239, 0.64);
+}
+
+.profileStatCard {
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    min-height: 92px;
+    padding: 8px 10px;
+    background:
+        linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+        radial-gradient(circle at 100% 0%, rgba(105, 197, 255, 0.1), rgba(105, 197, 255, 0) 44%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 5px 10px rgba(5, 12, 24, 0.16);
+    transition: transform 0.14s ease, filter 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    text-align: center;
+    gap: 4px;
+    outline: none;
+}
+
+.profileStatCard:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.11);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 9px 16px rgba(5, 12, 24, 0.22);
+    filter: brightness(1.04);
+}
+
+.profileStatCard:focus-visible {
+    border-color: rgba(191, 223, 255, 0.34);
+    box-shadow:
+        0 0 0 2px rgba(114, 194, 255, 0.2),
+        0 8px 16px rgba(5, 12, 24, 0.2);
+}
+
+.profileStatCard[data-tooltip]::before,
+.profileStatCard[data-tooltip]::after {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.16s ease;
+    position: absolute;
+    left: 50%;
+    z-index: 3;
+}
+
+.profileStatCard[data-tooltip]::before {
+    content: "";
+    bottom: calc(100% + 2px);
+    transform: translate(-50%, 4px);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(20, 30, 52, 0.95) transparent transparent transparent;
+}
+
+.profileStatCard[data-tooltip]::after {
+    content: attr(data-tooltip);
+    bottom: calc(100% + 14px);
+    transform: translate(-50%, 4px);
+    width: min(220px, calc(100vw - 64px));
+    border-radius: 10px;
+    border: 1px solid rgba(170, 209, 250, 0.38);
+    padding: 8px 9px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: rgba(228, 240, 255, 0.96);
+    background: rgba(20, 30, 52, 0.95);
+    box-shadow: 0 10px 20px rgba(3, 10, 20, 0.35);
+}
+
+.profileStatCard[data-tooltip]:hover::before,
+.profileStatCard[data-tooltip]:hover::after,
+.profileStatCard[data-tooltip]:focus-visible::before,
+.profileStatCard[data-tooltip]:focus-visible::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.profileStatCard.isFeatured {
+    border-width: 1px;
+    background:
+        linear-gradient(165deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+        radial-gradient(circle at 100% 0%, rgba(105, 197, 255, 0.14), rgba(105, 197, 255, 0) 48%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 8px 16px rgba(7, 15, 29, 0.22);
+}
+
+.profileStatCard.tone-rank.isFeatured {
+    border-color: rgba(105, 197, 255, 0.24);
+}
+
+.profileStatCard.tone-score.isFeatured,
+.profileStatCard.tone-accuracy.isFeatured {
+    border-color: rgba(105, 197, 255, 0.2);
+}
+
+.profileStatLabel {
+    margin: 0;
+    font-size: 10px;
+    text-transform: none;
+    letter-spacing: 0.1px;
+    color: rgba(210, 225, 246, 0.76);
+    font-weight: 700;
+    line-height: 1.25;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profileStatValue {
+    margin: 0;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: clamp(21px, 2.5vw, 27px);
+    font-weight: 800;
+    color: #f6fbff;
+    line-height: 1.1;
+}
+
+@media (max-width: 900px) {
+    .profileHero {
+        grid-template-columns: 1fr;
+    }
+
+    .profileRankShowcase {
+        align-items: flex-start;
+        text-align: left;
+    }
+}
+
+@media (max-width: 620px) {
+    .profileIdentityRow {
+        align-items: flex-start;
+    }
+
+    .profileAvatar {
+        width: 48px;
+        height: 48px;
+        font-size: 19px;
+    }
+
+    .profilePlayerName {
+        font-size: 21px;
+    }
+
+    .profileHeroMain,
+    .profileRankShowcase {
+        border-radius: 14px;
+    }
+
+    .profileHeroChip {
+        font-size: 10px;
+        padding: 5px 10px;
+    }
+
+    .profileLevelProgressTop {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 7px;
+    }
+
+    .profileLevelProgressPercent {
+        font-size: 24px;
+    }
+
+    .profileStatCard {
+        min-height: 120px;
+    }
+
+    .profileStatsSection {
+        padding: 10px;
+    }
+}
+
