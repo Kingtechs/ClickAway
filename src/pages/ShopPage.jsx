@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react"
-import { SHOP_CATEGORIES } from "../constants/shopCatalog.js"
+import { SHOP_CATEGORIES, SHOP_ITEMS_BY_ID } from "../constants/shopCatalog.js"
 import ShopItemCard from "../features/shop/components/ShopItemCard.jsx"
+import ShopLoadoutPreview from "../features/shop/components/ShopLoadoutPreview.jsx"
 
 const ALL_TAB_ID = "all_items"
 
 export default function ShopPage({
+  playerName = "Player",
   coins = 0,
   ownedItems = [],
   onPurchase,
@@ -45,6 +47,9 @@ export default function ShopPage({
     activeCategoryId === ALL_TAB_ID
       ? SHOP_CATEGORIES
       : SHOP_CATEGORIES.filter((category) => category.id === activeCategoryId)
+  const equippedButtonSkin = SHOP_ITEMS_BY_ID[equippedButtonSkinId] ?? null
+  const equippedArenaTheme = SHOP_ITEMS_BY_ID[equippedArenaThemeId] ?? null
+  const equippedProfileImage = SHOP_ITEMS_BY_ID[equippedProfileImageId] ?? null
 
   useEffect(() => {
     if (!actionFeedback) return undefined
@@ -105,6 +110,12 @@ export default function ShopPage({
             </strong>
           </div>
         </div>
+        <ShopLoadoutPreview
+          buttonSkin={equippedButtonSkin}
+          arenaTheme={equippedArenaTheme}
+          profileImage={equippedProfileImage}
+          playerName={playerName}
+        />
         <div className="shopTabs" role="tablist" aria-label="Shop categories">
           {tabs.map((tab) => {
             const isActive = tab.id === activeCategoryId

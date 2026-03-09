@@ -9,6 +9,7 @@ import {
 import { evaluateAchievements } from "../game/achievements/evaluateAchievements.js"
 import { formatAccuracy } from "../utils/gameMath.js"
 import { isRankedModeEntry } from "../utils/modeUtils.js"
+import { getProfileAvatarStyle, getProfileInitials } from "../utils/profileAvatar.js"
 import { getRankImageSrc } from "../utils/rankUtils.js"
 
 function buildProfileStats(roundHistory = []) {
@@ -87,24 +88,6 @@ function getPlayerTitle({ totalRounds, rankedRounds, bestStreak, rankLabel = "" 
   if (bestStreak >= 15) return "Combo Architect"
   if (totalRounds >= 60) return "Arena Veteran"
   return "Rising Contender"
-}
-
-function getInitials(name = "") {
-  const parts = String(name).trim().split(/\s+/).filter(Boolean)
-  if (!parts.length) return "P"
-  if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase()
-  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase()
-}
-
-function getAvatarStyle(seedText = "") {
-  const seed = [...String(seedText)].reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  const hue = seed % 360
-  const nextHue = (hue + 36) % 360
-
-  // A stable color per username makes the avatar feel like identity, not random decoration.
-  return {
-    background: `linear-gradient(145deg, hsl(${hue} 78% 62%), hsl(${nextHue} 74% 52%))`,
-  }
 }
 
 function getRankToneClass(rankLabel = "", isUnranked = false) {
@@ -264,9 +247,9 @@ export default function ProfilePage({
     bestStreak: profileStats.bestStreak,
     rankLabel,
   })
-  const playerInitials = getInitials(playerName)
+  const playerInitials = getProfileInitials(playerName)
   const hasProfileImage = Boolean(equippedProfileImage?.imageSrc)
-  const avatarStyle = hasProfileImage ? undefined : getAvatarStyle(playerName)
+  const avatarStyle = hasProfileImage ? undefined : getProfileAvatarStyle(playerName)
   const avatarClassName = `profileAvatar ${equippedProfileImage?.effectClass ?? ""} ${hasProfileImage ? "hasImage" : ""}`
 
   const playerProgressStats = [

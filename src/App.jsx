@@ -404,6 +404,7 @@ export default function App() {
           element={
             <ProtectedRoute isAuthed={isAuthed}>
               <ShopPage
+                playerName={playerUsername}
                 coins={coins}
                 ownedItems={ownedItemIds}
                 onPurchase={handlePurchase}
