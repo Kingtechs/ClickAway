@@ -17,3 +17,10 @@ GameOverOverlay computes `levelXpAfterRound` and `levelXpCap` and shows them as 
 "Play Again" returns to ReadyOverlay which restarts the mode carousel, forcing the player to navigate back to their mode before hitting Start. Add a secondary "Rematch" action on GameOverOverlay that skips the carousel and immediately starts a countdown with the same `roundMode` that just ended.
 
 PlayerHoverCard shows Coin Vault, XP Level, and Accuracy but no round count, so there is no way to judge whether a player's accuracy is based on 3 rounds or 300. Add a Rounds Played row using the existing data already present on leaderboard player objects and passed from `roundHistory` for the current player.
+
+
+Fix leaderboard player card cutoff
+Make player's earned coins more prominent
+Remove 'click me' message after first click
+Enable click on powerup tray
+Match player profile gradient with the showcase in shop
