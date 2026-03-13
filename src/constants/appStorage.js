@@ -1,5 +1,6 @@
 export const STORAGE_KEYS = {
   auth: "clickaway_is_authed",
+  authToken: "clickaway_auth_token",
   playerUsername: "clickaway_player_username",
   coins: "clickaway_coins",
   levelXp: "clickaway_level_xp",

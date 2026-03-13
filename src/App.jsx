@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
 
 import Layout from "./components/Layout.jsx"
@@ -18,6 +18,7 @@ import LoginPage from "./pages/LoginPage.jsx"
 import ProfilePage from "./pages/ProfilePage.jsx"
 import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
+import { fetchCurrentUser, loginUser, signupUser } from "./services/api.js"
 import {
   buildAchievementStats,
   evaluateAchievements,
@@ -84,6 +85,11 @@ export default function App() {
     key: STORAGE_KEYS.auth,
     readValue: () => readBooleanFromStorage(STORAGE_KEYS.auth),
   })
+  const [authToken, setAuthToken] = useLocalStorageState({
+    key: STORAGE_KEYS.authToken,
+    readValue: () => readStringFromStorage(STORAGE_KEYS.authToken, ""),
+  })
+  const [authReady, setAuthReady] = useState(false)
 
   const [playerUsername, setPlayerUsername] = useLocalStorageState({
     key: STORAGE_KEYS.playerUsername,
@@ -214,22 +220,93 @@ export default function App() {
     )
   }, [setUnlockedAchievementIds, unlockedAchievementIdsFromStats])
 
-  function handleLogin(username = "") {
-    const normalizedUsername = normalizeUsername(username)
-    // Treat the signed-in username as the active profile identity.
-    if (normalizedUsername) {
-      setPlayerUsername(normalizedUsername)
+  useEffect(() => {
+    let isCancelled = false
+
+    async function verifySession() {
+      if (!authToken) {
+        if (!isCancelled) {
+          setIsAuthed(false)
+          setAuthReady(true)
+        }
+        return
+      }
+
+      try {
+        const profile = await fetchCurrentUser(authToken)
+        if (isCancelled) return
+
+        setPlayerUsername(profile.username)
+        setIsAuthed(true)
+      } catch {
+        if (isCancelled) return
+        setAuthToken("")
+        setIsAuthed(false)
+      } finally {
+        if (!isCancelled) {
+          setAuthReady(true)
+        }
+      }
     }
-    setIsAuthed(true)
+
+    verifySession()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [authToken, setAuthToken, setIsAuthed, setPlayerUsername])
+
+  async function handleLogin(username = "", password = "") {
+    const normalizedUsername = normalizeUsername(username)
+
+    if (!normalizedUsername || !password) {
+      return {
+        ok: false,
+        error: "Enter your username and password.",
+      }
+    }
+
+    try {
+      const response = await loginUser({
+        username: normalizedUsername,
+        password,
+      })
+
+      setAuthToken(response.token)
+      setPlayerUsername(response.user.username)
+      setIsAuthed(true)
+      return { ok: true }
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message || "Unable to log in with those details.",
+      }
+    }
   }
 
-  function handleSignup(username = "") {
+  async function handleSignup(username = "", password = "") {
     const normalizedUsername = normalizeUsername(username) || "Player"
-    setPlayerUsername(normalizedUsername)
-    setIsAuthed(true)
+
+    try {
+      const response = await signupUser({
+        username: normalizedUsername,
+        password,
+      })
+
+      setAuthToken(response.token)
+      setPlayerUsername(response.user.username)
+      setIsAuthed(true)
+      return { ok: true }
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message || "Unable to create account.",
+      }
+    }
   }
 
   function handleLogout() {
+    setAuthToken("")
     setIsAuthed(false)
   }
 
@@ -332,6 +409,16 @@ export default function App() {
     }
 
     return false
+  }
+
+  if (!authReady) {
+    return (
+      <div className="pageCenter">
+        <section className="cardWide authCard">
+          <h1 className="cardTitle authTitle">Checking session...</h1>
+        </section>
+      </div>
+    )
   }
 
   return (

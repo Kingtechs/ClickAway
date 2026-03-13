@@ -584,7 +584,6 @@ export default function GamePage({
           bestStreak={bestStreak}
           accuracy={accuracy}
           modeLabel={roundMode.label}
-          playerLevel={playerLevel}
           playerXpIntoLevel={playerXpIntoLevel}
           playerXpToNextLevel={playerXpToNextLevel}
           roundXpEarned={roundXpEarned}
