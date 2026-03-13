@@ -8,11 +8,20 @@
 2. Install dependencies:
 - `npm install`
 
-3. Start the dev server:
+3. Start the frontend dev server:
 - `npm run dev`
 
 4. Create a production build:
 - `npm run build`
+
+## Backend Auth Setup
+1. Copy `.env.example` to `.env`
+2. Set `JWT_SECRET` and `ADMIN_PASSWORD`
+3. Start backend:
+- `npm run server`
+
+You can run frontend + backend together with:
+- `npm run dev:all`
 
 ## Project Structure
 - `src/components`: reusable UI components used by multiple pages.
