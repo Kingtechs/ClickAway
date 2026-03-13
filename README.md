@@ -8,10 +8,27 @@
 2. Install dependencies:
 - `npm install`
 
-3. Start the dev server:
+3. Copy `.env.example` to `.env`
+
+4. Update `.env`
+- `JWT_SECRET` is required for the Express auth server.
+- `ADMIN_USERNAME` and `ADMIN_PASSWORD` are optional. If `ADMIN_PASSWORD` is empty, admin seeding is skipped.
+- `PORT`, `CLIENT_ORIGIN`, and `VITE_API_BASE_URL` already match the local dev defaults.
+
+5. Start the React frontend and Express backend together:
+- `npm run dev:all`
+
+6. Open the app:
+- `http://localhost:5173`
+
+You can also run the servers separately:
+- `npm run server`
 - `npm run dev`
 
-4. Create a production build:
+Backend health check:
+- `http://localhost:4000/api/health`
+
+Create a production build:
 - `npm run build`
 
 ## Project Structure

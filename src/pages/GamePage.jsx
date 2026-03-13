@@ -37,7 +37,7 @@ import {
   CountdownOverlay,
   GameOverOverlay,
   ReadyOverlay,
-} from "../features/game/components/RoundOverlays.jsx"
+} from "../features/game/components/RoundOverlaysBarrel.jsx"
 
 function buildGameScreenClassName(atmosphereTier, isShakeActive) {
   const shakeClassName = isShakeActive ? "isShaking" : ""
