@@ -1,26 +1,33 @@
-GamePage already computes `accuracy` from hits/misses and passes it to GameHud as a prop, but GameHud's prop list doesn't include it and it never renders. Display live accuracy in the HUD so players can track shot quality mid-round without waiting for game over.
+# Targeted Feature Split and Barrel Standardization
 
-GameOverOverlay has a full `bestScore` prop, `isNewBestScore` flag, and "New Best" badge already written — but GamePage never passes `bestScore`. Derive the player's previous best score from `roundHistory` in App.jsx and thread it through to make the badge actually fire.
+**Summary**
+- Refactor the clearest feature-local monoliths using the same pattern as the overlay split: smaller files by concern, then folder-level barrels to keep imports clean.
+- Include matching CSS modularization so the code split and style split stay aligned.
+- Keep runtime behavior, route paths, storage keys, and top-level page/component props unchanged.
 
-PowerupTray shows "Unlock: streak N" but gives no sense of progress toward the next charge. Each powerup has `awardEvery` and `streak` is available in GamePage — add a small fill bar per powerup slot showing `streak % awardEvery` hits completed so players feel the build-up.
+**Implementation Changes**
+- Standardize barrel usage on folder `index.js` files and retire ad hoc barrel filenames like `RoundOverlaysBarrel.jsx`.
+- Add barrels for grouped folders that already import sibling files together: round overlays, help sections, shop components, and achievement components.
+- Split `GamePage` into a thin composition layer plus feature-local modules for round state/timers, powerup handling, click feedback, and keyboard handling; keep `GamePage` as the page entry.
+- Split `GameOverOverlay` into smaller internal modules: score/reward summary UI, reusable section renderer, XP progress UI, and XP animation planning/hook logic; keep the `GameOverOverlay` prop contract unchanged.
+- Split `ProfilePage` into feature-local helpers and presentational sections: profile stats/selectors, hero/rank section, summary stats section, and achievements shell; keep shared achievement tiles/carousel reusable.
+- Split the large data files by domain and re-export from a stable barrel: shop catalog by item category and achievement definitions by achievement category.
+- Break `game.css`, `profile.css`, `shop.css`, and `achievements.css` into smaller partials behind their current top-level stylesheet entry files so `styles/app.css` can keep importing the same public CSS entrypoints.
+- Keep `App.jsx` and `layout.css` out of this pass except for import updates needed to consume the new barrels.
 
-GamePage passes `modeLabel`, `playerRankLabel`, `playerRankMmr`, `playerRankToNextTier`, and `allowsRankProgression` to GameHud but none of those props appear in GameHud's destructuring or JSX. At minimum, render the current mode label during play so the player knows what mode they are in mid-round.
+**Public Interfaces**
+- Import paths for grouped feature modules change to folder barrels rather than file-by-file imports.
+- Existing exports that other code relies on stay stable: `SHOP_CATEGORIES`, `SHOP_ITEMS_BY_ID`, achievement category metadata, and the current page/component prop shapes.
+- CSS class names stay stable during the split so JSX markup does not need behavior-driven renaming.
 
-`getProfileAvatarStyle` receives `seedText` but ignores it and always returns the same red gradient, so every player with no profile image looks identical. Hash the username characters to a hue angle and generate a distinct HSL gradient per player.
+**Test Plan**
+- Clear the current lint blocker in `src/utils/profileAvatar.js` first so lint can be used as an acceptance gate.
+- Run `npm run lint` and `npm run build` after the refactor.
+- Smoke test game flow end to end: ready overlay, countdown, active round, powerup hotkeys, practice round end, and game-over XP/coins/rank display.
+- Smoke test profile behavior: hero data, rank card, summary stats, achievement category tabs, featured master banner, and carousel paging.
+- Smoke test help and shop pages to confirm new barrels resolve correctly and the CSS split does not change layout or responsive behavior.
 
-HistoryPage is a raw table with no aggregation — there is no summary of totals anywhere on the page. Add a compact stat strip above the table showing total rounds, cumulative XP earned, total coins earned, and all-time best score derived from the same `roundHistory` array already passed in.
-
-LeaderboardPage calls `buildPlayerLeaderboardStats(rankedHistory)` — ranked rounds only — for the player's bestScore, bestStreak, and accuracy in their leaderboard row, while mock players carry all-time stats. Pass the full `roundHistory` instead so the player row is built on the same basis as everyone else.
-
-GameOverOverlay computes `levelXpAfterRound` and `levelXpCap` and shows them as a text string ("X/Y XP"), but ProfilePage already has a visual level progress bar with the same two values. Replace the text-only level progress row in the game-over rewards section with a bar using those same computed values.
-
-"Play Again" returns to ReadyOverlay which restarts the mode carousel, forcing the player to navigate back to their mode before hitting Start. Add a secondary "Rematch" action on GameOverOverlay that skips the carousel and immediately starts a countdown with the same `roundMode` that just ended.
-
-PlayerHoverCard shows Coin Vault, XP Level, and Accuracy but no round count, so there is no way to judge whether a player's accuracy is based on 3 rounds or 300. Add a Rounds Played row using the existing data already present on leaderboard player objects and passed from `roundHistory` for the current player.
-
-
-Fix leaderboard player card cutoff
-Make player's earned coins more prominent
-Remove 'click me' message after first click
-Enable click on powerup tray
-Match player profile gradient with the showcase in shop
+**Assumptions**
+- Barrel convention for this codebase becomes folder-level `index.js`, not standalone `*Barrel.jsx` files.
+- This pass is intentionally targeted, not an app-wide architecture rewrite; `App.jsx` state ownership remains where it is for now.
+- Current baseline is: production build passes, lint fails only on the pre-existing unused `seedText` variable, and the refactor should end with both checks green.
