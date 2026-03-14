@@ -259,12 +259,25 @@
     outline: none;
 }
 
+.powerupPanel {
+    width: min(860px, 96vw, 100%);
+    display: grid;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(106, 240, 202, 0.08), rgba(106, 240, 202, 0) 36%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    box-shadow: 0 14px 28px rgba(7, 12, 24, 0.28);
+    flex-shrink: 0;
+}
+
 .powerupTray {
-    width: min(620px, 94vw, 100%);
+    width: 100%;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
-    flex-shrink: 0;
 }
 
 .powerupItem {
@@ -277,11 +290,30 @@
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
     color: rgba(255, 255, 255, 0.92);
     min-height: 70px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    font: inherit;
 }
 
 .powerupItem.ready {
     border-color: rgba(110, 235, 191, 0.58);
     background: linear-gradient(180deg, rgba(83, 215, 179, 0.24), rgba(83, 215, 179, 0.11));
+}
+
+.powerupItem:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: rgba(147, 232, 255, 0.46);
+}
+
+.powerupItem:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.powerupItem:disabled {
+    cursor: not-allowed;
+    opacity: 0.72;
 }
 
 .powerupTop {
@@ -339,6 +371,29 @@
     font-family: "Space Grotesk", "Verdana", sans-serif;
     font-weight: 700;
     color: #ffecbe;
+}
+
+.powerupPanelFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.powerupPanelTitle {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.32px;
+    text-transform: uppercase;
+    color: rgba(238, 246, 255, 0.96);
+}
+
+.powerupPanelHint {
+    margin: 0;
+    font-size: 11px;
+    color: rgba(205, 222, 246, 0.76);
+    text-align: right;
 }
 
 .clickFeedback {
@@ -1444,13 +1499,42 @@
         max-height: min(520px, calc(100dvh - 380px));
     }
 
+    .powerupPanel {
+        width: 100%;
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
     .powerupTray {
         width: 100%;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
     }
 
     .powerupItem {
         min-height: 0;
+        padding: 8px;
+    }
+
+    .powerupLabel {
+        font-size: 11px;
+    }
+
+    .powerupCount {
+        font-size: 10px;
+    }
+
+    .powerupIcon {
+        width: 18px;
+        height: 18px;
+    }
+
+    .powerupPanelTitle {
+        font-size: 12px;
+    }
+
+    .powerupPanelHint {
+        font-size: 10px;
     }
 
     .overlayActions {

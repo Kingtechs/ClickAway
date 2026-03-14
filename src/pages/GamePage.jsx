@@ -149,7 +149,7 @@ export default function GamePage({
     [buttonPosition, buttonSize]
   )
 
-  const buttonLabel = getButtonLabel(buttonSize)
+  const buttonLabel = hits === 0 ? getButtonLabel(buttonSize) : ""
   const buttonLabelFontSize = getButtonLabelFontSize(buttonSize)
 
   const clearFeedbackTimeouts = useCallback(() => {
@@ -560,7 +560,12 @@ export default function GamePage({
         clickFeedbackItems={clickFeedbackItems}
       />
 
-      <PowerupTray powerupCharges={powerupCharges} streak={streak} />
+      <PowerupTray
+        powerupCharges={powerupCharges}
+        streak={streak}
+        isPlaying={isPlaying}
+        onUsePowerup={tryUsePowerupKey}
+      />
 
       {phase === ROUND_PHASE.READY ? (
         <ReadyOverlay

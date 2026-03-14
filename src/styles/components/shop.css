@@ -171,6 +171,7 @@
     letter-spacing: 0.3px;
     box-shadow: 0 14px 0 rgba(0, 0, 0, 0.2), 0 18px 24px rgba(0, 0, 0, 0.28);
     z-index: 1;
+    isolation: isolate;
 }
 
 .shopLoadoutButton.hasImage {
@@ -459,6 +460,8 @@
     width: 76px;
     height: 76px;
     flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.14);
     background-color: rgba(255, 255, 255, 0.03);

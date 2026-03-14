@@ -18,7 +18,7 @@ import LoginPage from "./pages/LoginPage.jsx"
 import ProfilePage from "./pages/ProfilePage.jsx"
 import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
-import { fetchCurrentUser, loginUser, signupUser } from "./services/api.js"
+import { fetchCurrentUser, loginUser, saveUserProgress, signupUser } from "./services/api.js"
 import {
   buildAchievementStats,
   evaluateAchievements,
@@ -90,6 +90,7 @@ export default function App() {
     readValue: () => readStringFromStorage(STORAGE_KEYS.authToken, ""),
   })
   const [authReady, setAuthReady] = useState(false)
+  const [progressReady, setProgressReady] = useState(false)
 
   const [playerUsername, setPlayerUsername] = useLocalStorageState({
     key: STORAGE_KEYS.playerUsername,
@@ -214,11 +215,66 @@ export default function App() {
     [evaluatedAchievements]
   )
 
+  function applyAccountProgress(progress = {}) {
+    setCoins(Number(progress.coins) || 0)
+    setLevelXp(Number(progress.levelXp) || 0)
+    setRankMmr(Number(progress.rankMmr) || 0)
+    setOwnedItemIds(Array.isArray(progress.ownedItemIds) ? progress.ownedItemIds : [])
+    setEquippedButtonSkinId(
+      String(progress.equippedButtonSkinId || DEFAULT_EQUIPPED_IDS.buttonSkin)
+    )
+    setEquippedArenaThemeId(
+      String(progress.equippedArenaThemeId || DEFAULT_EQUIPPED_IDS.arenaTheme)
+    )
+    setEquippedProfileImageId(
+      String(progress.equippedProfileImageId || DEFAULT_EQUIPPED_IDS.profileImage)
+    )
+    setSelectedModeId(
+      isValidModeId(progress.selectedModeId) ? progress.selectedModeId : DEFAULT_MODE_ID
+    )
+    setRoundHistory(Array.isArray(progress.roundHistory) ? progress.roundHistory : [])
+    setUnlockedAchievementIds(
+      Array.isArray(progress.unlockedAchievementIds) ? progress.unlockedAchievementIds : []
+    )
+  }
+
   useEffect(() => {
     setUnlockedAchievementIds((currentIds) =>
       mergeUnlockedAchievementIds(currentIds, unlockedAchievementIdsFromStats)
     )
   }, [setUnlockedAchievementIds, unlockedAchievementIdsFromStats])
+
+  useEffect(() => {
+    if (!isAuthed || !authToken || !authReady || !progressReady) return
+
+    saveUserProgress(authToken, {
+      coins,
+      levelXp,
+      rankMmr,
+      ownedItemIds,
+      equippedButtonSkinId,
+      equippedArenaThemeId,
+      equippedProfileImageId,
+      selectedModeId,
+      roundHistory,
+      unlockedAchievementIds,
+    }).catch(() => {})
+  }, [
+    authReady,
+    authToken,
+    coins,
+    equippedArenaThemeId,
+    equippedButtonSkinId,
+    equippedProfileImageId,
+    isAuthed,
+    levelXp,
+    ownedItemIds,
+    progressReady,
+    rankMmr,
+    roundHistory,
+    selectedModeId,
+    unlockedAchievementIds,
+  ])
 
   useEffect(() => {
     let isCancelled = false
@@ -227,21 +283,25 @@ export default function App() {
       if (!authToken) {
         if (!isCancelled) {
           setIsAuthed(false)
+          setProgressReady(true)
           setAuthReady(true)
         }
         return
       }
 
       try {
-        const profile = await fetchCurrentUser(authToken)
+        const session = await fetchCurrentUser(authToken)
         if (isCancelled) return
 
-        setPlayerUsername(profile.username)
+        setPlayerUsername(session.user.username)
+        applyAccountProgress(session.progress)
         setIsAuthed(true)
+        setProgressReady(true)
       } catch {
         if (isCancelled) return
         setAuthToken("")
         setIsAuthed(false)
+        setProgressReady(true)
       } finally {
         if (!isCancelled) {
           setAuthReady(true)
@@ -274,7 +334,9 @@ export default function App() {
 
       setAuthToken(response.token)
       setPlayerUsername(response.user.username)
+      applyAccountProgress(response.progress)
       setIsAuthed(true)
+      setProgressReady(true)
       return { ok: true }
     } catch (error) {
       return {
@@ -295,7 +357,9 @@ export default function App() {
 
       setAuthToken(response.token)
       setPlayerUsername(response.user.username)
+      applyAccountProgress(response.progress)
       setIsAuthed(true)
+      setProgressReady(true)
       return { ok: true }
     } catch (error) {
       return {
@@ -308,6 +372,7 @@ export default function App() {
   function handleLogout() {
     setAuthToken("")
     setIsAuthed(false)
+    setProgressReady(false)
   }
 
   function handleRoundComplete({

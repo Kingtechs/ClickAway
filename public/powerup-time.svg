@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="timeGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9ae8ff"/>
+      <stop offset="100%" stop-color="#3f8cff"/>
+    </linearGradient>
+  </defs>
+  <rect x="24" y="4" width="16" height="8" rx="4" fill="#dff7ff"/>
+  <circle cx="32" cy="34" r="22" fill="#11203a" stroke="url(#timeGlow)" stroke-width="4"/>
+  <circle cx="32" cy="34" r="16" fill="none" stroke="#dff7ff" stroke-opacity="0.2" stroke-width="2"/>
+  <path d="M32 20v4" stroke="#dff7ff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M18 34h4M42 34h4M32 48v-4" stroke="#dff7ff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 34l8-7" stroke="#9ae8ff" stroke-width="4" stroke-linecap="round"/>
+  <path d="M32 34V24" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="32" cy="34" r="3.5" fill="#ffffff"/>
+</svg>

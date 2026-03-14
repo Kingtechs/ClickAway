@@ -7,8 +7,10 @@ import express from "express"
 import { extractBearerToken, signAuthToken, verifyAuthToken } from "./auth.js"
 import {
   createUser,
+  findUserProgressByUserId,
   findUserById,
   findUserByUsername,
+  saveUserProgress,
   updateUserPassword,
 } from "./db.js"
 
@@ -59,9 +61,26 @@ function createAuthResponse(user) {
   return {
     token: signAuthToken(buildAuthPayload(user), JWT_SECRET),
     user: {
+      id: user.id,
       username: user.username,
       role: user.role,
     },
+    progress: findUserProgressByUserId(user.id),
+  }
+}
+
+function normalizeProgressPayload(body = {}) {
+  return {
+    coins: body.coins,
+    levelXp: body.levelXp,
+    rankMmr: body.rankMmr,
+    ownedItemIds: body.ownedItemIds,
+    equippedButtonSkinId: body.equippedButtonSkinId,
+    equippedArenaThemeId: body.equippedArenaThemeId,
+    equippedProfileImageId: body.equippedProfileImageId,
+    selectedModeId: body.selectedModeId,
+    roundHistory: body.roundHistory,
+    unlockedAchievementIds: body.unlockedAchievementIds,
   }
 }
 
@@ -180,10 +199,27 @@ app.get("/api/auth/me", requireAuth, (request, response) => {
 
   response.json({
     user: {
+      id: user.id,
       username: user.username,
       role: user.role,
     },
+    progress: findUserProgressByUserId(user.id),
   })
+})
+
+app.put("/api/progress", requireAuth, (request, response) => {
+  const user = findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  const progress = saveUserProgress({
+    userId: user.id,
+    ...normalizeProgressPayload(request.body),
+  })
+
+  response.json({ progress })
 })
 
 async function startServer() {

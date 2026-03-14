@@ -107,7 +107,6 @@ export const SHOP_CATEGORIES = [
         id: "skin_fireball",
         name: "Fireball",
         cost: 30,
- 
         imageSrc: "/fireball.png",
         gameImageScale: 160,
         shopImageScale: 130,

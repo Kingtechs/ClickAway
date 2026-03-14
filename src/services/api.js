@@ -44,8 +44,19 @@ export async function fetchCurrentUser(token) {
     const response = await apiClient.get("/auth/me", {
       headers: buildAuthHeader(token),
     })
-    return response.data.user
+    return response.data
   } catch (error) {
     throw new Error(getErrorMessage(error, "Your session has expired."))
+  }
+}
+
+export async function saveUserProgress(token, progress) {
+  try {
+    const response = await apiClient.put("/progress", progress, {
+      headers: buildAuthHeader(token),
+    })
+    return response.data.progress
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Unable to save account progress."))
   }
 }
