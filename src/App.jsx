@@ -18,7 +18,7 @@ import LoginPage from "./pages/LoginPage.jsx"
 import ProfilePage from "./pages/ProfilePage.jsx"
 import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
-import { fetchCurrentUser, loginUser, signupUser } from "./services/api.js"
+import { fetchCurrentUser, loginUser, saveUserProgress, signupUser } from "./services/api.js"
 import {
   buildAchievementStats,
   evaluateAchievements,
@@ -53,6 +53,40 @@ function isValidModeId(modeId) {
 
 function normalizeUsername(username = "") {
   return String(username).trim()
+}
+
+function buildDefaultProgressState() {
+  return {
+    coins: 0,
+    levelXp: 0,
+    rankMmr: INITIAL_RANK_MMR,
+    ownedItemIds: [],
+    equippedButtonSkinId: DEFAULT_EQUIPPED_IDS.buttonSkin,
+    equippedArenaThemeId: DEFAULT_EQUIPPED_IDS.arenaTheme,
+    equippedProfileImageId: DEFAULT_EQUIPPED_IDS.profileImage,
+    selectedModeId: DEFAULT_MODE_ID,
+    roundHistory: [],
+    unlockedAchievementIds: [],
+  }
+}
+
+function normalizePersistedProgress(progress = {}) {
+  const defaults = buildDefaultProgressState()
+
+  return {
+    coins: Number(progress.coins) >= 0 ? Number(progress.coins) : defaults.coins,
+    levelXp: Number(progress.levelXp) >= 0 ? Number(progress.levelXp) : defaults.levelXp,
+    rankMmr: Number(progress.rankMmr) >= 0 ? Number(progress.rankMmr) : defaults.rankMmr,
+    ownedItemIds: Array.isArray(progress.ownedItemIds) ? progress.ownedItemIds : defaults.ownedItemIds,
+    equippedButtonSkinId: progress.equippedButtonSkinId || defaults.equippedButtonSkinId,
+    equippedArenaThemeId: progress.equippedArenaThemeId || defaults.equippedArenaThemeId,
+    equippedProfileImageId: progress.equippedProfileImageId || defaults.equippedProfileImageId,
+    selectedModeId: isValidModeId(progress.selectedModeId) ? progress.selectedModeId : defaults.selectedModeId,
+    roundHistory: Array.isArray(progress.roundHistory) ? progress.roundHistory : defaults.roundHistory,
+    unlockedAchievementIds: Array.isArray(progress.unlockedAchievementIds)
+      ? progress.unlockedAchievementIds
+      : defaults.unlockedAchievementIds,
+  }
 }
 
 function getEquippedShopItem(itemId, fallbackItemId) {
@@ -90,6 +124,7 @@ export default function App() {
     readValue: () => readStringFromStorage(STORAGE_KEYS.authToken, ""),
   })
   const [authReady, setAuthReady] = useState(false)
+  const [isHydratingProgress, setIsHydratingProgress] = useState(true)
 
   const [playerUsername, setPlayerUsername] = useLocalStorageState({
     key: STORAGE_KEYS.playerUsername,
@@ -214,6 +249,21 @@ export default function App() {
     [evaluatedAchievements]
   )
 
+  function applyProgressState(progress = buildDefaultProgressState()) {
+    const normalizedProgress = normalizePersistedProgress(progress)
+
+    setCoins(normalizedProgress.coins)
+    setLevelXp(normalizedProgress.levelXp)
+    setRankMmr(normalizedProgress.rankMmr)
+    setOwnedItemIds(normalizedProgress.ownedItemIds)
+    setEquippedButtonSkinId(normalizedProgress.equippedButtonSkinId)
+    setEquippedArenaThemeId(normalizedProgress.equippedArenaThemeId)
+    setEquippedProfileImageId(normalizedProgress.equippedProfileImageId)
+    setSelectedModeId(normalizedProgress.selectedModeId)
+    setRoundHistory(normalizedProgress.roundHistory)
+    setUnlockedAchievementIds(normalizedProgress.unlockedAchievementIds)
+  }
+
   useEffect(() => {
     setUnlockedAchievementIds((currentIds) =>
       mergeUnlockedAchievementIds(currentIds, unlockedAchievementIdsFromStats)
@@ -221,12 +271,50 @@ export default function App() {
   }, [setUnlockedAchievementIds, unlockedAchievementIdsFromStats])
 
   useEffect(() => {
+    if (!authReady || !isAuthed || !authToken || isHydratingProgress) return
+
+    const timeoutId = setTimeout(() => {
+      saveUserProgress(authToken, {
+        coins,
+        levelXp,
+        rankMmr,
+        ownedItemIds,
+        equippedButtonSkinId,
+        equippedArenaThemeId,
+        equippedProfileImageId,
+        selectedModeId,
+        roundHistory,
+        unlockedAchievementIds,
+      }).catch(() => {})
+    }, 250)
+
+    return () => clearTimeout(timeoutId)
+  }, [
+    authReady,
+    authToken,
+    coins,
+    equippedArenaThemeId,
+    equippedButtonSkinId,
+    equippedProfileImageId,
+    isAuthed,
+    isHydratingProgress,
+    levelXp,
+    ownedItemIds,
+    rankMmr,
+    roundHistory,
+    selectedModeId,
+    unlockedAchievementIds,
+  ])
+
+  useEffect(() => {
     let isCancelled = false
 
     async function verifySession() {
       if (!authToken) {
         if (!isCancelled) {
+          applyProgressState(buildDefaultProgressState())
           setIsAuthed(false)
+          setIsHydratingProgress(false)
           setAuthReady(true)
         }
         return
@@ -237,13 +325,16 @@ export default function App() {
         if (isCancelled) return
 
         setPlayerUsername(profile.username)
+        applyProgressState(profile.progress)
         setIsAuthed(true)
       } catch {
         if (isCancelled) return
         setAuthToken("")
+        applyProgressState(buildDefaultProgressState())
         setIsAuthed(false)
       } finally {
         if (!isCancelled) {
+          setIsHydratingProgress(false)
           setAuthReady(true)
         }
       }
@@ -274,6 +365,8 @@ export default function App() {
 
       setAuthToken(response.token)
       setPlayerUsername(response.user.username)
+      applyProgressState(response.user.progress)
+      setIsHydratingProgress(false)
       setIsAuthed(true)
       return { ok: true }
     } catch (error) {
@@ -295,6 +388,8 @@ export default function App() {
 
       setAuthToken(response.token)
       setPlayerUsername(response.user.username)
+      applyProgressState(response.user.progress)
+      setIsHydratingProgress(false)
       setIsAuthed(true)
       return { ok: true }
     } catch (error) {
@@ -307,6 +402,7 @@ export default function App() {
 
   function handleLogout() {
     setAuthToken("")
+    applyProgressState(buildDefaultProgressState())
     setIsAuthed(false)
   }
 

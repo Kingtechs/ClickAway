@@ -6,13 +6,20 @@ import express from "express"
 
 import { extractBearerToken, signAuthToken, verifyAuthToken } from "./auth.js"
 import {
+  createDefaultUserProgress,
   createUser,
   findUserById,
+  findUserProgressByUserId,
   findUserByUsername,
+  saveUserProgress,
   updateUserPassword,
 } from "./db.js"
 
 const app = express()
+const DEFAULT_SELECTED_MODE_ID = "normal"
+const DEFAULT_BUTTON_SKIN_ID = "skin_button"
+const DEFAULT_ARENA_THEME_ID = "theme_default"
+const DEFAULT_PROFILE_IMAGE_ID = "profile_default"
 
 const PORT = Number(process.env.PORT || 4000)
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173"
@@ -47,6 +54,64 @@ function validatePassword(password = "") {
   return ""
 }
 
+function buildDefaultProgress(rankMmr = 0) {
+  return {
+    coins: 0,
+    levelXp: 0,
+    rankMmr,
+    ownedItemIds: [],
+    equippedButtonSkinId: DEFAULT_BUTTON_SKIN_ID,
+    equippedArenaThemeId: DEFAULT_ARENA_THEME_ID,
+    equippedProfileImageId: DEFAULT_PROFILE_IMAGE_ID,
+    selectedModeId: DEFAULT_SELECTED_MODE_ID,
+    roundHistory: [],
+    unlockedAchievementIds: [],
+  }
+}
+
+function getUserProgressOrDefault(userId, rankMmr = 0) {
+  return findUserProgressByUserId(userId) ?? buildDefaultProgress(rankMmr)
+}
+
+function validateProgressPayload(progress = {}) {
+  if (!progress || typeof progress !== "object") {
+    return "Progress payload is required."
+  }
+
+  return ""
+}
+
+function sanitizeProgressPayload(progress = {}) {
+  return {
+    coins: Math.max(0, Number(progress.coins) || 0),
+    levelXp: Math.max(0, Number(progress.levelXp) || 0),
+    rankMmr: Math.max(0, Number(progress.rankMmr) || 0),
+    ownedItemIds: Array.isArray(progress.ownedItemIds)
+      ? progress.ownedItemIds.filter((itemId) => typeof itemId === "string")
+      : [],
+    equippedButtonSkinId:
+      typeof progress.equippedButtonSkinId === "string" && progress.equippedButtonSkinId
+        ? progress.equippedButtonSkinId
+        : DEFAULT_BUTTON_SKIN_ID,
+    equippedArenaThemeId:
+      typeof progress.equippedArenaThemeId === "string" && progress.equippedArenaThemeId
+        ? progress.equippedArenaThemeId
+        : DEFAULT_ARENA_THEME_ID,
+    equippedProfileImageId:
+      typeof progress.equippedProfileImageId === "string" && progress.equippedProfileImageId
+        ? progress.equippedProfileImageId
+        : DEFAULT_PROFILE_IMAGE_ID,
+    selectedModeId:
+      typeof progress.selectedModeId === "string" && progress.selectedModeId
+        ? progress.selectedModeId
+        : DEFAULT_SELECTED_MODE_ID,
+    roundHistory: Array.isArray(progress.roundHistory) ? progress.roundHistory : [],
+    unlockedAchievementIds: Array.isArray(progress.unlockedAchievementIds)
+      ? progress.unlockedAchievementIds.filter((achievementId) => typeof achievementId === "string")
+      : [],
+  }
+}
+
 function buildAuthPayload(user) {
   return {
     id: user.id,
@@ -61,6 +126,7 @@ function createAuthResponse(user) {
     user: {
       username: user.username,
       role: user.role,
+      progress: getUserProgressOrDefault(user.id),
     },
   }
 }
@@ -143,6 +209,7 @@ app.post("/api/auth/signup", async (request, response) => {
     passwordHash,
     role: "player",
   })
+  createDefaultUserProgress({ userId: createdUser.id })
 
   response.status(201).json(createAuthResponse(createdUser))
 })
@@ -182,8 +249,30 @@ app.get("/api/auth/me", requireAuth, (request, response) => {
     user: {
       username: user.username,
       role: user.role,
+      progress: getUserProgressOrDefault(user.id),
     },
   })
+})
+
+app.put("/api/progress", requireAuth, (request, response) => {
+  const payloadError = validateProgressPayload(request.body?.progress)
+  if (payloadError) {
+    response.status(400).json({ error: payloadError })
+    return
+  }
+
+  const user = findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  const savedProgress = saveUserProgress({
+    userId: user.id,
+    ...sanitizeProgressPayload(request.body.progress),
+  })
+
+  response.json({ progress: savedProgress })
 })
 
 async function startServer() {

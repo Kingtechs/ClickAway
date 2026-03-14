@@ -2,36 +2,53 @@ import { POWERUPS } from "../../../constants/gameConstants.js"
 
 const SEGMENT_COUNT = 5
 
-export default function PowerupTray({ powerupCharges, streak = 0 }) {
+export default function PowerupTray({ powerupCharges, streak = 0, onUsePowerup, isPlaying = false }) {
   return (
-    <div className="powerupTray" aria-label="Power-ups">
-      {POWERUPS.map((powerup) => {
-        const charges = powerupCharges[powerup.id] ?? 0
-        const hitsPerSegment = powerup.awardEvery / SEGMENT_COUNT
-        const filledSegments = charges > 0
-          ? SEGMENT_COUNT
-          : Math.floor((streak % powerup.awardEvery) / hitsPerSegment)
+    <section className="powerupPanel" aria-label="Power-ups">
+      <div className="powerupTray">
+        {POWERUPS.map((powerup) => {
+          const charges = powerupCharges[powerup.id] ?? 0
+          const isReady = charges > 0
+          const isDisabled = !isPlaying || !isReady
+          const hitsPerSegment = powerup.awardEvery / SEGMENT_COUNT
+          const filledSegments = isReady
+            ? SEGMENT_COUNT
+            : Math.floor((streak % powerup.awardEvery) / hitsPerSegment)
 
-        return (
-          <div key={powerup.id} className={`powerupItem ${charges > 0 ? "ready" : ""}`}>
-            <div className="powerupTop">
-              <strong className="powerupLabel">{powerup.label}</strong>
-              <div className="powerupCount">x{charges}</div>
-            </div>
-            <div className="powerupBottom">
-              <img src={powerup.icon} alt="" className="powerupIcon" />
-              <div className="powerupSegmentBar">
-                {Array.from({ length: SEGMENT_COUNT }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`powerupSegment ${i < filledSegments ? "filled" : ""}`}
-                  />
-                ))}
+          return (
+            <button
+              key={powerup.id}
+              type="button"
+              className={`powerupItem ${isReady ? "ready" : ""}`}
+              onClick={() => onUsePowerup?.(powerup.id)}
+              disabled={isDisabled}
+              aria-label={`${powerup.label} (${charges} charges)`}
+              title={powerup.description}
+            >
+              <div className="powerupTop">
+                <strong className="powerupLabel">{powerup.label}</strong>
+                <div className="powerupCount">x{charges}</div>
               </div>
-            </div>
-          </div>
-        )
-      })}
-    </div>
+              <div className="powerupBottom">
+                <img src={powerup.icon} alt="" className="powerupIcon" />
+                <div className="powerupSegmentBar">
+                  {Array.from({ length: SEGMENT_COUNT }, (_, i) => (
+                    <div
+                      key={i}
+                      className={`powerupSegment ${i < filledSegments ? "filled" : ""}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="powerupPanelFooter">
+        <h2 className="powerupPanelTitle">Power Ups</h2>
+        <p className="powerupPanelHint">Tap a card or use keys 1, 2, and 3.</p>
+      </div>
+    </section>
   )
 }

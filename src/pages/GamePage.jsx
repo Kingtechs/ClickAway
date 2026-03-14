@@ -149,7 +149,7 @@ export default function GamePage({
     [buttonPosition, buttonSize]
   )
 
-  const buttonLabel = getButtonLabel(buttonSize)
+  const buttonLabel = hits > 0 ? "" : getButtonLabel(buttonSize)
   const buttonLabelFontSize = getButtonLabelFontSize(buttonSize)
 
   const clearFeedbackTimeouts = useCallback(() => {
@@ -361,6 +361,22 @@ export default function GamePage({
     [applyPowerup, isPlaying, powerupCharges]
   )
 
+  const handleUsePowerup = useCallback(
+    (powerupId) => {
+      if (!isPlaying || !powerupId) return
+
+      const availableCharges = powerupCharges[powerupId] ?? 0
+      if (availableCharges <= 0) return
+
+      setPowerupCharges((currentCharges) => ({
+        ...currentCharges,
+        [powerupId]: Math.max(0, (currentCharges[powerupId] ?? 0) - 1),
+      }))
+      applyPowerup(powerupId)
+    },
+    [applyPowerup, isPlaying, powerupCharges]
+  )
+
   const handleButtonClick = useCallback(
     (event) => {
       event.stopPropagation()
@@ -560,7 +576,12 @@ export default function GamePage({
         clickFeedbackItems={clickFeedbackItems}
       />
 
-      <PowerupTray powerupCharges={powerupCharges} streak={streak} />
+      <PowerupTray
+        powerupCharges={powerupCharges}
+        streak={streak}
+        onUsePowerup={handleUsePowerup}
+        isPlaying={isPlaying}
+      />
 
       {phase === ROUND_PHASE.READY ? (
         <ReadyOverlay
