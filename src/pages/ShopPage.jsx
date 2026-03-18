@@ -1,9 +1,44 @@
 import { useEffect, useMemo, useState } from "react"
 import { SHOP_CATEGORIES, SHOP_ITEMS_BY_ID } from "../constants/shopCatalog.js"
+import ShopCategoryTabs from "../features/shop/components/ShopCategoryTabs.jsx"
 import ShopItemCard from "../features/shop/components/ShopItemCard.jsx"
 import ShopLoadoutPreview from "../features/shop/components/ShopLoadoutPreview.jsx"
+import ShopStatusHud from "../features/shop/components/ShopStatusHud.jsx"
 
 const ALL_TAB_ID = "all_items"
+const SHOP_ITEMS = SHOP_CATEGORIES.flatMap((category) => category.items)
+
+function getOwnedCount(items, ownedItemIds) {
+  return items.filter((item) => item.builtIn || ownedItemIds.includes(item.id)).length
+}
+
+function getNextUnlockTarget({ coins, ownedItems }) {
+  const unlockableItems = SHOP_ITEMS.filter(
+    (item) => !item.builtIn && !ownedItems.includes(item.id)
+  )
+
+  if (unlockableItems.length === 0) return null
+
+  const affordableItems = unlockableItems
+    .filter((item) => coins >= item.cost)
+    .sort((left, right) => left.cost - right.cost)
+
+  if (affordableItems.length > 0) {
+    return {
+      item: affordableItems[0],
+      isAffordable: true,
+      missingCoins: 0,
+    }
+  }
+
+  const nextTarget = [...unlockableItems].sort((left, right) => left.cost - right.cost)[0]
+
+  return {
+    item: nextTarget,
+    isAffordable: false,
+    missingCoins: Math.max(0, nextTarget.cost - coins),
+  }
+}
 
 export default function ShopPage({
   playerName = "Player",
@@ -18,15 +53,29 @@ export default function ShopPage({
   const [activeCategoryId, setActiveCategoryId] = useState(ALL_TAB_ID)
   const [actionFeedback, setActionFeedback] = useState(null)
 
-  const totalItems = SHOP_CATEGORIES.reduce(
-    (itemCount, category) => itemCount + category.items.length,
+  const totalItems = SHOP_ITEMS.length
+  const categoryOwnedCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        SHOP_CATEGORIES.map((category) => [category.id, getOwnedCount(category.items, ownedItems)])
+      ),
+    [ownedItems]
+  )
+  const totalOwnedCount = Object.values(categoryOwnedCounts).reduce(
+    (ownedCount, count) => ownedCount + count,
     0
   )
-  const totalOwnedCount = SHOP_CATEGORIES.reduce(
-    (ownedCount, category) =>
-      ownedCount +
-      category.items.filter((item) => item.builtIn || ownedItems.includes(item.id)).length,
-    0
+  const collectionPercent = totalItems > 0 ? Math.round((totalOwnedCount / totalItems) * 100) : 0
+  const affordableCount = useMemo(
+    () =>
+      SHOP_ITEMS.filter(
+        (item) => !item.builtIn && !ownedItems.includes(item.id) && coins >= item.cost
+      ).length,
+    [coins, ownedItems]
+  )
+  const nextUnlockTarget = useMemo(
+    () => getNextUnlockTarget({ coins, ownedItems }),
+    [coins, ownedItems]
   )
   const tabs = useMemo(
     () => [
@@ -34,19 +83,24 @@ export default function ShopPage({
         id: ALL_TAB_ID,
         label: "All Items",
         itemCount: totalItems,
+        ownedCount: totalOwnedCount,
       },
       ...SHOP_CATEGORIES.map((category) => ({
         id: category.id,
         label: category.title,
         itemCount: category.items.length,
+        ownedCount: categoryOwnedCounts[category.id] ?? 0,
       })),
     ],
-    [totalItems]
+    [categoryOwnedCounts, totalItems, totalOwnedCount]
   )
-  const visibleCategories =
-    activeCategoryId === ALL_TAB_ID
-      ? SHOP_CATEGORIES
-      : SHOP_CATEGORIES.filter((category) => category.id === activeCategoryId)
+  const visibleCategories = useMemo(
+    () =>
+      activeCategoryId === ALL_TAB_ID
+        ? SHOP_CATEGORIES
+        : SHOP_CATEGORIES.filter((category) => category.id === activeCategoryId),
+    [activeCategoryId]
+  )
   const equippedButtonSkin = SHOP_ITEMS_BY_ID[equippedButtonSkinId] ?? null
   const equippedArenaTheme = SHOP_ITEMS_BY_ID[equippedArenaThemeId] ?? null
   const equippedProfileImage = SHOP_ITEMS_BY_ID[equippedProfileImageId] ?? null
@@ -94,47 +148,41 @@ export default function ShopPage({
   return (
     <div className="pageCenter">
       <section className="card shopCard">
-        <h1 className="cardTitle">Shop</h1>
-        <p className="muted">
-          Spend coins earned from successful clicks.
-        </p>
-        <div className="shopHero" aria-label="Shop summary">
-          <div className="shopHeroStat">
-            <span className="shopHeroLabel">Balance</span>
-            <strong className="shopHeroValue">{coins.toLocaleString()} coins</strong>
+        <header className="shopScreenHeader">
+          <div>
+            <p className="shopScreenEyebrow">Cosmetic Armory</p>
+            <h1 className="cardTitle shopScreenTitle">Shop</h1>
+            <p className="muted shopScreenSubtitle">
+              Build a live loadout with cosmetics earned in the arena.
+            </p>
           </div>
-          <div className="shopHeroStat">
-            <span className="shopHeroLabel">Collection</span>
-            <strong className="shopHeroValue">
-              {totalOwnedCount}/{totalItems} owned
-            </strong>
+          <div className="shopScreenSignal" aria-label="Live inventory status">
+            <span className="shopScreenSignalDot" aria-hidden="true" />
+            Live Inventory
           </div>
-        </div>
+        </header>
+
+        <ShopStatusHud
+          coins={coins}
+          totalOwnedCount={totalOwnedCount}
+          totalItems={totalItems}
+          collectionPercent={collectionPercent}
+          affordableCount={affordableCount}
+          nextUnlockTarget={nextUnlockTarget}
+        />
+
         <ShopLoadoutPreview
           buttonSkin={equippedButtonSkin}
           arenaTheme={equippedArenaTheme}
           profileImage={equippedProfileImage}
           playerName={playerName}
         />
-        <div className="shopTabs" role="tablist" aria-label="Shop categories">
-          {tabs.map((tab) => {
-            const isActive = tab.id === activeCategoryId
 
-            return (
-              <button
-                key={tab.id}
-                role="tab"
-                type="button"
-                className={`shopTab ${isActive ? "active" : ""}`}
-                aria-selected={isActive}
-                onClick={() => setActiveCategoryId(tab.id)}
-              >
-                <span className="shopTabLabel">{tab.label}</span>
-                <span className="shopTabCount">{tab.itemCount}</span>
-              </button>
-            )
-          })}
-        </div>
+        <ShopCategoryTabs
+          tabs={tabs}
+          activeCategoryId={activeCategoryId}
+          onChange={setActiveCategoryId}
+        />
 
         {actionFeedback ? (
           <div
@@ -156,40 +204,37 @@ export default function ShopPage({
           </div>
         ) : null}
 
-        {visibleCategories.map((category) => (
-          <section key={category.id} className="shopSection">
-            <div className="shopSectionHeader">
-              <div className="shopSectionTitleRow">
-                <h2>{category.title}</h2>
-                <span className="shopSectionMeta">
-                  {
-                    category.items.filter(
-                      (item) => item.builtIn || ownedItems.includes(item.id)
-                    ).length
-                  }
-                  /{category.items.length} owned
-                </span>
+        <div className="shopInventoryDeck">
+          {visibleCategories.map((category) => (
+            <section key={category.id} className="shopSection">
+              <div className="shopSectionHeader">
+                <div className="shopSectionTitleRow">
+                  <h2>{category.title}</h2>
+                  <span className="shopSectionMeta">
+                    {categoryOwnedCounts[category.id] ?? 0}/{category.items.length} owned
+                  </span>
+                </div>
+                <p>{category.description}</p>
               </div>
-              <p>{category.description}</p>
-            </div>
 
-            <div className="shopGrid">
-              {category.items.map((item) => (
-                <ShopItemCard
-                  key={item.id}
-                  item={item}
-                  coins={coins}
-                  ownedItemIds={ownedItems}
-                  onPurchase={handlePurchase}
-                  onEquip={handleEquip}
-                  equippedButtonSkinId={equippedButtonSkinId}
-                  equippedArenaThemeId={equippedArenaThemeId}
-                  equippedProfileImageId={equippedProfileImageId}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+              <div className="shopGrid">
+                {category.items.map((item) => (
+                  <ShopItemCard
+                    key={item.id}
+                    item={item}
+                    coins={coins}
+                    ownedItemIds={ownedItems}
+                    onPurchase={handlePurchase}
+                    onEquip={handleEquip}
+                    equippedButtonSkinId={equippedButtonSkinId}
+                    equippedArenaThemeId={equippedArenaThemeId}
+                    equippedProfileImageId={equippedProfileImageId}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </section>
     </div>
   )
