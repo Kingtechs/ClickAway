@@ -1,15 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
 
+import { isValidModeId } from "./app/appStateHelpers.js"
+import { useAchievementSync } from "./app/useAchievementSync.js"
+import { useAppDerivedState } from "./app/useAppDerivedState.js"
+import { useAppPlayerState } from "./app/useAppPlayerState.js"
+import { useAuthSession } from "./app/useAuthSession.js"
+import { usePlayerProgressionUpdates } from "./app/usePlayerProgressionUpdates.js"
+import { useShopActions } from "./app/useShopActions.js"
 import Layout from "./components/Layout.jsx"
 import ProtectedRoute from "./components/routing/ProtectedRoute.jsx"
-import { DEFAULT_EQUIPPED_IDS, STORAGE_KEYS } from "./constants/appStorage.js"
-import {
-  DEFAULT_DIFFICULTY_ID as DEFAULT_MODE_ID,
-  DIFFICULTIES_BY_ID as MODES_BY_ID,
-} from "./constants/difficultyConfig.js"
-import { SHOP_ITEMS_BY_ID } from "./constants/shopCatalog.js"
-import { useLocalStorageState } from "./hooks/useLocalStorageState.js"
+import { DEFAULT_EQUIPPED_IDS } from "./constants/appStorage.js"
+import { DEFAULT_DIFFICULTY_ID as DEFAULT_MODE_ID } from "./constants/difficultyConfig.js"
 import GamePage from "./pages/GamePage.jsx"
 import HelpPage from "./pages/HelpPage.jsx"
 import HistoryPage from "./pages/HistoryPage.jsx"
@@ -18,210 +20,47 @@ import LoginPage from "./pages/LoginPage.jsx"
 import ProfilePage from "./pages/ProfilePage.jsx"
 import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
-import {
-  equipShopItem,
-  fetchCurrentUser,
-  fetchPlayerState,
-  loginUser,
-  purchaseShopItem,
-  saveUserProgress,
-  signupUser,
-} from "./services/api.js"
-import {
-  buildAchievementStats,
-  evaluateAchievements,
-  getUnlockedAchievementIds,
-} from "./game/achievements/evaluateAchievements.js"
-import { readArrayFromStorage, readBooleanFromStorage, readNumberFromStorage, readStringFromStorage } from "./utils/localStorage.js"
-import { appendHistoryEntry, buildPlayerLeaderboardStats, createHistoryEntry } from "./utils/historyUtils.js"
-import { isRankedModeEntry } from "./utils/modeUtils.js"
-import { calculateRoundXp, getLevelProgress } from "./utils/progressionUtils.js"
-import {
-  calculateRoundRankDelta,
-  getRankProgressWithPlacement,
-  INITIAL_RANK_MMR,
-} from "./utils/rankUtils.js"
-import { calculateRoundCoins } from "./utils/roundRewards.js"
-import { canPurchaseShopItem, isShopItemOwned } from "./utils/shopUtils.js"
+import { saveUserProgress } from "./services/api.js"
 
-function readSelectedModeId() {
-  const storedModeId = readStringFromStorage(
-    STORAGE_KEYS.selectedDifficulty,
-    DEFAULT_MODE_ID
+function SessionLoadingScreen() {
+  return (
+    <div className="pageCenter">
+      <section className="cardWide authCard">
+        <h1 className="cardTitle authTitle">Checking session...</h1>
+      </section>
+    </div>
   )
-
-  return MODES_BY_ID[storedModeId]
-    ? storedModeId
-    : DEFAULT_MODE_ID
-}
-
-function isValidModeId(modeId) {
-  return Boolean(MODES_BY_ID[modeId])
-}
-
-function normalizeUsername(username = "") {
-  return String(username).trim()
-}
-
-function getEquippedShopItem(itemId, fallbackItemId) {
-  return SHOP_ITEMS_BY_ID[itemId] ?? SHOP_ITEMS_BY_ID[fallbackItemId]
-}
-
-function mergeUnlockedAchievementIds(currentIds, nextUnlockedIds) {
-  const currentList = Array.isArray(currentIds)
-    ? currentIds.filter((id) => typeof id === "string")
-    : []
-  const nextList = Array.isArray(nextUnlockedIds)
-    ? nextUnlockedIds.filter((id) => typeof id === "string")
-    : []
-  const mergedSet = new Set(currentList)
-  let hasChanges = currentList.length !== (Array.isArray(currentIds) ? currentIds.length : 0)
-
-  nextList.forEach((id) => {
-    if (!mergedSet.has(id)) {
-      mergedSet.add(id)
-      hasChanges = true
-    }
-  })
-
-  if (!hasChanges) return currentIds
-  return Array.from(mergedSet)
 }
 
 export default function App() {
-  const [isAuthed, setIsAuthed] = useLocalStorageState({
-    key: STORAGE_KEYS.auth,
-    readValue: () => readBooleanFromStorage(STORAGE_KEYS.auth),
-  })
-  const [authToken, setAuthToken] = useLocalStorageState({
-    key: STORAGE_KEYS.authToken,
-    readValue: () => readStringFromStorage(STORAGE_KEYS.authToken, ""),
-  })
-  const [authReady, setAuthReady] = useState(false)
-  const [progressReady, setProgressReady] = useState(false)
-
-  const [playerUsername, setPlayerUsername] = useLocalStorageState({
-    key: STORAGE_KEYS.playerUsername,
-    readValue: () => readStringFromStorage(STORAGE_KEYS.playerUsername, "Player"),
-  })
-
-  const [coins, setCoins] = useLocalStorageState({
-    key: STORAGE_KEYS.coins,
-    readValue: () => readNumberFromStorage(STORAGE_KEYS.coins),
-  })
-
-  const [levelXp, setLevelXp] = useLocalStorageState({
-    key: STORAGE_KEYS.levelXp,
-    readValue: () => readNumberFromStorage(STORAGE_KEYS.levelXp),
-  })
-
-  const [rankMmr, setRankMmr] = useLocalStorageState({
-    key: STORAGE_KEYS.rankMmr,
-    readValue: () => readNumberFromStorage(STORAGE_KEYS.rankMmr, INITIAL_RANK_MMR),
-  })
-
-  const [ownedItemIds, setOwnedItemIds] = useLocalStorageState({
-    key: STORAGE_KEYS.ownedItems,
-    readValue: () => readArrayFromStorage(STORAGE_KEYS.ownedItems),
-    serialize: JSON.stringify,
-  })
-
-  const [equippedButtonSkinId, setEquippedButtonSkinId] = useLocalStorageState({
-    key: STORAGE_KEYS.equippedButtonSkin,
-    readValue: () =>
-      readStringFromStorage(
-        STORAGE_KEYS.equippedButtonSkin,
-        DEFAULT_EQUIPPED_IDS.buttonSkin
-      ),
-  })
-
-  const [equippedArenaThemeId, setEquippedArenaThemeId] = useLocalStorageState({
-    key: STORAGE_KEYS.equippedArenaTheme,
-    readValue: () =>
-      readStringFromStorage(
-        STORAGE_KEYS.equippedArenaTheme,
-        DEFAULT_EQUIPPED_IDS.arenaTheme
-      ),
-  })
-
-  const [equippedProfileImageId, setEquippedProfileImageId] = useLocalStorageState({
-    key: STORAGE_KEYS.equippedProfileImage,
-    readValue: () =>
-      readStringFromStorage(
-        STORAGE_KEYS.equippedProfileImage,
-        DEFAULT_EQUIPPED_IDS.profileImage
-      ),
-  })
-
-  const [selectedModeId, setSelectedModeId] = useLocalStorageState({
-    key: STORAGE_KEYS.selectedDifficulty,
-    readValue: readSelectedModeId,
-  })
-
-  const [roundHistory, setRoundHistory] = useLocalStorageState({
-    key: STORAGE_KEYS.roundHistory,
-    readValue: () => readArrayFromStorage(STORAGE_KEYS.roundHistory),
-    serialize: JSON.stringify,
-  })
-
-  const [unlockedAchievementIds, setUnlockedAchievementIds] = useLocalStorageState({
-    key: STORAGE_KEYS.achievementsUnlocked,
-    readValue: () => readArrayFromStorage(STORAGE_KEYS.achievementsUnlocked),
-    serialize: JSON.stringify,
-  })
-
-  const equippedButtonSkin = useMemo(
-    () =>
-      getEquippedShopItem(equippedButtonSkinId, DEFAULT_EQUIPPED_IDS.buttonSkin),
-    [equippedButtonSkinId]
-  )
-
-  const equippedArenaTheme = useMemo(
-    () =>
-      getEquippedShopItem(equippedArenaThemeId, DEFAULT_EQUIPPED_IDS.arenaTheme),
-    [equippedArenaThemeId]
-  )
-
-  const equippedProfileImage = useMemo(
-    () =>
-      getEquippedShopItem(
-        equippedProfileImageId,
-        DEFAULT_EQUIPPED_IDS.profileImage
-      ),
-    [equippedProfileImageId]
-  )
-
-  const levelProgress = useMemo(() => getLevelProgress(levelXp), [levelXp])
-  const hasRankedHistory = useMemo(
-    () => roundHistory.some((entry) => isRankedModeEntry(entry)),
-    [roundHistory]
-  )
-  const rankProgress = useMemo(
-    () => getRankProgressWithPlacement(rankMmr, hasRankedHistory),
-    [hasRankedHistory, rankMmr]
-  )
-  const playerLeaderboardStats = useMemo(
-    () => buildPlayerLeaderboardStats(roundHistory),
-    [roundHistory]
-  )
-  const achievementStats = useMemo(
-    () => buildAchievementStats({
-      levelProgress,
-      roundHistory,
-      coins,
-    }),
-    [coins, levelProgress, roundHistory]
-  )
-  const evaluatedAchievements = useMemo(
-    () => evaluateAchievements(achievementStats, {
-      persistedUnlockedIds: unlockedAchievementIds,
-    }),
-    [achievementStats, unlockedAchievementIds]
-  )
-  const unlockedAchievementIdsFromStats = useMemo(
-    () => getUnlockedAchievementIds(evaluatedAchievements),
-    [evaluatedAchievements]
-  )
+  const {
+    isAuthed,
+    setIsAuthed,
+    authToken,
+    setAuthToken,
+    playerUsername,
+    setPlayerUsername,
+    coins,
+    setCoins,
+    levelXp,
+    setLevelXp,
+    rankMmr,
+    setRankMmr,
+    ownedItemIds,
+    setOwnedItemIds,
+    equippedButtonSkinId,
+    setEquippedButtonSkinId,
+    equippedArenaThemeId,
+    setEquippedArenaThemeId,
+    equippedProfileImageId,
+    setEquippedProfileImageId,
+    selectedModeId,
+    setSelectedModeId,
+    roundHistory,
+    setRoundHistory,
+    unlockedAchievementIds,
+    setUnlockedAchievementIds,
+  } = useAppPlayerState()
 
   const applyPlayerState = useCallback((state = {}) => {
     setCoins(Number(state.coins) || 0)
@@ -261,28 +100,61 @@ export default function App() {
     setUnlockedAchievementIds,
   ])
 
-  const hydratePlayerState = useCallback(async (
-    token,
-    fallbackState = {},
-    fallbackUsername = "Player"
-  ) => {
-    try {
-      const playerStateResponse = await fetchPlayerState(token)
-      setPlayerUsername(playerStateResponse.user.username || fallbackUsername)
-      applyPlayerState(playerStateResponse.state)
-      return true
-    } catch {
-      setPlayerUsername(fallbackUsername)
-      applyPlayerState(fallbackState)
-      return false
-    }
-  }, [applyPlayerState, setPlayerUsername])
+  const {
+    equippedButtonSkin,
+    equippedArenaTheme,
+    equippedProfileImage,
+    levelProgress,
+    rankProgress,
+    playerLeaderboardStats,
+    achievementStats,
+    unlockedAchievementIdsFromStats,
+  } = useAppDerivedState({
+    equippedButtonSkinId,
+    equippedArenaThemeId,
+    equippedProfileImageId,
+    levelXp,
+    rankMmr,
+    roundHistory,
+    coins,
+    unlockedAchievementIds,
+  })
 
-  useEffect(() => {
-    setUnlockedAchievementIds((currentIds) =>
-      mergeUnlockedAchievementIds(currentIds, unlockedAchievementIdsFromStats)
-    )
-  }, [setUnlockedAchievementIds, unlockedAchievementIdsFromStats])
+  useAchievementSync({
+    setUnlockedAchievementIds,
+    unlockedAchievementIdsFromStats,
+  })
+
+  const {
+    authReady,
+    progressReady,
+    handleLogin,
+    handleSignup,
+    handleLogout,
+  } = useAuthSession({
+    authToken,
+    setAuthToken,
+    setIsAuthed,
+    setPlayerUsername,
+    applyLocalProgress,
+    applyPlayerState,
+  })
+
+  const { handleRoundComplete } = usePlayerProgressionUpdates({
+    setCoins,
+    setLevelXp,
+    setRankMmr,
+    setRoundHistory,
+  })
+
+  const { handlePurchase, handleEquip } = useShopActions({
+    authToken,
+    playerUsername,
+    setPlayerUsername,
+    coins,
+    ownedItemIds,
+    applyPlayerState,
+  })
 
   useEffect(() => {
     if (!isAuthed || !authToken || !authReady || !progressReady) return
@@ -308,233 +180,13 @@ export default function App() {
     unlockedAchievementIds,
   ])
 
-  useEffect(() => {
-    let isCancelled = false
-
-    async function verifySession() {
-      if (!authToken) {
-        if (!isCancelled) {
-          setIsAuthed(false)
-          setProgressReady(true)
-          setAuthReady(true)
-        }
-        return
-      }
-
-      try {
-        const session = await fetchCurrentUser(authToken)
-        if (isCancelled) return
-
-        applyLocalProgress(session.progress)
-        await hydratePlayerState(authToken, session.progress, session.user.username)
-        if (isCancelled) return
-
-        setIsAuthed(true)
-        setProgressReady(true)
-      } catch {
-        if (isCancelled) return
-        setAuthToken("")
-        setIsAuthed(false)
-        setProgressReady(true)
-      } finally {
-        if (!isCancelled) {
-          setAuthReady(true)
-        }
-      }
-    }
-
-    verifySession()
-
-    return () => {
-      isCancelled = true
-    }
-  }, [
-    applyLocalProgress,
-    authToken,
-    hydratePlayerState,
-    setAuthToken,
-    setIsAuthed,
-    setPlayerUsername,
-  ])
-
-  async function handleLogin(username = "", password = "") {
-    const normalizedUsername = normalizeUsername(username)
-
-    if (!normalizedUsername || !password) {
-      return {
-        ok: false,
-        error: "Enter your username and password.",
-      }
-    }
-
-    try {
-      const response = await loginUser({
-        username: normalizedUsername,
-        password,
-      })
-
-      applyLocalProgress(response.progress)
-      await hydratePlayerState(response.token, response.progress, response.user.username)
-      setAuthToken(response.token)
-      setIsAuthed(true)
-      setProgressReady(true)
-      return { ok: true }
-    } catch (error) {
-      return {
-        ok: false,
-        error: error.message || "Unable to log in with those details.",
-      }
-    }
-  }
-
-  async function handleSignup(username = "", password = "") {
-    const normalizedUsername = normalizeUsername(username) || "Player"
-
-    try {
-      const response = await signupUser({
-        username: normalizedUsername,
-        password,
-      })
-
-      applyLocalProgress(response.progress)
-      await hydratePlayerState(response.token, response.progress, response.user.username)
-      setAuthToken(response.token)
-      setIsAuthed(true)
-      setProgressReady(true)
-      return { ok: true }
-    } catch (error) {
-      return {
-        ok: false,
-        error: error.message || "Unable to create account.",
-      }
-    }
-  }
-
-  function handleLogout() {
-    setAuthToken("")
-    setIsAuthed(false)
-    setProgressReady(false)
-  }
-
-  function handleRoundComplete({
-    clicksScored,
-    coinMultiplier = 1,
-    allowsCoinRewards = true,
-    allowsLevelProgression = true,
-    allowsRankProgression = false,
-    progressionMode = "",
-    hits = 0,
-    misses = 0,
-    score = 0,
-    bestStreak = 0,
-    modeId = "",
-  }) {
-    const earnedCoins = allowsCoinRewards
-      ? calculateRoundCoins(clicksScored, coinMultiplier)
-      : 0
-    const earnedXp = allowsLevelProgression
-      ? calculateRoundXp({
-        hits,
-        misses,
-        bestStreak,
-        score,
-      })
-      : 0
-    const rankDelta = calculateRoundRankDelta({
-      score,
-      hits,
-      misses,
-      bestStreak,
-      modeId,
-      progressionMode,
-      allowsRankProgression,
-    })
-
-    const historyEntry = createHistoryEntry({
-      score,
-      hits,
-      misses,
-      bestStreak,
-      coinsEarned: earnedCoins,
-      modeId,
-      progressionMode,
-      xpEarned: earnedXp,
-      rankDelta,
-    })
-
-    if (earnedCoins > 0) {
-      setCoins((currentCoins) => currentCoins + earnedCoins)
-    }
-
-    if (earnedXp > 0) {
-      setLevelXp((currentXp) => currentXp + earnedXp)
-    }
-
-    if (rankDelta !== 0) {
-      setRankMmr((currentMmr) => Math.max(0, currentMmr + rankDelta))
-    }
-
-    setRoundHistory((currentHistory) =>
-      appendHistoryEntry(currentHistory, historyEntry)
-    )
-  }
-
-  function handleModeChange(nextModeId) {
+  const handleModeChange = useCallback((nextModeId) => {
     if (!isValidModeId(nextModeId)) return
     setSelectedModeId(nextModeId)
-  }
-
-  async function handlePurchase(item) {
-    const canPurchase = canPurchaseShopItem(item, coins, ownedItemIds)
-    if (!canPurchase || !authToken) {
-      return {
-        ok: false,
-        error: `Could not unlock ${item?.name || "that item"}.`,
-      }
-    }
-
-    try {
-      const playerStateResponse = await purchaseShopItem(authToken, item.id)
-      setPlayerUsername(playerStateResponse.user.username || playerUsername)
-      applyPlayerState(playerStateResponse.state)
-      return { ok: true }
-    } catch (error) {
-      return {
-        ok: false,
-        error: error.message || `Could not unlock ${item.name}.`,
-      }
-    }
-  }
-
-  async function handleEquip(item) {
-    if (!item?.id || !item.type || !authToken || !isShopItemOwned(item, ownedItemIds)) {
-      return {
-        ok: false,
-        error: `Could not equip ${item?.name || "that item"}.`,
-      }
-    }
-
-    try {
-      const playerStateResponse = await equipShopItem(authToken, item.id)
-      setPlayerUsername(playerStateResponse.user.username || playerUsername)
-      applyPlayerState(playerStateResponse.state)
-      return { ok: true }
-    } catch (error) {
-      return {
-        ok: false,
-        error: error.message || `Could not equip ${item.name}.`,
-      }
-    }
-  }
+  }, [setSelectedModeId])
 
   if (!authReady) {
-    return (
-      <div className="pageCenter">
-        <section className="cardWide authCard">
-          <h1 className="cardTitle authTitle">Checking session...</h1>
-        </section>
-      </div>
-    )
+    return <SessionLoadingScreen />
   }
 
   return (
@@ -551,21 +203,26 @@ export default function App() {
           />
         }
       >
-        <Route path="/" element={<Navigate to={isAuthed ? "/game" : "/login"} replace />} />
+        <Route
+          path="/"
+          element={<Navigate to={isAuthed ? "/game" : "/login"} replace />}
+        />
+
         <Route
           path="/login"
           element={
-            isAuthed ? <Navigate to="/game" replace /> : <LoginPage onLogin={handleLogin} />
+            isAuthed
+              ? <Navigate to="/game" replace />
+              : <LoginPage onLogin={handleLogin} />
           }
         />
+
         <Route
           path="/signup"
           element={
-            isAuthed ? (
-              <Navigate to="/game" replace />
-            ) : (
-              <SignupPage onSignup={handleSignup} />
-            )
+            isAuthed
+              ? <Navigate to="/game" replace />
+              : <SignupPage onSignup={handleSignup} />
           }
         />
 
@@ -577,6 +234,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/game"
           element={
@@ -595,13 +253,15 @@ export default function App() {
                 buttonSkinClass={equippedButtonSkin?.effectClass}
                 buttonSkinImageSrc={equippedButtonSkin?.imageSrc}
                 buttonSkinImageScale={
-                  equippedButtonSkin?.gameImageScale ?? equippedButtonSkin?.imageScale
+                  equippedButtonSkin?.gameImageScale ??
+                  equippedButtonSkin?.imageScale
                 }
                 arenaThemeClass={equippedArenaTheme?.effectClass}
               />
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/shop"
           element={
@@ -619,6 +279,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/history"
           element={
@@ -627,6 +288,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/leaderboard"
           element={
@@ -642,6 +304,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/profile"
           element={
