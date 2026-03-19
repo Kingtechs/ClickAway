@@ -99,7 +99,7 @@ const findUserByUsernameStatement = db.prepare(`
 `)
 
 const findUserByIdStatement = db.prepare(`
-  SELECT id, username, role
+  SELECT id, username, password_hash AS passwordHash, role
   FROM users
   WHERE id = ?
   LIMIT 1

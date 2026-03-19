@@ -54,6 +54,8 @@ export default function ShopItemCard({
   ownedItemIds,
   onPurchase,
   onEquip,
+  isPending = false,
+  disableActions = false,
   equippedButtonSkinId,
   equippedArenaThemeId,
   equippedProfileImageId,
@@ -75,6 +77,8 @@ export default function ShopItemCard({
   const visualState = getVisualState({ isOwned, isEquipped, canAfford })
 
   function handleAction() {
+    if (disableActions) return
+
     if (isOwned) {
       onEquip?.(item)
       return
@@ -88,14 +92,17 @@ export default function ShopItemCard({
   const cardClassName = `shopItemCard shopItemCard-${visualState}`
   const actionButtonClassName = `primaryButton shopActionButton ${isOwned ? "isEquip" : "isBuy"}`
   const footerText = getFooterText({ item, isOwned, isEquipped, canAfford })
-  const actionLabelDisplay = getActionLabel({
-    item,
-    isOwned,
-    canAfford,
-    coins,
-    defaultLabel: actionLabel,
-  })
+  const actionLabelDisplay = isPending
+    ? (isOwned ? "Equipping..." : "Buying...")
+    : getActionLabel({
+      item,
+      isOwned,
+      canAfford,
+      coins,
+      defaultLabel: actionLabel,
+    })
   const footerClassName = `shopItemFooter ${footerText ? "" : "hasNoMeta"}`
+  const isButtonDisabled = isActionDisabled || disableActions
 
   return (
     <article className={cardClassName}>
@@ -117,7 +124,7 @@ export default function ShopItemCard({
         {isEquipped ? (
           <span className="shopSelectedPill">Selected</span>
         ) : (
-          <button className={actionButtonClassName} onClick={handleAction} disabled={isActionDisabled}>
+          <button className={actionButtonClassName} onClick={handleAction} disabled={isButtonDisabled}>
             {actionLabelDisplay}
           </button>
         )}

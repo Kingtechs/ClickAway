@@ -17,6 +17,7 @@ export default function ShopPage({
 }) {
   const [activeCategoryId, setActiveCategoryId] = useState(ALL_TAB_ID)
   const [actionFeedback, setActionFeedback] = useState(null)
+  const [pendingItemId, setPendingItemId] = useState("")
 
   const totalItems = SHOP_CATEGORIES.reduce(
     (itemCount, category) => itemCount + category.items.length,
@@ -69,25 +70,45 @@ export default function ShopPage({
     })
   }
 
-  function handlePurchase(item) {
-    const wasPurchased = onPurchase?.(item) === true
-    if (wasPurchased) {
+  async function handlePurchase(item) {
+    if (!item?.id || pendingItemId) return false
+
+    setPendingItemId(item.id)
+    let purchaseResult
+
+    try {
+      purchaseResult = await onPurchase?.(item)
+    } finally {
+      setPendingItemId("")
+    }
+
+    if (purchaseResult?.ok === true) {
       showFeedback("success", `${item.name} unlocked.`)
       return true
     }
 
-    showFeedback("error", `Could not unlock ${item.name}.`)
+    showFeedback("error", purchaseResult?.error || `Could not unlock ${item.name}.`)
     return false
   }
 
-  function handleEquip(item) {
-    const wasEquipped = onEquip?.(item) === true
-    if (wasEquipped) {
+  async function handleEquip(item) {
+    if (!item?.id || pendingItemId) return false
+
+    setPendingItemId(item.id)
+    let equipResult
+
+    try {
+      equipResult = await onEquip?.(item)
+    } finally {
+      setPendingItemId("")
+    }
+
+    if (equipResult?.ok === true) {
       showFeedback("success", `${item.name} equipped.`)
       return true
     }
 
-    showFeedback("error", `Could not equip ${item.name}.`)
+    showFeedback("error", equipResult?.error || `Could not equip ${item.name}.`)
     return false
   }
 
@@ -182,6 +203,8 @@ export default function ShopPage({
                   ownedItemIds={ownedItems}
                   onPurchase={handlePurchase}
                   onEquip={handleEquip}
+                  isPending={pendingItemId === item.id}
+                  disableActions={Boolean(pendingItemId)}
                   equippedButtonSkinId={equippedButtonSkinId}
                   equippedArenaThemeId={equippedArenaThemeId}
                   equippedProfileImageId={equippedProfileImageId}

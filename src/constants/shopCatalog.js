@@ -65,23 +65,12 @@ function createProfileImageItem({
   }
 }
 
-function applyIncrementalCosts(items = [], maxCost = 999) {
-  if (!Array.isArray(items) || items.length <= 1) return items
-
-  const lastIndex = items.length - 1
-
-  return items.map((item, index) => ({
-    ...item,
-    cost: Math.round((maxCost * index) / lastIndex),
-  }))
-}
-
 export const SHOP_CATEGORIES = [
   {
     id: "button_skins",
     title: "Button Skins",
     description: "Cosmetic styles for the main click target.",
-    items: applyIncrementalCosts([
+    items: [
       createButtonSkinItem({
         id: "skin_button",
         name: "Classic",
@@ -96,7 +85,7 @@ export const SHOP_CATEGORIES = [
       createButtonSkinItem({
         id: "skin_neon",
         name: "Neon Pulse",
-        cost: 25,
+        cost: 14,
         effectClass: "skin-neoncircle",
         imageSrc: "/neoncircle.avif",
         gameImageScale: 115,
@@ -106,7 +95,7 @@ export const SHOP_CATEGORIES = [
       createButtonSkinItem({
         id: "skin_fireball",
         name: "Fireball",
-        cost: 30,
+        cost: 125,
         imageSrc: "/fireball.png",
         gameImageScale: 160,
         shopImageScale: 130,
@@ -115,7 +104,7 @@ export const SHOP_CATEGORIES = [
       createButtonSkinItem({
         id: "skin_cd",
         name: "CD",
-        cost: 30,
+        cost: 236,
         effectClass: "skin-cd",
         imageSrc: "/cd.png",
         gameImageScale: 100,
@@ -125,7 +114,7 @@ export const SHOP_CATEGORIES = [
       createButtonSkinItem({
         id: "skin_earth",
         name: "Earth",
-        cost: 30,
+        cost: 347,
         effectClass: "skin-earth",
         imageSrc: "/earth.png",
         gameImageScale: 110,
@@ -135,7 +124,7 @@ export const SHOP_CATEGORIES = [
       createButtonSkinItem({
         id: "skin_melon",
         name: "Melon",
-        cost: 30,
+        cost: 458,
         effectClass: "skin-melon",
         imageSrc: "/melon.png",
         gameImageScale: 105,
@@ -145,7 +134,7 @@ export const SHOP_CATEGORIES = [
       createButtonSkinItem({
         id: "skin_moon",
         name: "Moon",
-        cost: 30,
+        cost: 569,
         effectClass: "skin-moon",
         imageSrc: "/moon.png",
         gameImageScale: 105,
@@ -155,7 +144,7 @@ export const SHOP_CATEGORIES = [
       createButtonSkinItem({
         id: "skin_wheel",
         name: "Wheel",
-        cost: 30,
+        cost: 680,
         effectClass: "skin-wheel",
         imageSrc: "/wheel.png",
         gameImageScale: 115,
@@ -165,7 +154,7 @@ export const SHOP_CATEGORIES = [
       createButtonSkinItem({
         id: "skin_xboxbutton",
         name: "Xbox",
-        cost: 30,
+        cost: 791,
         effectClass: "skin-xboxbutton",
         imageSrc: "/xboxbutton.png",
         gameImageScale: 105,
@@ -175,20 +164,20 @@ export const SHOP_CATEGORIES = [
       createButtonSkinItem({
         id: "skin_coin",
         name: "Gold Token",
-        cost: 999,
+        cost: 902,
         effectClass: "skin-coin",
         imageSrc: "/coin.png",
         gameImageScale: 140,
         shopImageScale: 130,
         description: "Classic arcade token style with metallic shine.",
       }),
-    ]),
+    ],
   },
   {
     id: "arena_themes",
     title: "Arena Themes",
     description: "Background/theme swaps for the game arena.",
-    items: applyIncrementalCosts([
+    items: [
       createArenaThemeItem({
         id: "theme_default",
         name: "Classic Arena",
@@ -200,25 +189,25 @@ export const SHOP_CATEGORIES = [
       createArenaThemeItem({
         id: "theme_sunset",
         name: "Sunset Grid",
-        cost: 40,
+        cost: 236,
         effectClass: "theme-sunset",
         description: "Warm dusk sky over a glowing retro horizon grid.",
       }),
       createArenaThemeItem({
         id: "theme_forest",
         name: "Forest Glow",
-        cost: 45,
+        cost: 569,
         effectClass: "theme-forest",
         description: "Misty woodland tones with bioluminescent highlights.",
       }),
       createArenaThemeItem({
         id: "theme_arcade",
         name: "Arcade Night",
-        cost: 999,
+        cost: 902,
         effectClass: "theme-arcade",
         description: "Synthwave-inspired night lane with neon lane lines.",
       }),
-    ]),
+    ],
   },
   {
     id: "profile_images",
@@ -236,7 +225,7 @@ export const SHOP_CATEGORIES = [
       createProfileImageItem({
         id: "profile_racoon",
         name: "Raccoon Scout",
-        cost: 100,
+        cost: 3,
         effectClass: "profile-image-racoon",
         imageSrc: "/racoon.png",
         shopImageScale: 96,
@@ -246,7 +235,7 @@ export const SHOP_CATEGORIES = [
       createProfileImageItem({
         id: "profile_lock",
         name: "Secure Lock",
-        cost: 100,
+        cost: 3,
         effectClass: "profile-image-lock",
         imageSrc: "/lock.png",
         shopImageScale: 94,
@@ -256,7 +245,7 @@ export const SHOP_CATEGORIES = [
       createProfileImageItem({
         id: "profile_heart",
         name: "Heart Pulse",
-        cost: 100,
+        cost: 3,
         effectClass: "profile-image-heart",
         imageSrc: "/heart.png",
         shopImageScale: 95,
@@ -266,7 +255,7 @@ export const SHOP_CATEGORIES = [
       createProfileImageItem({
         id: "profile_ghost",
         name: "Phantom Drift",
-        cost: 100,
+        cost: 3,
         effectClass: "profile-image-ghost",
         imageSrc: "/ghost.png",
         shopImageScale: 95,
@@ -276,7 +265,7 @@ export const SHOP_CATEGORIES = [
       createProfileImageItem({
         id: "profile_grape",
         name: "Grape Burst",
-        cost: 100,
+        cost: 3,
         effectClass: "profile-image-grape",
         imageSrc: "/grape.png",
         shopImageScale: 93,
@@ -286,7 +275,7 @@ export const SHOP_CATEGORIES = [
       createProfileImageItem({
         id: "profile_flashlight",
         name: "Night Beam",
-        cost: 100,
+        cost: 3,
         effectClass: "profile-image-flashlight",
         imageSrc: "/flashlight.png",
         shopImageScale: 94,

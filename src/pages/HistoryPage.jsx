@@ -33,7 +33,6 @@ export default function HistoryPage({ roundHistory = [] }) {
       setIsMobileTable(event.matches)
     }
 
-    setIsMobileTable(mediaQuery.matches)
     mediaQuery.addEventListener("change", handleChange)
 
     return () => mediaQuery.removeEventListener("change", handleChange)

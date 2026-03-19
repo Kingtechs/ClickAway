@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Navigate, Route, Routes } from "react-router-dom"
 
 import Layout from "./components/Layout.jsx"
@@ -18,7 +18,15 @@ import LoginPage from "./pages/LoginPage.jsx"
 import ProfilePage from "./pages/ProfilePage.jsx"
 import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
-import { fetchCurrentUser, loginUser, saveUserProgress, signupUser } from "./services/api.js"
+import {
+  equipShopItem,
+  fetchCurrentUser,
+  fetchPlayerState,
+  loginUser,
+  purchaseShopItem,
+  saveUserProgress,
+  signupUser,
+} from "./services/api.js"
 import {
   buildAchievementStats,
   evaluateAchievements,
@@ -215,20 +223,29 @@ export default function App() {
     [evaluatedAchievements]
   )
 
-  function applyAccountProgress(progress = {}) {
-    setCoins(Number(progress.coins) || 0)
-    setLevelXp(Number(progress.levelXp) || 0)
-    setRankMmr(Number(progress.rankMmr) || 0)
-    setOwnedItemIds(Array.isArray(progress.ownedItemIds) ? progress.ownedItemIds : [])
+  const applyPlayerState = useCallback((state = {}) => {
+    setCoins(Number(state.coins) || 0)
+    setOwnedItemIds(Array.isArray(state.ownedItemIds) ? state.ownedItemIds : [])
     setEquippedButtonSkinId(
-      String(progress.equippedButtonSkinId || DEFAULT_EQUIPPED_IDS.buttonSkin)
+      String(state.equippedButtonSkinId || DEFAULT_EQUIPPED_IDS.buttonSkin)
     )
     setEquippedArenaThemeId(
-      String(progress.equippedArenaThemeId || DEFAULT_EQUIPPED_IDS.arenaTheme)
+      String(state.equippedArenaThemeId || DEFAULT_EQUIPPED_IDS.arenaTheme)
     )
     setEquippedProfileImageId(
-      String(progress.equippedProfileImageId || DEFAULT_EQUIPPED_IDS.profileImage)
+      String(state.equippedProfileImageId || DEFAULT_EQUIPPED_IDS.profileImage)
     )
+  }, [
+    setCoins,
+    setEquippedArenaThemeId,
+    setEquippedButtonSkinId,
+    setEquippedProfileImageId,
+    setOwnedItemIds,
+  ])
+
+  const applyLocalProgress = useCallback((progress = {}) => {
+    setLevelXp(Number(progress.levelXp) || 0)
+    setRankMmr(Number(progress.rankMmr) || 0)
     setSelectedModeId(
       isValidModeId(progress.selectedModeId) ? progress.selectedModeId : DEFAULT_MODE_ID
     )
@@ -236,7 +253,30 @@ export default function App() {
     setUnlockedAchievementIds(
       Array.isArray(progress.unlockedAchievementIds) ? progress.unlockedAchievementIds : []
     )
-  }
+  }, [
+    setLevelXp,
+    setRankMmr,
+    setRoundHistory,
+    setSelectedModeId,
+    setUnlockedAchievementIds,
+  ])
+
+  const hydratePlayerState = useCallback(async (
+    token,
+    fallbackState = {},
+    fallbackUsername = "Player"
+  ) => {
+    try {
+      const playerStateResponse = await fetchPlayerState(token)
+      setPlayerUsername(playerStateResponse.user.username || fallbackUsername)
+      applyPlayerState(playerStateResponse.state)
+      return true
+    } catch {
+      setPlayerUsername(fallbackUsername)
+      applyPlayerState(fallbackState)
+      return false
+    }
+  }, [applyPlayerState, setPlayerUsername])
 
   useEffect(() => {
     setUnlockedAchievementIds((currentIds) =>
@@ -251,10 +291,6 @@ export default function App() {
       coins,
       levelXp,
       rankMmr,
-      ownedItemIds,
-      equippedButtonSkinId,
-      equippedArenaThemeId,
-      equippedProfileImageId,
       selectedModeId,
       roundHistory,
       unlockedAchievementIds,
@@ -263,12 +299,8 @@ export default function App() {
     authReady,
     authToken,
     coins,
-    equippedArenaThemeId,
-    equippedButtonSkinId,
-    equippedProfileImageId,
     isAuthed,
     levelXp,
-    ownedItemIds,
     progressReady,
     rankMmr,
     roundHistory,
@@ -293,8 +325,10 @@ export default function App() {
         const session = await fetchCurrentUser(authToken)
         if (isCancelled) return
 
-        setPlayerUsername(session.user.username)
-        applyAccountProgress(session.progress)
+        applyLocalProgress(session.progress)
+        await hydratePlayerState(authToken, session.progress, session.user.username)
+        if (isCancelled) return
+
         setIsAuthed(true)
         setProgressReady(true)
       } catch {
@@ -314,7 +348,14 @@ export default function App() {
     return () => {
       isCancelled = true
     }
-  }, [authToken, setAuthToken, setIsAuthed, setPlayerUsername])
+  }, [
+    applyLocalProgress,
+    authToken,
+    hydratePlayerState,
+    setAuthToken,
+    setIsAuthed,
+    setPlayerUsername,
+  ])
 
   async function handleLogin(username = "", password = "") {
     const normalizedUsername = normalizeUsername(username)
@@ -332,9 +373,9 @@ export default function App() {
         password,
       })
 
+      applyLocalProgress(response.progress)
+      await hydratePlayerState(response.token, response.progress, response.user.username)
       setAuthToken(response.token)
-      setPlayerUsername(response.user.username)
-      applyAccountProgress(response.progress)
       setIsAuthed(true)
       setProgressReady(true)
       return { ok: true }
@@ -355,9 +396,9 @@ export default function App() {
         password,
       })
 
+      applyLocalProgress(response.progress)
+      await hydratePlayerState(response.token, response.progress, response.user.username)
       setAuthToken(response.token)
-      setPlayerUsername(response.user.username)
-      applyAccountProgress(response.progress)
       setIsAuthed(true)
       setProgressReady(true)
       return { ok: true }
@@ -443,37 +484,47 @@ export default function App() {
     setSelectedModeId(nextModeId)
   }
 
-  function handlePurchase(item) {
+  async function handlePurchase(item) {
     const canPurchase = canPurchaseShopItem(item, coins, ownedItemIds)
-    if (!canPurchase) return false
+    if (!canPurchase || !authToken) {
+      return {
+        ok: false,
+        error: `Could not unlock ${item?.name || "that item"}.`,
+      }
+    }
 
-    setCoins((currentCoins) => currentCoins - item.cost)
-    setOwnedItemIds((currentItemIds) => [...currentItemIds, item.id])
-    return true
+    try {
+      const playerStateResponse = await purchaseShopItem(authToken, item.id)
+      setPlayerUsername(playerStateResponse.user.username || playerUsername)
+      applyPlayerState(playerStateResponse.state)
+      return { ok: true }
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message || `Could not unlock ${item.name}.`,
+      }
+    }
   }
 
-  function handleEquip(item) {
-    if (!item?.id || !item.type) return false
-
-    const isOwned = isShopItemOwned(item, ownedItemIds)
-    if (!isOwned) return false
-
-    if (item.type === "button_skin") {
-      setEquippedButtonSkinId(item.id)
-      return true
+  async function handleEquip(item) {
+    if (!item?.id || !item.type || !authToken || !isShopItemOwned(item, ownedItemIds)) {
+      return {
+        ok: false,
+        error: `Could not equip ${item?.name || "that item"}.`,
+      }
     }
 
-    if (item.type === "arena_theme") {
-      setEquippedArenaThemeId(item.id)
-      return true
+    try {
+      const playerStateResponse = await equipShopItem(authToken, item.id)
+      setPlayerUsername(playerStateResponse.user.username || playerUsername)
+      applyPlayerState(playerStateResponse.state)
+      return { ok: true }
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message || `Could not equip ${item.name}.`,
+      }
     }
-
-    if (item.type === "profile_image") {
-      setEquippedProfileImageId(item.id)
-      return true
-    }
-
-    return false
   }
 
   if (!authReady) {

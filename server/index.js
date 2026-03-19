@@ -13,8 +13,10 @@ import {
   saveUserProgress,
   updateUserPassword,
 } from "./db.js"
+import { createPlayerStateStore, PlayerStateError } from "./playerStateStore.js"
 
 const app = express()
+const playerStateStore = createPlayerStateStore()
 
 const PORT = Number(process.env.PORT || 4000)
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173"
@@ -82,6 +84,27 @@ function normalizeProgressPayload(body = {}) {
     roundHistory: body.roundHistory,
     unlockedAchievementIds: body.unlockedAchievementIds,
   }
+}
+
+function mergeProgressPayload(existingProgress = {}, nextProgress = {}) {
+  return Object.entries(nextProgress).reduce(
+    (mergedProgress, [key, value]) => (
+      value === undefined
+        ? mergedProgress
+        : { ...mergedProgress, [key]: value }
+    ),
+    { ...existingProgress }
+  )
+}
+
+function handleRouteError(error, response) {
+  if (error instanceof PlayerStateError) {
+    response.status(error.status).json({ error: error.message })
+    return
+  }
+
+  console.error(error)
+  response.status(500).json({ error: "Unexpected server error." })
 }
 
 function requireAuth(request, response, next) {
@@ -163,6 +186,13 @@ app.post("/api/auth/signup", async (request, response) => {
     role: "player",
   })
 
+  try {
+    await playerStateStore.ensurePlayerUser(createdUser)
+  } catch (error) {
+    handleRouteError(error, response)
+    return
+  }
+
   response.status(201).json(createAuthResponse(createdUser))
 })
 
@@ -187,13 +217,27 @@ app.post("/api/auth/login", async (request, response) => {
     return
   }
 
+  try {
+    await playerStateStore.ensurePlayerUser(user)
+  } catch (error) {
+    handleRouteError(error, response)
+    return
+  }
+
   response.json(createAuthResponse(user))
 })
 
-app.get("/api/auth/me", requireAuth, (request, response) => {
+app.get("/api/auth/me", requireAuth, async (request, response) => {
   const user = findUserById(request.auth.userId)
   if (!user) {
     response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  try {
+    await playerStateStore.ensurePlayerUser(user)
+  } catch (error) {
+    handleRouteError(error, response)
     return
   }
 
@@ -207,19 +251,87 @@ app.get("/api/auth/me", requireAuth, (request, response) => {
   })
 })
 
-app.put("/api/progress", requireAuth, (request, response) => {
+app.get("/api/player/state", requireAuth, async (request, response) => {
   const user = findUserById(request.auth.userId)
   if (!user) {
     response.status(401).json({ error: "Session is no longer valid." })
     return
   }
 
-  const progress = saveUserProgress({
-    userId: user.id,
-    ...normalizeProgressPayload(request.body),
-  })
+  try {
+    const playerState = await playerStateStore.getPlayerState({ user })
+    response.json(playerState)
+  } catch (error) {
+    handleRouteError(error, response)
+  }
+})
 
-  response.json({ progress })
+app.post("/api/shop/purchase", requireAuth, async (request, response) => {
+  const user = findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  try {
+    const playerState = await playerStateStore.purchaseItem({
+      user,
+      itemId: request.body?.itemId,
+    })
+    response.json(playerState)
+  } catch (error) {
+    handleRouteError(error, response)
+  }
+})
+
+app.post("/api/shop/equip", requireAuth, async (request, response) => {
+  const user = findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  try {
+    const playerState = await playerStateStore.equipItem({
+      user,
+      itemId: request.body?.itemId,
+    })
+    response.json(playerState)
+  } catch (error) {
+    handleRouteError(error, response)
+  }
+})
+
+app.put("/api/progress", requireAuth, async (request, response) => {
+  const user = findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  const currentProgress = findUserProgressByUserId(user.id)
+  const nextProgress = mergeProgressPayload(
+    currentProgress,
+    normalizeProgressPayload(request.body)
+  )
+
+  try {
+    if (nextProgress.coins !== undefined) {
+      await playerStateStore.syncCoins({
+        user,
+        coins: nextProgress.coins,
+      })
+    }
+
+    const progress = saveUserProgress({
+      userId: user.id,
+      ...nextProgress,
+    })
+
+    response.json({ progress })
+  } catch (error) {
+    handleRouteError(error, response)
+  }
 })
 
 async function startServer() {

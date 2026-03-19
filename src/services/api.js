@@ -50,6 +50,40 @@ export async function fetchCurrentUser(token) {
   }
 }
 
+export async function fetchPlayerState(token) {
+  try {
+    const response = await apiClient.get("/player/state", {
+      headers: buildAuthHeader(token),
+    })
+    return response.data
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Unable to load player state."))
+  }
+}
+
+async function postShopMutation(token, path, itemId, fallbackMessage) {
+  try {
+    const response = await apiClient.post(
+      path,
+      { itemId },
+      {
+        headers: buildAuthHeader(token),
+      }
+    )
+    return response.data
+  } catch (error) {
+    throw new Error(getErrorMessage(error, fallbackMessage))
+  }
+}
+
+export function purchaseShopItem(token, itemId) {
+  return postShopMutation(token, "/shop/purchase", itemId, "Unable to purchase that item.")
+}
+
+export function equipShopItem(token, itemId) {
+  return postShopMutation(token, "/shop/equip", itemId, "Unable to equip that item.")
+}
+
 export async function saveUserProgress(token, progress) {
   try {
     const response = await apiClient.put("/progress", progress, {
