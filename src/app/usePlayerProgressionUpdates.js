@@ -5,11 +5,16 @@ import { calculateRoundXp } from "../utils/progressionUtils.js"
 import { calculateRoundRankDelta } from "../utils/rankUtils.js"
 import { calculateRoundCoins } from "../utils/roundRewards.js"
 
-export function usePlayerProgressionUpdates ({
+export function usePlayerProgressionUpdates({
+  coins,
+  levelXp,
+  rankMmr,
+  roundHistory,
   setCoins,
   setLevelXp,
   setRankMmr,
   setRoundHistory,
+  persistProgress,
 }) {
   const handleRoundComplete = useCallback(
     (roundResult = {}) => {
@@ -62,23 +67,34 @@ export function usePlayerProgressionUpdates ({
         rankDelta,
       })
 
-      if (earnedCoins > 0) {
-        setCoins((currentCoins) => currentCoins + earnedCoins)
-      }
+      const nextCoins = Math.max(0, coins + earnedCoins)
+      const nextLevelXp = Math.max(0, levelXp + earnedXp)
+      const nextRankMmr = Math.max(0, rankMmr + rankDelta)
+      const nextRoundHistory = appendHistoryEntry(roundHistory, historyEntry)
 
-      if (earnedXp > 0) {
-        setLevelXp((currentXp) => currentXp + earnedXp)
-      }
+      setCoins(nextCoins)
+      setLevelXp(nextLevelXp)
+      setRankMmr(nextRankMmr)
+      setRoundHistory(nextRoundHistory)
 
-      if (rankDelta !== 0) {
-        setRankMmr((currentMmr) => Math.max(0, currentMmr + rankDelta))
-      }
-
-      setRoundHistory((currentHistory) =>
-        appendHistoryEntry(currentHistory, historyEntry)
-      )
+      void persistProgress({
+        coins: nextCoins,
+        levelXp: nextLevelXp,
+        rankMmr: nextRankMmr,
+        roundHistory: nextRoundHistory,
+      })
     },
-    [setCoins, setLevelXp, setRankMmr, setRoundHistory]
+    [
+      coins,
+      levelXp,
+      persistProgress,
+      rankMmr,
+      roundHistory,
+      setCoins,
+      setLevelXp,
+      setRankMmr,
+      setRoundHistory,
+    ]
   )
 
   return {

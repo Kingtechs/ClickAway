@@ -7,35 +7,23 @@ import express from "express"
 import { extractBearerToken, signAuthToken, verifyAuthToken } from "./auth.js"
 import {
   createUser,
+  findLeaderboardRows,
+  findUserProgressByUserId,
   findUserById,
   findUserByUsername,
+  saveUserProgress,
   updateUserPassword,
 } from "./db.js"
+import { createPlayerStateStore, PlayerStateError } from "./playerStateStore.js"
 
 const app = express()
+const playerStateStore = createPlayerStateStore()
 
 const PORT = Number(process.env.PORT || 4000)
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:5173"
 const JWT_SECRET = process.env.JWT_SECRET || ""
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin"
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || ""
-const BREACHED_PASSWORDS = new Set([
-  "123456", "12345678", "123456789", "12345", "1234", "123", 
-  "1234567", "111111", "000000", "123123", "1234567890",
-  "654321", "112233", "12345678910", "987654321",
-
-  "admin", "password", "Password", "admin123", "user", 
-  "guest", "root", "toor", "secret", "welcome", "Welcome1",
-
-  "qwerty", "qwerty123", "qwerasdf", "zxcvbnm", "1q2w3e4r",
-
-  "iloveyou", "minecraft", "dragon", "monkey", "sunshine", 
-  "princess", "football", "starwars", "batman", "superman",
-
-  "P@ssw0rd", "Pass@123", "Aa123456", "Admin@123", "Password1!",
-  "Abcd@1234", "Aa@123456", "password123", "Password123"
-]);
-
 
 if (!JWT_SECRET) {
   throw new Error("Missing JWT_SECRET. Set it in your environment before starting the server.")
@@ -59,16 +47,8 @@ function validateUsername(username) {
 }
 
 function validatePassword(password = "") {
-  if (!password) return "Password is required.";
-
-  if (password.length < 8) {
-    return "Password must be at least 8 characters.";
-  }
-
-  if (BREACHED_PASSWORDS.has(password)) {
-    return "Password is too simple."
-  }
-
+  if (!password) return "Password is required."
+  if (password.length < 8) return "Password must be at least 8 characters."
   return ""
 }
 
@@ -76,18 +56,56 @@ function buildAuthPayload(user) {
   return {
     id: user.id,
     username: user.username,
-    role: user.role || "player",
+    role: user.role,
   }
 }
 
-function createAuthResponse(user) {
+async function createAuthResponse(user) {
   return {
     token: signAuthToken(buildAuthPayload(user), JWT_SECRET),
     user: {
+      id: user.id,
       username: user.username,
-      role: user.role || "player",
+      role: user.role,
     },
+    progress: await findUserProgressByUserId(user.id),
   }
+}
+
+function normalizeProgressPayload(body = {}) {
+  return {
+    coins: body.coins,
+    levelXp: body.levelXp,
+    rankMmr: body.rankMmr,
+    ownedItemIds: body.ownedItemIds,
+    equippedButtonSkinId: body.equippedButtonSkinId,
+    equippedArenaThemeId: body.equippedArenaThemeId,
+    equippedProfileImageId: body.equippedProfileImageId,
+    selectedModeId: body.selectedModeId,
+    roundHistory: body.roundHistory,
+    unlockedAchievementIds: body.unlockedAchievementIds,
+  }
+}
+
+function mergeProgressPayload(existingProgress = {}, nextProgress = {}) {
+  return Object.entries(nextProgress).reduce(
+    (mergedProgress, [key, value]) => (
+      value === undefined
+        ? mergedProgress
+        : { ...mergedProgress, [key]: value }
+    ),
+    { ...existingProgress }
+  )
+}
+
+function handleRouteError(error, response) {
+  if (error instanceof PlayerStateError) {
+    response.status(error.status).json({ error: error.message })
+    return
+  }
+
+  console.error(error)
+  response.status(500).json({ error: "Unexpected server error." })
 }
 
 function requireAuth(request, response, next) {
@@ -123,6 +141,7 @@ async function seedAdminAccount() {
     await createUser({
       username: ADMIN_USERNAME,
       passwordHash,
+      role: "admin",
     })
     console.log(`Admin account created for username "${ADMIN_USERNAME}".`)
     return
@@ -165,9 +184,15 @@ app.post("/api/auth/signup", async (request, response) => {
   const createdUser = await createUser({
     username,
     passwordHash,
+    role: "player",
   })
 
-  response.status(201).json(createAuthResponse(createdUser))
+  try {
+    await playerStateStore.ensurePlayerUser(createdUser)
+    response.status(201).json(await createAuthResponse(createdUser))
+  } catch (error) {
+    handleRouteError(error, response)
+  }
 })
 
 app.post("/api/auth/login", async (request, response) => {
@@ -191,7 +216,12 @@ app.post("/api/auth/login", async (request, response) => {
     return
   }
 
-  response.json(createAuthResponse(user))
+  try {
+    await playerStateStore.ensurePlayerUser(user)
+    response.json(await createAuthResponse(user))
+  } catch (error) {
+    handleRouteError(error, response)
+  }
 })
 
 app.get("/api/auth/me", requireAuth, async (request, response) => {
@@ -201,12 +231,107 @@ app.get("/api/auth/me", requireAuth, async (request, response) => {
     return
   }
 
-  response.json({
-    user: {
-      username: user.username,
-      role: user.role,
-    },
-  })
+  try {
+    await playerStateStore.ensurePlayerUser(user)
+    response.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+      },
+      progress: await findUserProgressByUserId(user.id),
+    })
+  } catch (error) {
+    handleRouteError(error, response)
+  }
+})
+
+app.get("/api/player/state", requireAuth, async (request, response) => {
+  const user = await findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  try {
+    response.json(await playerStateStore.getPlayerState({ user }))
+  } catch (error) {
+    handleRouteError(error, response)
+  }
+})
+
+app.get("/api/leaderboard", requireAuth, async (request, response) => {
+  const user = await findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  try {
+    response.json({
+      rows: await findLeaderboardRows({ limit: 25 }),
+    })
+  } catch (error) {
+    handleRouteError(error, response)
+  }
+})
+
+app.post("/api/shop/purchase", requireAuth, async (request, response) => {
+  const user = await findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  try {
+    response.json(await playerStateStore.purchaseItem({
+      user,
+      itemId: request.body?.itemId,
+    }))
+  } catch (error) {
+    handleRouteError(error, response)
+  }
+})
+
+app.post("/api/shop/equip", requireAuth, async (request, response) => {
+  const user = await findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  try {
+    response.json(await playerStateStore.equipItem({
+      user,
+      itemId: request.body?.itemId,
+    }))
+  } catch (error) {
+    handleRouteError(error, response)
+  }
+})
+
+app.put("/api/progress", requireAuth, async (request, response) => {
+  const user = await findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  try {
+    const currentProgress = await findUserProgressByUserId(user.id)
+    const nextProgress = mergeProgressPayload(
+      currentProgress,
+      normalizeProgressPayload(request.body)
+    )
+    const progress = await saveUserProgress({
+      userId: user.id,
+      ...nextProgress,
+    })
+
+    response.json({ progress })
+  } catch (error) {
+    handleRouteError(error, response)
+  }
 })
 
 async function startServer() {

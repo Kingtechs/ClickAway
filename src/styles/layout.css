@@ -632,6 +632,42 @@
     border-spacing: 0;
 }
 
+.leaderboardStatusCard {
+    margin-top: 16px;
+    border: 1px solid rgba(174, 206, 243, 0.22);
+    border-radius: 16px;
+    padding: 18px;
+    background: rgba(20, 32, 53, 0.58);
+}
+
+.leaderboardStatusTitle {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #eef4ff;
+}
+
+.leaderboardRetryButton {
+    margin-top: 12px;
+    border: 1px solid rgba(174, 206, 243, 0.42);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font: inherit;
+    font-weight: 700;
+    color: #eef4ff;
+    background: rgba(105, 150, 204, 0.18);
+    cursor: pointer;
+}
+
+.leaderboardRetryButton:hover {
+    background: rgba(118, 166, 224, 0.24);
+}
+
+.leaderboardRetryButton:focus-visible {
+    outline: 2px solid rgba(148, 211, 255, 0.8);
+    outline-offset: 2px;
+}
+
 .leaderboardTable .leaderboardNumeric {
     text-align: right;
     font-variant-numeric: tabular-nums;

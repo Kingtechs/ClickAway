@@ -120,10 +120,10 @@ export const PROGRESSION_POINTS = [
 ]
 
 export const DATA_SYSTEM_POINTS = [
-  "Progress is stored in browser localStorage (device/browser specific).",
-  "Tracked data includes auth state, coins, XP, MMR, history, owned items, and equipped cosmetics.",
-  "Clearing browser/site storage resets progression and inventory state.",
-  "Switching browser profile/device starts a separate local profile unless data is migrated.",
+  "Progress is stored against your signed-in account on the server.",
+  "Tracked data includes coins, XP, MMR, history, owned items, equipped cosmetics, and unlocked achievements.",
+  "Clearing browser/site storage signs you out but does not erase account progression.",
+  "Signing into the same account on another browser/device restores the same stored progression.",
 ]
 
 export const FAQ_ITEMS = [
@@ -153,7 +153,7 @@ export const FAQ_ITEMS = [
   },
   {
     question: "Why does my account appear reset?",
-    answer: "Data is local to your browser storage. Clearing storage removes saved progress.",
+    answer: "Make sure you are signed into the same account. Progress now follows your account, not just one browser.",
   },
 ]
 

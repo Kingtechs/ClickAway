@@ -1,53 +1,93 @@
 import { useCallback } from "react"
 
+import { equipShopItem, purchaseShopItem } from "../services/api.js"
 import { canPurchaseShopItem, isShopItemOwned } from "../utils/shopUtils.js"
 
+function buildPurchaseError(item, coins, ownedItemIds) {
+  if (!item?.id) return "Unknown item."
+  if (item.builtIn) return "Built-in items cannot be purchased."
+  if (ownedItemIds.includes(item.id)) return "Item is already owned."
+  if (coins < item.cost) return "Not enough coins."
+  return "Could not unlock that item."
+}
+
+function buildEquipError(item, ownedItemIds) {
+  if (!item?.id || !item.type) return "Unknown item."
+  if (item.builtIn) return ""
+  if (!ownedItemIds.includes(item.id)) {
+    return "Item must be owned before it can be equipped."
+  }
+  return "Could not equip that item."
+}
+
 export function useShopActions({
+  authToken,
   coins,
   ownedItemIds,
-  setCoins,
-  setOwnedItemIds,
-  setEquippedButtonSkinId,
-  setEquippedArenaThemeId,
-  setEquippedProfileImageId,
+  applyPlayerState,
 }) {
-  const handlePurchase = useCallback((item) => {
+  const handlePurchase = useCallback(async (item) => {
     const canPurchase = canPurchaseShopItem(item, coins, ownedItemIds)
-    if (!canPurchase) return false
+    if (!canPurchase) {
+      return {
+        ok: false,
+        error: buildPurchaseError(item, coins, ownedItemIds),
+      }
+    }
 
-    setCoins((currentCoins) => currentCoins - item.cost)
-    setOwnedItemIds((currentItemIds) => [...currentItemIds, item.id])
-    return true
-  }, [coins, ownedItemIds, setCoins, setOwnedItemIds])
+    if (!authToken) {
+      return {
+        ok: false,
+        error: "You must be logged in to unlock items.",
+      }
+    }
 
-  const handleEquip = useCallback((item) => {
-    if (!item?.id || !item.type) return false
+    try {
+      const playerState = await purchaseShopItem(authToken, item.id)
+      applyPlayerState(playerState)
+      return { ok: true }
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message || "Could not unlock that item.",
+      }
+    }
+  }, [applyPlayerState, authToken, coins, ownedItemIds])
+
+  const handleEquip = useCallback(async (item) => {
+    if (!item?.id || !item.type) {
+      return {
+        ok: false,
+        error: "Unknown item.",
+      }
+    }
 
     const isOwned = isShopItemOwned(item, ownedItemIds)
-    if (!isOwned) return false
-
-    if (item.type === "button_skin") {
-      setEquippedButtonSkinId(item.id)
-      return true
+    if (!isOwned) {
+      return {
+        ok: false,
+        error: buildEquipError(item, ownedItemIds),
+      }
     }
 
-    if (item.type === "arena_theme") {
-      setEquippedArenaThemeId(item.id)
-      return true
+    if (!authToken) {
+      return {
+        ok: false,
+        error: "You must be logged in to equip items.",
+      }
     }
 
-    if (item.type === "profile_image") {
-      setEquippedProfileImageId(item.id)
-      return true
+    try {
+      const playerState = await equipShopItem(authToken, item.id)
+      applyPlayerState(playerState)
+      return { ok: true }
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message || "Could not equip that item.",
+      }
     }
-
-    return false
-  }, [
-    ownedItemIds,
-    setEquippedArenaThemeId,
-    setEquippedButtonSkinId,
-    setEquippedProfileImageId,
-  ])
+  }, [applyPlayerState, authToken, ownedItemIds])
 
   return {
     handlePurchase,

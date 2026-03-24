@@ -7,7 +7,8 @@ export function useAuthSession({
   authToken,
   setAuthToken,
   setIsAuthed,
-  setPlayerUsername,
+  applyAuthenticatedSession,
+  resetPlayerState,
 }) {
   const [authReady, setAuthReady] = useState(false)
 
@@ -17,6 +18,7 @@ export function useAuthSession({
     async function verifySession() {
       if (!authToken) {
         if (!isCancelled) {
+          resetPlayerState()
           setIsAuthed(false)
           setAuthReady(true)
         }
@@ -24,14 +26,15 @@ export function useAuthSession({
       }
 
       try {
-        const profile = await fetchCurrentUser(authToken)
+        const session = await fetchCurrentUser(authToken)
         if (isCancelled) return
 
-        setPlayerUsername(profile.username)
+        applyAuthenticatedSession(session)
         setIsAuthed(true)
       } catch {
         if (isCancelled) return
         setAuthToken("")
+        resetPlayerState()
         setIsAuthed(false)
       } finally {
         if (!isCancelled) {
@@ -45,7 +48,14 @@ export function useAuthSession({
     return () => {
       isCancelled = true
     }
-  }, [authToken, setAuthToken, setIsAuthed, setPlayerUsername])
+  }, [
+    authToken,
+    applyAuthenticatedSession,
+    resetPlayerState,
+    setAuthToken,
+    setAuthReady,
+    setIsAuthed,
+  ])
 
   const handleLogin = useCallback(async (username = "", password = "") => {
     const normalizedUsername = normalizeUsername(username)
@@ -64,7 +74,7 @@ export function useAuthSession({
       })
 
       setAuthToken(response.token)
-      setPlayerUsername(response.user.username)
+      applyAuthenticatedSession(response)
       setIsAuthed(true)
       return { ok: true }
     } catch (error) {
@@ -73,7 +83,7 @@ export function useAuthSession({
         error: error.message || "Unable to log in with those details.",
       }
     }
-  }, [setAuthToken, setIsAuthed, setPlayerUsername])
+  }, [applyAuthenticatedSession, setAuthToken, setIsAuthed])
 
   const handleSignup = useCallback(async (username = "", password = "") => {
     const normalizedUsername = normalizeUsername(username) || "Player"
@@ -85,7 +95,7 @@ export function useAuthSession({
       })
 
       setAuthToken(response.token)
-      setPlayerUsername(response.user.username)
+      applyAuthenticatedSession(response)
       setIsAuthed(true)
       return { ok: true }
     } catch (error) {
@@ -94,12 +104,13 @@ export function useAuthSession({
         error: error.message || "Unable to create account.",
       }
     }
-  }, [setAuthToken, setIsAuthed, setPlayerUsername])
+  }, [applyAuthenticatedSession, setAuthToken, setIsAuthed])
 
   const handleLogout = useCallback(() => {
     setAuthToken("")
+    resetPlayerState()
     setIsAuthed(false)
-  }, [setAuthToken, setIsAuthed])
+  }, [resetPlayerState, setAuthToken, setIsAuthed])
 
   return {
     authReady,

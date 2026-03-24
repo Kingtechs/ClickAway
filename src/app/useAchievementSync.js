@@ -3,12 +3,29 @@ import { useEffect } from "react"
 import { mergeUnlockedAchievementIds } from "./appStateHelpers.js"
 
 export function useAchievementSync({
+  unlockedAchievementIds,
   setUnlockedAchievementIds,
   unlockedAchievementIdsFromStats,
+  persistProgress,
 }) {
   useEffect(() => {
-    setUnlockedAchievementIds((currentIds) =>
-      mergeUnlockedAchievementIds(currentIds, unlockedAchievementIdsFromStats)
+    const mergedIds = mergeUnlockedAchievementIds(
+      unlockedAchievementIds,
+      unlockedAchievementIdsFromStats
     )
-  }, [setUnlockedAchievementIds, unlockedAchievementIdsFromStats])
+
+    if (mergedIds === unlockedAchievementIds) {
+      return
+    }
+
+    setUnlockedAchievementIds(mergedIds)
+    void persistProgress({
+      unlockedAchievementIds: mergedIds,
+    })
+  }, [
+    persistProgress,
+    setUnlockedAchievementIds,
+    unlockedAchievementIds,
+    unlockedAchievementIdsFromStats,
+  ])
 }
