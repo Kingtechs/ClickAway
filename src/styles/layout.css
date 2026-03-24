@@ -755,6 +755,11 @@
     gap: 8px;
 }
 
+.leaderboardTableRow:hover .leaderboardEntryHoverWrap,
+.leaderboardTableRow:focus-visible .leaderboardEntryHoverWrap {
+    z-index: 2;
+}
+
 .leaderboardPlayerName {
     display: inline-flex;
     align-items: center;
