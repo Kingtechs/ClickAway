@@ -57,6 +57,7 @@ export function useGameScreenController({
   playerXpIntoLevel = 0,
   playerXpToNextLevel = 0,
   playerRankMmr = 0,
+  playerBestScore = 0,
   buttonSkinClass = "skin-default",
   buttonSkinImageSrc = "",
   buttonSkinImageScale = 100,
@@ -67,6 +68,9 @@ export function useGameScreenController({
   const hasAwardedRoundRef = useRef(false)
   const shakeTimeoutRef = useRef(null)
   const freezeMovementUntilRef = useRef(0)
+  // Captures best score BEFORE this round starts so the game-over badge
+  // can compare against the correct baseline (history updates after round ends)
+  const previousBestScoreRef = useRef(0)
 
   const selectedMode = useMemo(
     () => getModeById(selectedModeId),
@@ -289,9 +293,10 @@ export function useGameScreenController({
     setRoundMode(nextRoundMode)
     resetRoundState(nextRoundMode)
     hasAwardedRoundRef.current = false
+    previousBestScoreRef.current = playerBestScore
     setCountdownValue(READY_COUNTDOWN_START)
     setPhase(ROUND_PHASE.COUNTDOWN)
-  }, [resetRoundState, selectedMode])
+  }, [playerBestScore, resetRoundState, selectedMode])
 
   const returnToReadyOverlay = useCallback(() => {
     const nextRoundMode = selectedMode
@@ -579,6 +584,7 @@ export function useGameScreenController({
       roundRankDelta,
       allowsRankProgression,
       selectedModeId,
+      bestScore: previousBestScoreRef.current,
       onPlayAgain: returnToReadyOverlay,
       onChooseMode: returnToReadyOverlay,
     },

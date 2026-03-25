@@ -255,6 +255,7 @@ export default function App() {
                 playerXpIntoLevel={levelProgress.xpIntoLevel}
                 playerXpToNextLevel={levelProgress.xpToNextLevel}
                 playerRankMmr={rankProgress.mmr}
+                playerBestScore={playerLeaderboardStats.bestScore}
                 buttonSkinClass={equippedButtonSkin?.effectClass}
                 buttonSkinImageSrc={equippedButtonSkin?.imageSrc}
                 buttonSkinImageScale={
