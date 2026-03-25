@@ -44,23 +44,56 @@ export async function fetchCurrentUser(token) {
     const response = await apiClient.get("/auth/me", {
       headers: buildAuthHeader(token),
     })
-    return response.data.user
+    return response.data
   } catch (error) {
     throw new Error(getErrorMessage(error, "Your session has expired."))
   }
 }
 
-export async function saveUserProgress(token, progress) {
+export async function fetchLeaderboard(token) {
   try {
-    const response = await apiClient.put(
-      "/progress",
-      { progress },
-      {
-        headers: buildAuthHeader(token),
-      }
-    )
-    return response.data.progress
+    const response = await apiClient.get("/leaderboard", {
+      headers: buildAuthHeader(token),
+    })
+    return response.data
   } catch (error) {
-    throw new Error(getErrorMessage(error, "Unable to save your progress."))
+    throw new Error(getErrorMessage(error, "Unable to load leaderboard."))
+  }
+}
+
+export async function updatePlayerProgress(token, progress = {}) {
+  try {
+    const response = await apiClient.put("/progress", progress, {
+      headers: buildAuthHeader(token),
+    })
+    return response.data
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Unable to sync progress."))
+  }
+}
+
+export async function purchaseShopItem(token, itemId) {
+  try {
+    const response = await apiClient.post(
+      "/shop/purchase",
+      { itemId },
+      { headers: buildAuthHeader(token) }
+    )
+    return response.data
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Unable to unlock that item."))
+  }
+}
+
+export async function equipShopItem(token, itemId) {
+  try {
+    const response = await apiClient.post(
+      "/shop/equip",
+      { itemId },
+      { headers: buildAuthHeader(token) }
+    )
+    return response.data
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Unable to equip that item."))
   }
 }

@@ -2,7 +2,12 @@ import { POWERUPS } from "../../../constants/gameConstants.js"
 
 const SEGMENT_COUNT = 5
 
-export default function PowerupTray({ powerupCharges, streak = 0, onUsePowerup, isPlaying = false }) {
+export default function PowerupTray({
+  powerupCharges,
+  streak = 0,
+  onUsePowerup,
+  isPlaying = false,
+}) {
   return (
     <section className="powerupPanel" aria-label="Power-ups">
       <div className="powerupTray">
@@ -27,15 +32,21 @@ export default function PowerupTray({ powerupCharges, streak = 0, onUsePowerup, 
             >
               <div className="powerupTop">
                 <strong className="powerupLabel">{powerup.label}</strong>
-                <div className="powerupCount">x{charges}</div>
+                <div className="powerupMeta">
+                  {isReady ? <span className="powerupReadyCue">Ready</span> : null}
+                  <div className="powerupCount">x{charges}</div>
+                </div>
               </div>
               <div className="powerupBottom">
+                <div className="powerupSlotBadge" aria-hidden="true">
+                  {powerup.key}
+                </div>
                 <img src={powerup.icon} alt="" className="powerupIcon" />
                 <div className="powerupSegmentBar">
-                  {Array.from({ length: SEGMENT_COUNT }, (_, i) => (
+                  {Array.from({ length: SEGMENT_COUNT }, (_, index) => (
                     <div
-                      key={i}
-                      className={`powerupSegment ${i < filledSegments ? "filled" : ""}`}
+                      key={index}
+                      className={`powerupSegment ${index < filledSegments ? "filled" : ""}`}
                     />
                   ))}
                 </div>

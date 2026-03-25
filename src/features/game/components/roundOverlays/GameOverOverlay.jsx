@@ -219,7 +219,6 @@ function GameOverXpProgress({
 
 export function GameOverOverlay({
   score,
-  bestScore = null,
   hits,
   misses,
   bestStreak,
@@ -236,6 +235,7 @@ export function GameOverOverlay({
   roundRankDelta = 0,
   allowsRankProgression = false,
   selectedModeId,
+  bestScore = 0,
   onPlayAgain,
   onChooseMode,
 }) {
@@ -245,10 +245,9 @@ export function GameOverOverlay({
     allowsRankProgression,
   })
   const isPracticeMode = !allowsCoinRewards && !allowsLevelProgression && !allowsRankProgression
-  const hasPriorBestScore = Number.isFinite(bestScore)
-  const isNewBestScore = hasPriorBestScore && score > bestScore
   const hasCleanRun = misses === 0
-  const scoreBadgeText = isNewBestScore ? "New Best" : hasCleanRun ? "Clean Run" : ""
+  const isNewBestScore = score > bestScore
+  const scoreBadgeText = isNewBestScore ? "New Personal Best!" : hasCleanRun ? "Clean Run" : ""
   const projectedMmr = Math.max(0, playerRankMmr + roundRankDelta)
   const projectedRankLabel = getRankTierFromMmr(projectedMmr).label
   const tone = getGameOverTone({ hits, misses, accuracy, bestStreak })
