@@ -242,14 +242,13 @@ export default function LeaderboardPage({
       <section className="card">
         <h1 className="cardTitle">Leaderboard</h1>
         <p className="muted">
-          Ranked leaderboard. Only Ranked mode rounds affect rank/MMR placement.
+          View your current rank/MMR placement.
         </p>
 
         <InfoStrip
           points={LEADERBOARD_INSIGHTS}
           collapsible
           defaultCollapsed
-          summary={LEADERBOARD_INSIGHTS[0]}
         />
 
         {isLoading ? (

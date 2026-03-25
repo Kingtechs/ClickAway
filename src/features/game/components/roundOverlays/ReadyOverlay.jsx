@@ -7,21 +7,18 @@ const MODE_ORDER = ["Practice", "Casual", "Ranked"]
 const MODE_COPY = [
   {
     name: "Practice",
-    description: "Train mechanics. No rewards.",
-    badge: "Training",
-    glyph: "P",
+    description: "Train mechanics.",
+    glyph: "1",
   },
   {
     name: "Casual",
-    description: "Earn XP + coins. No rank.",
-    badge: "Standard",
-    glyph: "C",
+    description: "Earn XP + coins.",
+    glyph: "2",
   },
   {
     name: "Ranked",
     description: "Earn XP + coins + rank. Harder penalties.",
-    badge: "Ranked",
-    glyph: "R",
+    glyph: "3",
   },
 ]
 
@@ -32,6 +29,7 @@ const MODE_COPY_BY_NAME = MODE_COPY.reduce((accumulator, mode) => {
 
 function getShrinkPaceLabel(shrinkFactor) {
   if (shrinkFactor >= 0.98) return "Relaxed"
+  if (shrinkFactor >= 0.96) return "Balanced"
   return "Aggressive"
 }
 
@@ -53,7 +51,6 @@ function toModeSlide(mode) {
     id: mode.id,
     name,
     tone: name.toLowerCase(),
-    badge: copy?.badge ?? "Mode",
     glyph: copy?.glyph ?? name.charAt(0),
     description: copy?.description ?? mode.playerHint,
     round,
@@ -73,7 +70,6 @@ function ModePreviewContent({ mode, animationClass = "" }) {
           <span className="modeCardGlyph" aria-hidden="true">{mode.glyph}</span>
           <h3 className="modeCardTitle">{mode.name}</h3>
         </div>
-        <span className="modeCardBadge">{mode.badge}</span>
       </header>
       <p className="modeCardDescription">{mode.description}</p>
       <div className="modeCardStats">

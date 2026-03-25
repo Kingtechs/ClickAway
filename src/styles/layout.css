@@ -725,7 +725,7 @@
 }
 
 .leaderboardTableRow.isCurrentUser td {
-    background: linear-gradient(90deg, rgba(108, 154, 211, 0.28), rgba(108, 154, 211, 0.1));
+    background-color: rgba(108, 154, 211, 0.2);
 }
 
 .leaderboardTableRow.isCurrentUser td:first-child {
@@ -745,7 +745,7 @@
 
 .leaderboardTableRow.isCurrentUser:hover td,
 .leaderboardTableRow.isCurrentUser:focus-visible td {
-    background: linear-gradient(90deg, rgba(121, 168, 222, 0.34), rgba(121, 168, 222, 0.14));
+    background-color: rgba(121, 168, 222, 0.26);
 }
 
 .leaderboardEntryHoverWrap {
@@ -905,10 +905,18 @@
 }
 
 .helpInlineList {
-    margin-top: 10px;
+    margin: 10px 0 0;
+    padding-left: 0;
+    list-style-position: inside;
     display: grid;
-    gap: 8px;
+    gap: 10px 18px;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    align-items: start;
+}
+
+.helpInlineList li {
+    margin: 0;
+    line-height: 1.4;
 }
 
 @media (prefers-reduced-motion: reduce) {
