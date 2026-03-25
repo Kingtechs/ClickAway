@@ -29,15 +29,6 @@
     z-index: 1;
 }
 
-.shopScreenEyebrow {
-    margin: 0 0 8px;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.42px;
-    text-transform: uppercase;
-    color: #9cc9ff;
-}
-
 .shopScreenTitle {
     margin-bottom: 0;
 }
@@ -180,18 +171,6 @@
     letter-spacing: -0.03em;
     -webkit-text-fill-color: currentColor;
     text-shadow: none;
-}
-
-.shopCommandBalanceMeta {
-    position: relative;
-    z-index: 1;
-    display: block;
-    margin-top: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.22px;
-    text-transform: uppercase;
-    color: #8c7750;
 }
 
 .shopCommandSection-balance .shopCommandLabel {

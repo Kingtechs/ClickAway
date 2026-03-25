@@ -254,10 +254,7 @@ export default function App() {
                 playerLevel={levelProgress.level}
                 playerXpIntoLevel={levelProgress.xpIntoLevel}
                 playerXpToNextLevel={levelProgress.xpToNextLevel}
-                playerLevelProgressPercent={levelProgress.progressPercent}
-                playerRankLabel={rankProgress.tierLabel}
                 playerRankMmr={rankProgress.mmr}
-                playerRankToNextTier={rankProgress.mmrToNextTier}
                 buttonSkinClass={equippedButtonSkin?.effectClass}
                 buttonSkinImageSrc={equippedButtonSkin?.imageSrc}
                 buttonSkinImageScale={

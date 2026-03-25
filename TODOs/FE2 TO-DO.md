@@ -162,9 +162,9 @@ Constraints:
 
 ## Low Priority
 
-### 12. Remove Dead Frontend Proxy Files And Unused Helpers
-- Why it matters: Extra compatibility files make it harder for beginners to know which file is the real source of truth.
-- Affected files/components: `src/config/shopCatalog.js`, `src/features/game/difficultyConfig.js`, `src/app/appStateHelpers.js`, `src/styles/_deprecated.css`
+### 12. Remove Dead Frontend Helpers And Deprecated Style Archives
+- Why it matters: Leftover helper exports and archived style files make it harder for beginners to know which code is actually active.
+- Affected files/components: `src/app/appStateHelpers.js`, `src/styles/_deprecated.css`
 - Ready-to-paste Codex prompt:
 ```md
 Audit the listed frontend files and remove or simplify only the ones that are truly unused.

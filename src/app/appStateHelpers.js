@@ -1,9 +1,5 @@
-import { DEFAULT_DIFFICULTY_ID as DEFAULT_MODE_ID, DIFFICULTIES_BY_ID as MODES_BY_ID } from "../constants/difficultyConfig.js"
+import { DIFFICULTIES_BY_ID as MODES_BY_ID } from "../constants/difficultyConfig.js"
 import { SHOP_ITEMS_BY_ID } from "../constants/shopCatalog.js"
-
-export function readSelectedModeId() {
-  return DEFAULT_MODE_ID
-}
 
 export function isValidModeId(modeId) {
   return Boolean(MODES_BY_ID[modeId])
