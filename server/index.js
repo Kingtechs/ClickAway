@@ -21,6 +21,7 @@ import {
   updateUserPassword,
   initializeSchema,
 } from "./db.js"
+import { calculateRewards } from "./roundRewards.js"
 import { createPlayerStateStore, PlayerStateError } from "./playerStateStore.js"
 
 const app = express()
@@ -312,6 +313,82 @@ app.post("/api/shop/equip", requireAuth, async (request, response) => {
       user,
       itemId: request.body?.itemId,
     }))
+  } catch (error) {
+    handleRouteError(error, response)
+  }
+})
+
+app.post("/api/round/complete", requireAuth, async (request, response) => {
+  const user = await findUserById(request.auth.userId)
+  if (!user) {
+    response.status(401).json({ error: "Session is no longer valid." })
+    return
+  }
+
+  const { modeId, hits, misses, score, bestStreak } = request.body ?? {}
+
+  const validModes = ["easy", "normal", "hard"]
+  if (!validModes.includes(modeId)) {
+    response.status(400).json({ error: "Invalid modeId." })
+    return
+  }
+
+  const normalizedHits = Math.max(0, Math.floor(Number(hits) || 0))
+  const normalizedMisses = Math.max(0, Math.floor(Number(misses) || 0))
+  const normalizedScore = Math.max(0, Math.floor(Number(score) || 0))
+  const normalizedBestStreak = Math.max(0, Math.floor(Number(bestStreak) || 0))
+
+  // Sanity check: streak can't exceed total hits
+  if (normalizedBestStreak > normalizedHits) {
+    response.status(400).json({ error: "Invalid round data." })
+    return
+  }
+
+  try {
+    const { earnedCoins, earnedXp, rankDelta, progressionMode } = calculateRewards({
+      modeId,
+      hits: normalizedHits,
+      misses: normalizedMisses,
+      score: normalizedScore,
+      bestStreak: normalizedBestStreak,
+    })
+
+    const currentProgress = await findUserProgressByUserId(user.id)
+
+    const nextCoins = Math.max(0, currentProgress.coins + earnedCoins)
+    const nextLevelXp = Math.max(0, currentProgress.levelXp + earnedXp)
+    const nextRankMmr = Math.max(0, currentProgress.rankMmr + rankDelta)
+
+    const historyEntry = {
+      score: normalizedScore,
+      hits: normalizedHits,
+      misses: normalizedMisses,
+      bestStreak: normalizedBestStreak,
+      coinsEarned: earnedCoins,
+      xpEarned: earnedXp,
+      rankDelta,
+      modeId,
+      progressionMode,
+      playedAtIso: new Date().toISOString(),
+    }
+
+    const nextRoundHistory = [historyEntry, ...currentProgress.roundHistory].slice(0, 100)
+
+    const progress = await saveUserProgress({
+      userId: user.id,
+      coins: nextCoins,
+      levelXp: nextLevelXp,
+      rankMmr: nextRankMmr,
+      ownedItemIds: currentProgress.ownedItemIds,
+      equippedButtonSkinId: currentProgress.equippedButtonSkinId,
+      equippedArenaThemeId: currentProgress.equippedArenaThemeId,
+      equippedProfileImageId: currentProgress.equippedProfileImageId,
+      selectedModeId: modeId,
+      roundHistory: nextRoundHistory,
+      unlockedAchievementIds: currentProgress.unlockedAchievementIds,
+    })
+
+    response.json({ progress, earnedCoins, earnedXp, rankDelta })
   } catch (error) {
     handleRouteError(error, response)
   }

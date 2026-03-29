@@ -8,7 +8,6 @@ import { useAppPlayerState } from "./app/useAppPlayerState.js"
 import { useAuthSession } from "./app/useAuthSession.js"
 import { usePlayerProgressionUpdates } from "./app/usePlayerProgressionUpdates.js"
 import { useShopActions } from "./app/useShopActions.js"
-import { updatePlayerProgress } from "./services/api.js"
 
 import Layout from "./components/Layout.jsx"
 import ProtectedRoute from "./components/routing/ProtectedRoute.jsx"
@@ -44,11 +43,8 @@ export default function App() {
 
     // progression
     coins,
-    setCoins,
     levelXp,
-    setLevelXp,
     rankMmr,
-    setRankMmr,
 
     // inventory + cosmetics
     ownedItemIds,
@@ -60,7 +56,6 @@ export default function App() {
     selectedModeId,
     setSelectedModeId,
     roundHistory,
-    setRoundHistory,
 
     // achievements
     unlockedAchievementIds,
@@ -170,15 +165,8 @@ export default function App() {
   })
 
   const { handleRoundComplete } = usePlayerProgressionUpdates({
-    coins,
-    levelXp,
-    rankMmr,
-    roundHistory,
-    setCoins,
-    setLevelXp,
-    setRankMmr,
-    setRoundHistory,
-    persistProgress,
+    authToken,
+    applyProgress,
   })
 
   const { handlePurchase, handleEquip } = useShopActions({

@@ -97,3 +97,16 @@ export async function equipShopItem(token, itemId) {
     throw new Error(getErrorMessage(error, "Unable to equip that item."))
   }
 }
+
+export async function submitRound(token, { modeId, hits, misses, score, bestStreak }) {
+  try {
+    const response = await apiClient.post(
+      "/round/complete",
+      { modeId, hits, misses, score, bestStreak },
+      { headers: buildAuthHeader(token) }
+    )
+    return response.data
+  } catch (error) {
+    throw new Error(getErrorMessage(error, "Unable to submit round."))
+  }
+}
