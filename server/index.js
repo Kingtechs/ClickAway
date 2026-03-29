@@ -19,6 +19,7 @@ import {
   findUserByUsername,
   saveUserProgress,
   updateUserPassword,
+  initializeSchema,
 } from "./db.js"
 import { createPlayerStateStore, PlayerStateError } from "./playerStateStore.js"
 
@@ -350,6 +351,7 @@ if (existsSync(distPath)) {
 }
 
 async function startServer() {
+  await initializeSchema()
   await seedAdminAccount()
   app.listen(PORT, () => {
     console.log(`Auth server listening on http://localhost:${PORT}`)

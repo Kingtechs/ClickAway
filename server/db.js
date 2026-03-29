@@ -36,7 +36,106 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || process.env.MYSQL_DATABASE || "clickaway",
   waitForConnections: true,
   connectionLimit: 10,
+  multipleStatements: true,
 })
+
+export async function initializeSchema() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS \`achievements_catalog\` (
+      \`id\` varchar(60) NOT NULL,
+      PRIMARY KEY (\`id\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    CREATE TABLE IF NOT EXISTS \`arena_themes\` (
+      \`id\` bigint(20) NOT NULL,
+      PRIMARY KEY (\`id\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    CREATE TABLE IF NOT EXISTS \`button_skins\` (
+      \`id\` bigint(20) NOT NULL,
+      PRIMARY KEY (\`id\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    CREATE TABLE IF NOT EXISTS \`profile_images\` (
+      \`id\` bigint(20) NOT NULL,
+      PRIMARY KEY (\`id\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    CREATE TABLE IF NOT EXISTS \`users\` (
+      \`id\` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+      \`username\` varchar(50) NOT NULL,
+      \`password_hash\` varchar(255) NOT NULL,
+      \`coins\` bigint(20) NOT NULL DEFAULT 0,
+      \`xp\` int(11) NOT NULL DEFAULT 0,
+      \`mmr\` int(11) NOT NULL DEFAULT 0,
+      \`current_button_skin_id\` bigint(20) DEFAULT NULL,
+      \`current_arena_theme_id\` bigint(20) DEFAULT NULL,
+      \`current_profile_theme_id\` bigint(20) DEFAULT NULL,
+      PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`uq_username\` (\`username\`),
+      KEY \`idx_users_mmr_id\` (\`mmr\`, \`id\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    CREATE TABLE IF NOT EXISTS \`round_history\` (
+      \`id\` bigint(20) NOT NULL AUTO_INCREMENT,
+      \`user_id\` bigint(20) UNSIGNED NOT NULL,
+      \`mode\` varchar(50) NOT NULL DEFAULT 'normal',
+      \`progression_mode\` varchar(50) NOT NULL DEFAULT 'non_ranked',
+      \`score\` int(11) NOT NULL DEFAULT 0,
+      \`hits\` int(11) NOT NULL DEFAULT 0,
+      \`misses\` int(11) NOT NULL DEFAULT 0,
+      \`best_streak\` int(11) NOT NULL DEFAULT 0,
+      \`coins_earned\` int(11) NOT NULL DEFAULT 0,
+      \`xp_earned\` int(11) NOT NULL DEFAULT 0,
+      \`rank_delta\` int(11) NOT NULL DEFAULT 0,
+      \`played_at\` timestamp NOT NULL DEFAULT current_timestamp(),
+      PRIMARY KEY (\`id\`),
+      KEY \`idx_user_played\` (\`user_id\`, \`played_at\`),
+      KEY \`idx_round_history_progression_user\` (\`progression_mode\`, \`user_id\`),
+      CONSTRAINT \`fk_round_history_user\`
+        FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    CREATE TABLE IF NOT EXISTS \`user_achievement_progress\` (
+      \`id\` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+      \`user_id\` bigint(20) UNSIGNED NOT NULL,
+      \`achievement_id\` varchar(60) NOT NULL,
+      \`unlocked_at\` timestamp NULL DEFAULT NULL,
+      PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`uq_user_achievement\` (\`user_id\`, \`achievement_id\`),
+      KEY \`idx_user_unlocked\` (\`user_id\`, \`unlocked_at\`),
+      KEY \`idx_achprog_catalog\` (\`achievement_id\`),
+      CONSTRAINT \`fk_achprog_user\`
+        FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    CREATE TABLE IF NOT EXISTS \`user_collection\` (
+      \`id\` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+      \`user_id\` bigint(20) UNSIGNED NOT NULL,
+      \`item_type\` varchar(50) NOT NULL,
+      \`item_id\` bigint(20) NOT NULL,
+      PRIMARY KEY (\`id\`),
+      UNIQUE KEY \`uq_user_item\` (\`user_id\`, \`item_type\`, \`item_id\`),
+      CONSTRAINT \`fk_collection_user\`
+        FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+    INSERT IGNORE INTO \`achievements_catalog\` (\`id\`) VALUES
+      ('career-coins-100000'),('career-coins-25000'),('career-level-30'),('career-level-50'),
+      ('career-ranked-1000'),('career-ranked-250'),('career-rounds-1000'),('career-rounds-250'),
+      ('easy-coins-500'),('easy-level-5'),('easy-ranked-1'),('easy-rounds-1'),('easy-rounds-10'),
+      ('hard-coins-5000'),('hard-level-15'),('hard-ranked-10'),('hard-ranked-50'),('hard-rounds-50'),
+      ('master-economy'),('master-level'),('master-of-masters'),('master-ranked'),('master-rounds');
+
+    INSERT IGNORE INTO \`arena_themes\` (\`id\`) VALUES (1),(2),(3),(4);
+
+    INSERT IGNORE INTO \`button_skins\` (\`id\`) VALUES
+      (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16);
+
+    INSERT IGNORE INTO \`profile_images\` (\`id\`) VALUES (1),(2),(3),(4),(5),(6),(7);
+  `)
+  console.log("Database schema initialized.")
+}
 
 function toNonNegativeNumber(value, fallback = 0) {
   const numericValue = Number(value)
