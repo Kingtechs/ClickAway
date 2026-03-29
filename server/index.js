@@ -116,16 +116,13 @@ async function createAuthResponse(user) {
 }
 
 function normalizeProgressPayload(body = {}) {
+  // Only allow safe client-controlled fields.
+  // coins, levelXp, rankMmr, and roundHistory are server-owned and never accepted from client.
   return {
-    coins: body.coins,
-    levelXp: body.levelXp,
-    rankMmr: body.rankMmr,
-    ownedItemIds: body.ownedItemIds,
     equippedButtonSkinId: body.equippedButtonSkinId,
     equippedArenaThemeId: body.equippedArenaThemeId,
     equippedProfileImageId: body.equippedProfileImageId,
     selectedModeId: body.selectedModeId,
-    roundHistory: body.roundHistory,
     unlockedAchievementIds: body.unlockedAchievementIds,
   }
 }
@@ -386,10 +383,10 @@ app.post("/api/round/complete", requireAuth, async (request, response) => {
     const nextRankMmr = Math.min(MAX_MMR, Math.max(0, currentProgress.rankMmr + rankDelta))
 
     const historyEntry = {
-      score: normalizedScore,
-      hits: normalizedHits,
-      misses: normalizedMisses,
-      bestStreak: normalizedBestStreak,
+      score,
+      hits,
+      misses,
+      bestStreak,
       coinsEarned: earnedCoins,
       xpEarned: earnedXp,
       rankDelta,
