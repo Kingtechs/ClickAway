@@ -344,7 +344,7 @@ const distPath = join(__dirname, "../dist")
 
 if (existsSync(distPath)) {
   app.use(express.static(distPath))
-  app.get("*", (_request, response) => {
+  app.get("/{*splat}", (_request, response) => {
     response.sendFile(join(distPath, "index.html"))
   })
 }
