@@ -10,6 +10,8 @@ import { existsSync } from "fs"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+import rateLimit from "express-rate-limit"
+
 import { extractBearerToken, signAuthToken, verifyAuthToken } from "./auth.js"
 import {
   createUser,
@@ -42,6 +44,25 @@ app.use(cors({
   credentials: false,
 }))
 app.use(express.json())
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: "Too many attempts. Please try again in 15 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: { error: "Too many requests. Please slow down." },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+app.use("/api/auth", authLimiter)
+app.use("/api", apiLimiter)
 
 function sanitizeUsername(username = "") {
   return String(username).trim()
