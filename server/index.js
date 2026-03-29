@@ -3,6 +3,12 @@ import "dotenv/config"
 import bcrypt from "bcryptjs"
 import cors from "cors"
 import express from "express"
+import { fileURLToPath } from "url"
+import { dirname, join } from "path"
+import { existsSync } from "fs"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 import { extractBearerToken, signAuthToken, verifyAuthToken } from "./auth.js"
 import {
@@ -333,6 +339,15 @@ app.put("/api/progress", requireAuth, async (request, response) => {
     handleRouteError(error, response)
   }
 })
+
+const distPath = join(__dirname, "../dist")
+
+if (existsSync(distPath)) {
+  app.use(express.static(distPath))
+  app.get("*", (_request, response) => {
+    response.sendFile(join(distPath, "index.html"))
+  })
+}
 
 async function startServer() {
   await seedAdminAccount()
