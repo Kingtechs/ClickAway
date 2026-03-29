@@ -353,8 +353,8 @@ if (existsSync(distPath)) {
 async function startServer() {
   await initializeSchema()
   await seedAdminAccount()
-  app.listen(PORT, () => {
-    console.log(`Auth server listening on http://localhost:${PORT}`)
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Auth server listening on http://0.0.0.0:${PORT}`)
   })
 }
 
