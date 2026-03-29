@@ -21,7 +21,7 @@ import {
   updateUserPassword,
   initializeSchema,
 } from "./db.js"
-import { calculateRewards } from "./roundRewards.js"
+import { calculateRewards, simulateRound } from "./roundRewards.js"
 import { createPlayerStateStore, PlayerStateError } from "./playerStateStore.js"
 
 const app = express()
@@ -325,32 +325,23 @@ app.post("/api/round/complete", requireAuth, async (request, response) => {
     return
   }
 
-  const { modeId, hits, misses, score, bestStreak } = request.body ?? {}
+  const { modeId, events } = request.body ?? {}
 
-  const validModes = ["easy", "normal", "hard"]
-  if (!validModes.includes(modeId)) {
-    response.status(400).json({ error: "Invalid modeId." })
+  const simulation = simulateRound(events, modeId)
+  if (!simulation.valid) {
+    response.status(400).json({ error: simulation.reason })
     return
   }
 
-  const normalizedHits = Math.max(0, Math.floor(Number(hits) || 0))
-  const normalizedMisses = Math.max(0, Math.floor(Number(misses) || 0))
-  const normalizedScore = Math.max(0, Math.floor(Number(score) || 0))
-  const normalizedBestStreak = Math.max(0, Math.floor(Number(bestStreak) || 0))
-
-  // Sanity check: streak can't exceed total hits
-  if (normalizedBestStreak > normalizedHits) {
-    response.status(400).json({ error: "Invalid round data." })
-    return
-  }
+  const { hits, misses, score, bestStreak } = simulation
 
   try {
     const { earnedCoins, earnedXp, rankDelta, progressionMode } = calculateRewards({
       modeId,
-      hits: normalizedHits,
-      misses: normalizedMisses,
-      score: normalizedScore,
-      bestStreak: normalizedBestStreak,
+      hits,
+      misses,
+      score,
+      bestStreak,
     })
 
     const currentProgress = await findUserProgressByUserId(user.id)

@@ -10,22 +10,13 @@ export function usePlayerProgressionUpdates({
     async (roundResult = {}) => {
       const {
         modeId = "",
-        hits = 0,
-        misses = 0,
-        score = 0,
-        bestStreak = 0,
+        events = [],
       } = roundResult
 
       if (!authToken) return
 
       try {
-        const response = await submitRound(authToken, {
-          modeId,
-          hits,
-          misses,
-          score,
-          bestStreak,
-        })
+        const response = await submitRound(authToken, { modeId, events })
         applyProgress(response.progress)
       } catch (error) {
         console.error("Unable to submit round:", error)

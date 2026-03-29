@@ -98,11 +98,11 @@ export async function equipShopItem(token, itemId) {
   }
 }
 
-export async function submitRound(token, { modeId, hits, misses, score, bestStreak }) {
+export async function submitRound(token, { modeId, events }) {
   try {
     const response = await apiClient.post(
       "/round/complete",
-      { modeId, hits, misses, score, bestStreak },
+      { modeId, events },
       { headers: buildAuthHeader(token) }
     )
     return response.data

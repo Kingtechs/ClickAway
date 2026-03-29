@@ -86,6 +86,8 @@ export function useGameScreenController({
   const [bestStreak, setBestStreak] = useState(0)
   const [hits, setHits] = useState(0)
   const [misses, setMisses] = useState(0)
+  const roundStartTimeRef = useRef(0)
+  const roundEventsRef = useRef([])
 
   const [roundMode, setRoundMode] = useState(selectedMode)
   const [buttonSize, setButtonSize] = useState(selectedMode.initialButtonSize)
@@ -293,6 +295,8 @@ export function useGameScreenController({
     setRoundMode(nextRoundMode)
     resetRoundState(nextRoundMode)
     hasAwardedRoundRef.current = false
+    roundEventsRef.current = []
+    roundStartTimeRef.current = 0
     setPreviousBestScore(playerBestScore)
     setCountdownValue(READY_COUNTDOWN_START)
     setPhase(ROUND_PHASE.COUNTDOWN)
@@ -389,6 +393,8 @@ export function useGameScreenController({
         roundMode.basePointsPerHit *
         getComboMultiplier(nextStreak, roundMode.comboStep)
 
+      roundEventsRef.current.push({ type: "hit", t: Date.now() - roundStartTimeRef.current })
+
       setStreak(nextStreak)
       setBestStreak((currentBestStreak) => Math.max(currentBestStreak, nextStreak))
       setHits((currentHits) => currentHits + 1)
@@ -416,6 +422,8 @@ export function useGameScreenController({
   const handleArenaClick = useCallback(
     (event) => {
       if (!isPlaying) return
+
+      roundEventsRef.current.push({ type: "miss", t: Date.now() - roundStartTimeRef.current })
 
       const missPenalty = roundMode.missPenalty
       setStreak(0)
@@ -454,6 +462,7 @@ export function useGameScreenController({
       setCountdownValue((currentCountdown) => {
         if (currentCountdown <= 1) {
           clearInterval(countdownInterval)
+          roundStartTimeRef.current = Date.now()
           setPhase(ROUND_PHASE.PLAYING)
           return 0
         }
@@ -498,6 +507,7 @@ export function useGameScreenController({
       allowsCoinRewards: roundMode.allowsCoinRewards !== false,
       allowsLevelProgression: roundMode.allowsLevelProgression !== false,
       allowsRankProgression: roundMode.allowsRankProgression === true,
+      events: roundEventsRef.current,
     })
   }, [
     bestStreak,

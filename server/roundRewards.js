@@ -1,11 +1,13 @@
-const DIFFICULTY_IDS = { EASY: "easy", NORMAL: "normal", HARD: "hard" }
 const PROGRESSION_MODE = { PRACTICE: "practice", NON_RANKED: "non_ranked", RANKED: "ranked" }
 
 const DIFFICULTIES_BY_ID = {
-  easy: { allowsCoinRewards: false, allowsLevelProgression: false, allowsRankProgression: false, coinMultiplier: 1, progressionMode: PROGRESSION_MODE.PRACTICE },
-  normal: { allowsCoinRewards: true, allowsLevelProgression: true, allowsRankProgression: false, coinMultiplier: 1, progressionMode: PROGRESSION_MODE.NON_RANKED },
-  hard: { allowsCoinRewards: true, allowsLevelProgression: true, allowsRankProgression: true, coinMultiplier: 1.5, progressionMode: PROGRESSION_MODE.RANKED },
+  easy:   { allowsCoinRewards: false, allowsLevelProgression: false, allowsRankProgression: false, coinMultiplier: 1,   progressionMode: PROGRESSION_MODE.PRACTICE,   comboStep: 6, basePointsPerHit: 1, missPenalty: 0, maxEvents: 800  },
+  normal: { allowsCoinRewards: true,  allowsLevelProgression: true,  allowsRankProgression: false, coinMultiplier: 1,   progressionMode: PROGRESSION_MODE.NON_RANKED, comboStep: 5, basePointsPerHit: 1, missPenalty: 1, maxEvents: 400  },
+  hard:   { allowsCoinRewards: true,  allowsLevelProgression: true,  allowsRankProgression: true,  coinMultiplier: 1.5, progressionMode: PROGRESSION_MODE.RANKED,     comboStep: 4, basePointsPerHit: 1, missPenalty: 2, maxEvents: 300  },
 }
+
+// Minimum milliseconds between any two clicks — below this is inhuman/scripted
+const MIN_CLICK_INTERVAL_MS = 80
 
 function clamp(value) {
   const n = Number.isFinite(value) ? value : 0
@@ -15,6 +17,54 @@ function clamp(value) {
 function accuracyPercent(hits, misses) {
   const total = hits + misses
   return total > 0 ? (hits / total) * 100 : 0
+}
+
+export function simulateRound(events, modeId) {
+  const mode = DIFFICULTIES_BY_ID[modeId]
+  if (!mode) return { valid: false, reason: "Invalid modeId." }
+
+  if (!Array.isArray(events)) return { valid: false, reason: "Events must be an array." }
+  if (events.length > mode.maxEvents) return { valid: false, reason: "Too many events." }
+
+  // Validate and sort events by timestamp
+  const sorted = [...events].sort((a, b) => a.t - b.t)
+
+  for (let i = 0; i < sorted.length; i++) {
+    const event = sorted[i]
+    if (event.type !== "hit" && event.type !== "miss") {
+      return { valid: false, reason: "Invalid event type." }
+    }
+    if (typeof event.t !== "number" || !Number.isFinite(event.t) || event.t < 0) {
+      return { valid: false, reason: "Invalid event timestamp." }
+    }
+    if (i > 0 && event.t - sorted[i - 1].t < MIN_CLICK_INTERVAL_MS) {
+      return { valid: false, reason: "Events too fast to be human." }
+    }
+  }
+
+  // Simulate the round
+  let score = 0
+  let streak = 0
+  let bestStreak = 0
+  let hits = 0
+  let misses = 0
+
+  for (const event of sorted) {
+    if (event.type === "hit") {
+      const nextStreak = streak + 1
+      const multiplier = 1 + Math.floor(nextStreak / mode.comboStep)
+      score += mode.basePointsPerHit * multiplier
+      streak = nextStreak
+      bestStreak = Math.max(bestStreak, streak)
+      hits++
+    } else {
+      score = Math.max(0, score - mode.missPenalty)
+      streak = 0
+      misses++
+    }
+  }
+
+  return { valid: true, hits, misses, score: Math.floor(score), bestStreak }
 }
 
 export function calculateRewards({ modeId, hits, misses, score, bestStreak }) {
