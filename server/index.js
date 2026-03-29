@@ -22,6 +22,7 @@ import {
   saveUserProgress,
   updateUserPassword,
   initializeSchema,
+  default as pool,
 } from "./db.js"
 import { calculateRewards, simulateRound } from "./roundRewards.js"
 import { createPlayerStateStore, PlayerStateError } from "./playerStateStore.js"
@@ -43,7 +44,7 @@ app.use(cors({
   origin: CLIENT_ORIGIN,
   credentials: false,
 }))
-app.use(express.json())
+app.use(express.json({ limit: "64kb" }))
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -79,6 +80,19 @@ function validatePassword(password = "") {
   if (!password) return "Password is required."
   if (password.length < 8) return "Password must be at least 8 characters."
   return ""
+}
+
+const MAX_COINS = 100_000_000
+const MAX_XP = 100_000_000
+const MAX_MMR = 100_000
+
+function clampProgressBounds(progress = {}) {
+  return {
+    ...progress,
+    ...(progress.coins !== undefined && { coins: Math.min(progress.coins, MAX_COINS) }),
+    ...(progress.levelXp !== undefined && { levelXp: Math.min(progress.levelXp, MAX_XP) }),
+    ...(progress.rankMmr !== undefined && { rankMmr: Math.min(progress.rankMmr, MAX_MMR) }),
+  }
 }
 
 function buildAuthPayload(user) {
@@ -367,9 +381,9 @@ app.post("/api/round/complete", requireAuth, async (request, response) => {
 
     const currentProgress = await findUserProgressByUserId(user.id)
 
-    const nextCoins = Math.max(0, currentProgress.coins + earnedCoins)
-    const nextLevelXp = Math.max(0, currentProgress.levelXp + earnedXp)
-    const nextRankMmr = Math.max(0, currentProgress.rankMmr + rankDelta)
+    const nextCoins = Math.min(MAX_COINS, Math.max(0, currentProgress.coins + earnedCoins))
+    const nextLevelXp = Math.min(MAX_XP, Math.max(0, currentProgress.levelXp + earnedXp))
+    const nextRankMmr = Math.min(MAX_MMR, Math.max(0, currentProgress.rankMmr + rankDelta))
 
     const historyEntry = {
       score: normalizedScore,
@@ -415,10 +429,21 @@ app.put("/api/progress", requireAuth, async (request, response) => {
 
   try {
     const currentProgress = await findUserProgressByUserId(user.id)
-    const nextProgress = mergeProgressPayload(
-      currentProgress,
-      normalizeProgressPayload(request.body)
+    const incoming = normalizeProgressPayload(request.body)
+
+    // Whitelist achievement IDs against the catalog
+    if (Array.isArray(incoming.unlockedAchievementIds)) {
+      const [catalogRows] = await pool.query("SELECT id FROM achievements_catalog")
+      const validIds = new Set(catalogRows.map((r) => r.id))
+      incoming.unlockedAchievementIds = incoming.unlockedAchievementIds.filter(
+        (id) => validIds.has(id)
+      )
+    }
+
+    const nextProgress = clampProgressBounds(
+      mergeProgressPayload(currentProgress, incoming)
     )
+
     const progress = await saveUserProgress({
       userId: user.id,
       ...nextProgress,
