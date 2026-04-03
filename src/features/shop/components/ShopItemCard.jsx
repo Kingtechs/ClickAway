@@ -1,3 +1,5 @@
+import { useState } from "react"
+
 import { getShopItemStatus } from "../../../utils/shopUtils.js"
 
 function getActionState({ isOwned, isEquipped, canAfford }) {
@@ -32,7 +34,7 @@ function getActionLabel({ item, isOwned, canAfford, coins, defaultLabel }) {
 }
 
 function getStateLabel({ isOwned, isEquipped, canAfford }) {
-  if (isEquipped) return "Active"
+  if (isEquipped) return "Equipped"
   if (isOwned) return "Owned"
   if (!canAfford) return "Locked"
   return "Ready"
@@ -66,6 +68,7 @@ export default function ShopItemCard({
   equippedArenaThemeId,
   equippedProfileImageId,
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const { isOwned, canAfford, isEquipped } = getShopItemStatus({
     item,
     coins,
@@ -83,12 +86,17 @@ export default function ShopItemCard({
   const visualState = getVisualState({ isOwned, isEquipped, canAfford })
 
   function handleAction() {
-    if (isOwned) {
-      onEquip?.(item)
-      return
-    }
+    if (isSubmitting) return
 
-    onPurchase?.(item)
+    setIsSubmitting(true)
+
+    const actionPromise = isOwned
+      ? onEquip?.(item)
+      : onPurchase?.(item)
+
+    Promise.resolve(actionPromise).finally(() => {
+      setIsSubmitting(false)
+    })
   }
 
   const hasImage = Boolean(item.imageSrc)
@@ -99,14 +107,17 @@ export default function ShopItemCard({
   const previewFrameClassName = `shopItemPreviewFrame is-${itemTypeClass}`
   const cardClassName = `shopItemCard shopItemCard-${visualState}`
   const actionButtonClassName = `primaryButton shopActionButton ${
-    isOwned ? "isEquip" : canAfford ? "isBuy" : "isLocked"
+    isEquipped ? "isEquipped" : isOwned ? "isEquip" : canAfford ? "isBuy" : "isLocked"
   }`
+  const isActionBusy = isSubmitting && !isEquipped
   const actionLabelDisplay = getActionLabel({
     item,
     isOwned,
     canAfford,
     coins,
-    defaultLabel: actionLabel,
+    defaultLabel: isActionBusy
+      ? (isOwned ? "Equipping..." : "Unlocking...")
+      : actionLabel,
   })
   const stateLabel = getStateLabel({ isOwned, isEquipped, canAfford })
   const priceLabel = getPriceLabel({ item })
@@ -147,16 +158,14 @@ export default function ShopItemCard({
       </div>
 
       <div className="shopItemFooter">
-        {isEquipped ? null : (
-          <button
-            type="button"
-            className={actionButtonClassName}
-            onClick={handleAction}
-            disabled={isActionDisabled}
-          >
-            {actionLabelDisplay}
-          </button>
-        )}
+        <button
+          type="button"
+          className={actionButtonClassName}
+          onClick={handleAction}
+          disabled={isActionDisabled || isSubmitting}
+        >
+          {actionLabelDisplay}
+        </button>
       </div>
     </article>
   )

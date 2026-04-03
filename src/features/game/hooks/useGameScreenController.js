@@ -57,6 +57,7 @@ export function useGameScreenController({
   playerXpIntoLevel = 0,
   playerXpToNextLevel = 0,
   playerRankMmr = 0,
+  playerRankLabel = "Unranked",
   playerBestScore = 0,
   buttonSkinClass = "skin-default",
   buttonSkinImageSrc = "",
@@ -68,9 +69,9 @@ export function useGameScreenController({
   const hasAwardedRoundRef = useRef(false)
   const shakeTimeoutRef = useRef(null)
   const freezeMovementUntilRef = useRef(0)
-  // Captures best score BEFORE this round starts so the game-over badge
-  // can compare against the correct baseline (history updates after round ends)
-  const previousBestScoreRef = useRef(0)
+  const buttonSpawnedAtRef = useRef(0)
+  const reactionTotalMsRef = useRef(0)
+  const reactionSampleCountRef = useRef(0)
 
   const selectedMode = useMemo(
     () => getModeById(selectedModeId),
@@ -93,6 +94,14 @@ export function useGameScreenController({
   const [timeLeft, setTimeLeft] = useState(selectedMode.durationSeconds)
   const [clickFeedbackItems, setClickFeedbackItems] = useState([])
   const [powerupCharges, setPowerupCharges] = useState(buildInitialPowerupCharges)
+  const [roundStartBestScore, setRoundStartBestScore] = useState(playerBestScore)
+  const [roundStartLevel, setRoundStartLevel] = useState(playerLevel)
+  const [roundStartXpIntoLevel, setRoundStartXpIntoLevel] = useState(playerXpIntoLevel)
+  const [roundStartXpToNextLevel, setRoundStartXpToNextLevel] = useState(playerXpToNextLevel)
+  const [roundStartRankMmr, setRoundStartRankMmr] = useState(playerRankMmr)
+  const [roundStartRankLabel, setRoundStartRankLabel] = useState(playerRankLabel)
+  const [avgReactionMs, setAvgReactionMs] = useState(null)
+  const [bestReactionMs, setBestReactionMs] = useState(null)
 
   const isPlaying = phase === ROUND_PHASE.PLAYING
   const canChangeMode =
@@ -165,6 +174,10 @@ export function useGameScreenController({
     shakeTimeoutRef.current = null
   }, [])
 
+  const markButtonSpawned = useCallback(() => {
+    buttonSpawnedAtRef.current = performance.now()
+  }, [])
+
   const triggerScreenShake = useCallback(() => {
     clearShakeTimeout()
     setIsShakeActive(true)
@@ -189,7 +202,8 @@ export function useGameScreenController({
 
     const arenaRect = arenaElement.getBoundingClientRect()
     setButtonPosition(getRandomPosition(arenaRect, nextButtonSize))
-  }, [])
+    markButtonSpawned()
+  }, [markButtonSpawned])
 
   const queueButtonReposition = useCallback(
     (nextButtonSize) => {
@@ -279,6 +293,11 @@ export function useGameScreenController({
       setClickFeedbackItems([])
       setPowerupCharges(buildInitialPowerupCharges())
       freezeMovementUntilRef.current = 0
+      buttonSpawnedAtRef.current = 0
+      reactionTotalMsRef.current = 0
+      reactionSampleCountRef.current = 0
+      setAvgReactionMs(null)
+      setBestReactionMs(null)
       setIsShakeActive(false)
       clearShakeTimeout()
       clearFeedbackTimeouts()
@@ -293,10 +312,24 @@ export function useGameScreenController({
     setRoundMode(nextRoundMode)
     resetRoundState(nextRoundMode)
     hasAwardedRoundRef.current = false
-    previousBestScoreRef.current = playerBestScore
+    setRoundStartBestScore(playerBestScore)
+    setRoundStartLevel(playerLevel)
+    setRoundStartXpIntoLevel(playerXpIntoLevel)
+    setRoundStartXpToNextLevel(playerXpToNextLevel)
+    setRoundStartRankMmr(playerRankMmr)
+    setRoundStartRankLabel(playerRankLabel)
     setCountdownValue(READY_COUNTDOWN_START)
     setPhase(ROUND_PHASE.COUNTDOWN)
-  }, [playerBestScore, resetRoundState, selectedMode])
+  }, [
+    playerBestScore,
+    playerLevel,
+    playerRankLabel,
+    playerRankMmr,
+    playerXpIntoLevel,
+    playerXpToNextLevel,
+    resetRoundState,
+    selectedMode,
+  ])
 
   const returnToReadyOverlay = useCallback(() => {
     const nextRoundMode = selectedMode
@@ -372,6 +405,27 @@ export function useGameScreenController({
       const pointsEarned =
         roundMode.basePointsPerHit *
         getComboMultiplier(nextStreak, roundMode.comboStep)
+      const hitReactionMs = buttonSpawnedAtRef.current > 0
+        ? Math.max(0, Math.round(performance.now() - buttonSpawnedAtRef.current))
+        : null
+
+      buttonSpawnedAtRef.current = 0
+
+      if (hitReactionMs !== null) {
+        reactionTotalMsRef.current += hitReactionMs
+        reactionSampleCountRef.current += 1
+
+        const nextAverageReactionMs = Math.round(
+          reactionTotalMsRef.current / reactionSampleCountRef.current
+        )
+
+        setAvgReactionMs(nextAverageReactionMs)
+        setBestReactionMs((currentBestReactionMs) => (
+          currentBestReactionMs === null
+            ? hitReactionMs
+            : Math.min(currentBestReactionMs, hitReactionMs)
+        ))
+      }
 
       setStreak(nextStreak)
       setBestStreak((currentBestStreak) => Math.max(currentBestStreak, nextStreak))
@@ -466,6 +520,11 @@ export function useGameScreenController({
   }, [isPlaying, isTimedRound])
 
   useEffect(() => {
+    if (!isPlaying) return
+    markButtonSpawned()
+  }, [isPlaying, markButtonSpawned])
+
+  useEffect(() => {
     if (phase !== ROUND_PHASE.GAME_OVER) return
     if (hasAwardedRoundRef.current) return
 
@@ -476,6 +535,8 @@ export function useGameScreenController({
       misses,
       score,
       bestStreak,
+      avgReactionMs,
+      bestReactionMs,
       modeId: roundMode.id,
       progressionMode: roundMode.progressionMode,
       coinMultiplier: roundMode.coinMultiplier,
@@ -485,6 +546,7 @@ export function useGameScreenController({
     })
   }, [
     bestStreak,
+    bestReactionMs,
     hits,
     misses,
     onRoundComplete,
@@ -496,6 +558,7 @@ export function useGameScreenController({
     roundMode.id,
     roundMode.progressionMode,
     score,
+    avgReactionMs,
   ])
 
   useEffect(() => {
@@ -532,8 +595,11 @@ export function useGameScreenController({
       score,
       timeLeft,
       isTimedRound,
+      modeLabel: roundMode.label,
+      rankLabel: playerRankLabel,
       streak,
       comboMultiplier,
+      comboActive: comboMultiplier > 1,
       bestStreak,
       isPlaying,
       onEndRound: endCurrentRound,
@@ -573,18 +639,21 @@ export function useGameScreenController({
       bestStreak,
       accuracy,
       modeLabel: roundMode.label,
-      playerLevel,
-      playerXpIntoLevel,
-      playerXpToNextLevel,
+      playerLevel: roundStartLevel,
+      playerXpIntoLevel: roundStartXpIntoLevel,
+      playerXpToNextLevel: roundStartXpToNextLevel,
       roundXpEarned,
       roundCoinsEarned,
       allowsCoinRewards,
       allowsLevelProgression,
-      playerRankMmr,
+      playerRankMmr: roundStartRankMmr,
+      playerRankLabel: roundStartRankLabel,
       roundRankDelta,
       allowsRankProgression,
       selectedModeId,
-      bestScore: previousBestScoreRef.current,
+      bestScore: roundStartBestScore,
+      avgReactionMs,
+      bestReactionMs,
       onPlayAgain: returnToReadyOverlay,
       onChooseMode: returnToReadyOverlay,
     },

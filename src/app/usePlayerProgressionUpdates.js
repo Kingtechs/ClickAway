@@ -29,6 +29,8 @@ export function usePlayerProgressionUpdates({
         misses = 0,
         score = 0,
         bestStreak = 0,
+        avgReactionMs = null,
+        bestReactionMs = null,
         modeId = "",
       } = roundResult
 
@@ -60,6 +62,8 @@ export function usePlayerProgressionUpdates({
         hits,
         misses,
         bestStreak,
+        avgReactionMs,
+        bestReactionMs,
         coinsEarned: earnedCoins,
         modeId,
         progressionMode,

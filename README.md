@@ -52,6 +52,19 @@ That SQL file creates the tables the app currently expects:
 - `user_achievement_progress`
 - lookup tables for cosmetics and achievements
 
+### 2a. Apply incremental migrations when needed
+
+Fresh databases created from `server/data/clickaway.sql` already include the
+current reaction-time columns on `round_history`.
+
+If you are upgrading an older local database instead of bootstrapping a new one,
+check `server/data/MIGRATIONS.md` and run any numbered scripts in
+`server/data/migrations/` that your database is missing.
+
+The first tracked migration is:
+
+- `001_add_round_reaction_metrics.sql`
+
 ### 3. Create your environment file
 
 Copy `.env.example` to `.env`.
@@ -170,16 +183,16 @@ The profile page summarizes a player's account:
 - coins
 - level progress
 - rank tier and MMR
-- best score and streak
+- best score, streak, and reaction metrics
 - achievement progress
 
 ### History
 
-The history page shows previously completed rounds, including score, hits, misses, rewards, and rank movement.
+The history page shows previously completed rounds, including score, hits, misses, rewards, reaction metrics, and rank movement.
 
 ### Leaderboard
 
-The leaderboard page currently combines the logged-in player's ranked stats with mock leaderboard entries. It is useful for UI work, but it is not backed by a real leaderboard API yet.
+The leaderboard page is backed by `GET /api/leaderboard` and renders live ranked standings returned by the server.
 
 ### Help
 
@@ -191,7 +204,10 @@ The help page explains controls, formulas, modes, ranking, progression, and othe
 ClickAway/
 |- public/                         Static images and rank/cosmetic assets
 |- server/
-|  |- data/clickaway (3).sql       Bootstrap MySQL schema
+|  |- data/
+|  |  |- clickaway.sql             Bootstrap MySQL schema for fresh databases
+|  |  |- MIGRATIONS.md             Manual migration ledger and environment notes
+|  |  |- migrations/               Incremental patches for older databases
 |  |- index.js                     Express app and API routes
 |  |- db.js                        MySQL queries and persistence helpers
 |  |- playerStateStore.js          Purchase/equip logic for player state
@@ -210,7 +226,6 @@ ClickAway/
 |  |- App.jsx                      Main route tree and page wiring
 |  |- main.jsx                     React app entry point
 |- .env.example                    Environment variable template
-|- MYSQL_AUDIT.md                  Notes on current MySQL ownership and gaps
 ```
 
 ## How State And Data Flow Through The App
@@ -229,7 +244,7 @@ A common path looks like this:
 
 - user logs in
 - backend returns a token and the user's saved progress
-- frontend stores the token and hydrates coins, XP, MMR, inventory, and history
+- frontend stores only the auth token in `localStorage` and hydrates coins, XP, MMR, inventory, and history from the server response
 - completing rounds updates local state
 - the frontend persists that state back to the backend through `PUT /api/progress`
 
@@ -248,8 +263,8 @@ If you are changing a specific part of the app, these are the main entry points:
 
 These are useful to know before making deeper changes:
 
-- The MySQL schema is bootstrapped from `server/data/clickaway (3).sql`; there is no migration system yet.
-- The leaderboard is not fully backend-driven yet. The current page still uses mock data for non-local players.
+- The MySQL schema is bootstrapped from `server/data/clickaway.sql`; there is no migration system yet.
+- The leaderboard is backend-driven through `GET /api/leaderboard`.
 - Shop metadata lives in the frontend, while the backend only knows item ids and mappings.
 - Achievement rules are evaluated in the frontend, while unlocked achievement ids are persisted in MySQL.
 - If you add or rename a cosmetic item, you usually need to update both `src/constants/shopCatalog.js` and `server/shopItemMap.js`, and keep the SQL seed ids aligned.

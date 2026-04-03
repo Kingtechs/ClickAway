@@ -8,51 +8,6 @@
 
 ---
 
-## ~~1. 🔴 The "Personal Best" badge on the game-over screen never shows up~~ ✅ Done
-
-~~**What's wrong:**
-When a round ends, there is a badge in the results screen that should light up and say "New Personal Best!" — but it is permanently invisible. The code that *displays* the badge is there, but the part of the app that *sends* the badge information to that screen was never wired up.~~
-
-~~**Why it matters:**
-This is a core piece of game feel. Players should get a satisfying moment when they beat their own score.~~
-
-~~**Action plan:**
-1. Open `src/App.jsx`.
-2. Find where `onRoundComplete` is called and where `roundHistory` is updated.
-3. Before updating history, calculate the previous best score from the existing history.
-4. Pass `bestScore` and `isNewBestScore` as props into `GameOverOverlay`.~~
-
----
-
-## ~~2. 🔴 The game HUD (score/timer bar) never shows the current mode or rank~~ ✅ Done
-
-~~**What's wrong:**
-During a game, the header bar receives two pieces of information — the mode name (e.g., "Ranked") and the player's current rank label (e.g., "Gold") — but it never actually displays them anywhere on screen. The data arrives but gets silently ignored.~~
-
-~~**Why it matters:**
-Players have no visual reminder of which mode they are in while playing.~~
-
-~~**Action plan:**
-1. Open `src/features/game/components/GameHud.jsx`.
-2. Find where `modeLabel` and `rankLabel` are listed as incoming props (around line 12).
-3. Add two small text elements to the JSX that render these values, positioned in the HUD.~~
-
----
-
-## 3. 🔴 Every player has the exact same avatar color
-
-**What's wrong:**
-Avatars are supposed to generate a unique color/gradient per player based on their username. Instead, every single player — no matter who they are — gets the same red gradient. The function that should pick a unique color ignores the username it is given.
-
-**Why it matters:**
-Avatars feel generic and players can't visually distinguish themselves or others.
-
-**Action plan:**
-1. Open `src/utils/profileAvatar.js`.
-2. The function `getProfileAvatarStyle` currently returns a hardcoded color. Replace the logic to use the `seedText` parameter (the username) to deterministically pick a color from a palette (e.g., hash the first character to an index in an array of colors).
-
----
-
 ## 4. 🔴 The same number-formatting code is copy-pasted in 4+ different places
 
 **What's wrong:**

@@ -35,26 +35,22 @@
 .profileHero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
-    gap: 18px;
+    gap: 28px;
     align-items: stretch;
 }
 
 .profileHeroMain {
-    border: 1px solid var(--profile-border-soft);
-    border-radius: 18px;
-    padding: clamp(16px, 2.7vw, 22px);
-    background:
-        linear-gradient(165deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-        radial-gradient(circle at 100% 0%, rgba(105, 197, 255, 0.11), rgba(105, 197, 255, 0) 45%);
+    padding-right: 24px;
+    border-right: 1px solid var(--profile-border-soft);
 }
 
 .profileEyebrow {
     margin: 0;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.56px;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    color: rgba(204, 225, 250, 0.86);
+    color: rgba(74, 168, 255, 0.6);
 }
 
 .profileTitle {
@@ -70,13 +66,15 @@
 }
 
 .profileAvatar {
-    width: 56px;
-    height: 56px;
+    width: 72px;
+    height: 72px;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 8px 18px rgba(6, 14, 28, 0.36);
+    border: 1px solid rgba(74, 168, 255, 0.36);
+    box-shadow:
+        0 0 0 1px rgba(74, 168, 255, 0.18),
+        0 8px 18px rgba(6, 14, 28, 0.36);
     font-family: "Space Grotesk", "Verdana", sans-serif;
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 700;
     color: #f8fcff;
     display: grid;
@@ -170,16 +168,18 @@
 .profileLevelProgressLabel {
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.46px;
-    color: rgba(207, 223, 244, 0.84);
+    letter-spacing: 1.2px;
+    color: rgba(74, 168, 255, 0.6);
     font-weight: 700;
 }
 
 .profileLevelProgressPercent {
     font-family: "Space Grotesk", "Verdana", sans-serif;
     font-size: 28px;
+    font-weight: 700;
     line-height: 1;
     color: #f3f9ff;
+    font-variant-numeric: tabular-nums;
 }
 
 .profileLevelProgressXpSummary {
@@ -322,6 +322,7 @@
     font-size: 13px;
     color: var(--rank-meta-color);
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
 .profileRankInsights {
@@ -403,6 +404,7 @@
     font-size: 15px;
     line-height: 1;
     color: rgba(237, 247, 255, 0.75);
+    font-variant-numeric: tabular-nums;
 }
 
 .profileRankActionsDivider {
@@ -418,33 +420,31 @@
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 
-.profileStatsGrid.isFiveColumns {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+.profileStatsGrid.isSummaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .profileStatsSections {
-    margin-top: 18px;
+    margin-top: 28px;
     display: grid;
-    gap: 10px;
+    gap: 0;
 }
 
 .profileStatsSection {
-    border: 1px solid rgba(167, 204, 244, 0.18);
-    border-radius: 14px;
-    padding: 9px;
-    background: rgba(9, 16, 31, 0.3);
+    padding: 22px 0 0;
+    border-top: 1px solid rgba(167, 204, 244, 0.1);
 }
 
 .profileStatsSectionHeader {
-    margin-bottom: 11px;
+    margin-bottom: 14px;
     display: grid;
-    gap: 2px;
+    gap: 3px;
 }
 
 .profileStatsSectionTitle {
     margin: 0;
     font-family: "Space Grotesk", "Verdana", sans-serif;
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1.1;
     color: #f3f9ff;
 }
@@ -452,7 +452,7 @@
 .profileStatsSectionDescription {
     margin: 0;
     font-size: 12px;
-    color: rgba(196, 215, 239, 0.64);
+    color: rgba(196, 215, 239, 0.56);
 }
 
 .profileStatCard {
@@ -574,14 +574,24 @@
     font-weight: 800;
     color: #f6fbff;
     line-height: 1.1;
+    font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 900px) {
     .profileHero {
         grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .profileHeroMain {
+        padding-right: 0;
+        padding-bottom: 24px;
+        border-right: none;
+        border-bottom: 1px solid var(--profile-border-soft);
     }
 
     .profileRankShowcase {
+        margin-top: 24px;
         align-items: flex-start;
         text-align: left;
     }
@@ -600,11 +610,6 @@
 
     .profilePlayerName {
         font-size: 21px;
-    }
-
-    .profileHeroMain,
-    .profileRankShowcase {
-        border-radius: 14px;
     }
 
     .profileHeroChip {
@@ -626,12 +631,8 @@
         min-height: 120px;
     }
 
-    .profileStatsGrid.isFiveColumns {
+    .profileStatsGrid.isSummaryGrid {
         grid-template-columns: 1fr;
-    }
-
-    .profileStatsSection {
-        padding: 10px;
     }
 }
 

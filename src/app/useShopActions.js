@@ -20,11 +20,45 @@ function buildEquipError(item, ownedItemIds) {
   return "Could not equip that item."
 }
 
+function hasFullProgressPayload(response) {
+  const progress = response?.progress
+  return Boolean(
+    progress &&
+    typeof progress === "object" &&
+    Array.isArray(progress.ownedItemIds) &&
+    progress.equippedButtonSkinId &&
+    progress.equippedArenaThemeId &&
+    progress.equippedProfileImageId
+  )
+}
+
+function buildEquipProgressPatch(item, equippedIds) {
+  if (item.type === "button_skin") {
+    return { equippedButtonSkinId: item.id }
+  }
+
+  if (item.type === "arena_theme") {
+    return { equippedArenaThemeId: item.id }
+  }
+
+  if (item.type === "profile_image") {
+    return { equippedProfileImageId: item.id }
+  }
+
+  return equippedIds
+}
+
 export function useShopActions({
   authToken,
   coins,
   ownedItemIds,
-  applyPlayerState,
+  equippedButtonSkinId,
+  equippedArenaThemeId,
+  equippedProfileImageId,
+  applyProgress,
+  applyAuthenticatedSession,
+  waitForPendingProgress,
+  syncProgressSnapshot,
 }) {
   const handlePurchase = useCallback(async (item) => {
     const canPurchase = canPurchaseShopItem(item, coins, ownedItemIds)
@@ -43,8 +77,16 @@ export function useShopActions({
     }
 
     try {
-      const playerState = await purchaseShopItem(authToken, item.id)
-      applyPlayerState(playerState)
+      await waitForPendingProgress?.()
+      const session = await purchaseShopItem(authToken, item.id)
+      const nextProgress = hasFullProgressPayload(session)
+        ? applyAuthenticatedSession(session)
+        : applyProgress({
+            ...syncProgressSnapshot?.(),
+            coins: Math.max(0, coins - (Number(item.cost) || 0)),
+            ownedItemIds: Array.from(new Set([...ownedItemIds, item.id])),
+          })
+      syncProgressSnapshot?.(nextProgress)
       return { ok: true }
     } catch (error) {
       return {
@@ -52,7 +94,15 @@ export function useShopActions({
         error: error.message || "Could not unlock that item.",
       }
     }
-  }, [applyPlayerState, authToken, coins, ownedItemIds])
+  }, [
+    applyProgress,
+    applyAuthenticatedSession,
+    authToken,
+    coins,
+    ownedItemIds,
+    syncProgressSnapshot,
+    waitForPendingProgress,
+  ])
 
   const handleEquip = useCallback(async (item) => {
     if (!item?.id || !item.type) {
@@ -78,8 +128,19 @@ export function useShopActions({
     }
 
     try {
-      const playerState = await equipShopItem(authToken, item.id)
-      applyPlayerState(playerState)
+      await waitForPendingProgress?.()
+      const session = await equipShopItem(authToken, item.id)
+      const nextProgress = hasFullProgressPayload(session)
+        ? applyAuthenticatedSession(session)
+        : applyProgress({
+            ...syncProgressSnapshot?.(),
+            ...buildEquipProgressPatch(item, {
+              equippedButtonSkinId,
+              equippedArenaThemeId,
+              equippedProfileImageId,
+            }),
+          })
+      syncProgressSnapshot?.(nextProgress)
       return { ok: true }
     } catch (error) {
       return {
@@ -87,7 +148,17 @@ export function useShopActions({
         error: error.message || "Could not equip that item.",
       }
     }
-  }, [applyPlayerState, authToken, ownedItemIds])
+  }, [
+    applyProgress,
+    applyAuthenticatedSession,
+    authToken,
+    equippedArenaThemeId,
+    equippedButtonSkinId,
+    equippedProfileImageId,
+    ownedItemIds,
+    syncProgressSnapshot,
+    waitForPendingProgress,
+  ])
 
   return {
     handlePurchase,

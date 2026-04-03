@@ -1,14 +1,5 @@
+import { formatPercent } from "../utils/gameMath.js"
 import { getRankImageSrc } from "../utils/rankUtils.js"
-
-function formatAccuracyValue(accuracy) {
-  if (typeof accuracy === "number" && Number.isFinite(accuracy)) {
-    const normalized = Math.max(0, Math.min(100, Math.round(accuracy)))
-    return `${normalized}%`
-  }
-
-  const parsedValue = Number.parseInt(String(accuracy ?? "").replace("%", ""), 10)
-  return Number.isFinite(parsedValue) ? `${Math.max(0, Math.min(100, parsedValue))}%` : "0%"
-}
 
 function HoverStatRow({ label, value, tone = "default" }) {
   return (
@@ -42,10 +33,16 @@ function RankedHoverRank({ rankLabel, rankMmr }) {
   )
 }
 
-export default function PlayerHoverCard({ rankLabel = "Unranked", rankMmr = 0, coins = 0, level = 1, accuracy = "0%" }) {
+export default function PlayerHoverCard({
+  rankLabel = "Unranked",
+  rankMmr = 0,
+  coins = 0,
+  level = 1,
+  accuracyPercent = 0,
+}) {
   const formattedCoins = Number.isFinite(coins) ? coins.toLocaleString() : "0"
   const normalizedLevel = Number.isFinite(level) ? Math.max(1, level) : 1
-  const formattedAccuracy = formatAccuracyValue(accuracy)
+  const formattedAccuracy = formatPercent(accuracyPercent)
 
   return (
     <div className="profileHoverCard">

@@ -5,8 +5,33 @@ export function getProfileInitials(name = "") {
   return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase()
 }
 
-export function getProfileAvatarStyle() {
+const AVATAR_GRADIENTS = [
+  "linear-gradient(145deg, #ff6b6b, #7b233a)",
+  "linear-gradient(145deg, #ff9f43, #7a3f0f)",
+  "linear-gradient(145deg, #ffd166, #7b5c11)",
+  "linear-gradient(145deg, #4dd4ac, #175b55)",
+  "linear-gradient(145deg, #54a0ff, #233b8b)",
+  "linear-gradient(145deg, #8c7ae6, #3d2f7b)",
+  "linear-gradient(145deg, #f368e0, #7a245d)",
+  "linear-gradient(145deg, #48dbfb, #17617a)",
+]
+
+function getAvatarGradientIndex(seedText = "") {
+  const normalizedSeedText = String(seedText).trim().toLowerCase()
+  if (!normalizedSeedText) return 0
+
+  let hash = 0
+
+  for (let index = 0; index < normalizedSeedText.length; index += 1) {
+    hash = ((hash << 5) - hash) + normalizedSeedText.charCodeAt(index)
+    hash |= 0
+  }
+
+  return (hash >>> 0) % AVATAR_GRADIENTS.length
+}
+
+export function getProfileAvatarStyle(seedText = "") {
   return {
-    background: "linear-gradient(145deg, #ff1919d2, #690b1288)",
+    background: AVATAR_GRADIENTS[getAvatarGradientIndex(seedText)],
   }
 }

@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom"
 
 import InfoStrip from "../components/InfoStrip.jsx"
 import PlayerHoverCard from "../components/PlayerHoverCard.jsx"
+import TierBadge from "../components/TierBadge.jsx"
 import { LEADERBOARD_INSIGHTS } from "../features/leaderboard/leaderboardData.js"
 import { fetchLeaderboard } from "../services/api.js"
+import { formatPercent, normalizePercentValue } from "../utils/gameMath.js"
 import { getLevelProgress } from "../utils/progressionUtils.js"
-import { getRankImageSrc, getRankProgressWithPlacement } from "../utils/rankUtils.js"
+import { getRankProgressWithPlacement } from "../utils/rankUtils.js"
 
 const SORTABLE_COLUMNS = [
   { key: "mmr", label: "MMR" },
@@ -16,19 +18,6 @@ const SORTABLE_COLUMNS = [
 ]
 
 const DEFAULT_SORT = { key: "mmr", direction: "desc" }
-
-function parseAccuracyPercent(accuracy) {
-  if (typeof accuracy === "number" && Number.isFinite(accuracy)) {
-    return Math.max(0, Math.min(100, Math.round(accuracy)))
-  }
-
-  const parsedValue = Number.parseInt(String(accuracy ?? "").replace("%", ""), 10)
-  return Number.isFinite(parsedValue) ? Math.max(0, Math.min(100, parsedValue)) : 0
-}
-
-function formatAccuracyPercent(accuracy) {
-  return `${parseAccuracyPercent(accuracy)}%`
-}
 
 function formatNumericValue(value) {
   const normalizedValue = Number(value)
@@ -61,7 +50,7 @@ function isCurrentUserRow(player, currentUserId, currentUsername) {
 function normalizeLeaderboardRow(row = {}, rowIndex = 0) {
   const rankedRounds = Math.max(0, Number(row.rankedRounds) || 0)
   const mmr = Math.max(0, Number(row.mmr) || 0)
-  const accuracyPercent = parseAccuracyPercent(row.accuracyPercent)
+  const accuracyPercent = normalizePercentValue(row.accuracyPercent)
   const levelXp = Math.max(0, Number(row.levelXp) || 0)
   const level = getLevelProgress(levelXp).level
   const rankProgress = getRankProgressWithPlacement(mmr, rankedRounds > 0)
@@ -77,7 +66,6 @@ function normalizeLeaderboardRow(row = {}, rowIndex = 0) {
     bestScore: Math.max(0, Number(row.bestScore) || 0),
     bestStreak: Math.max(0, Number(row.bestStreak) || 0),
     accuracyPercent,
-    accuracy: formatAccuracyPercent(accuracyPercent),
     rankLabel: rankProgress.tierLabel,
   }
 }
@@ -112,15 +100,17 @@ function SortableHeader({ label, columnKey, sortConfig, onSort }) {
   )
 }
 
-function TierBadge({ tierLabel = "Unranked" }) {
-  const normalizedLabel = String(tierLabel || "Unranked").trim()
-  const tierVariant = normalizedLabel.toLowerCase()
-  const rankImageSrc = getRankImageSrc(normalizedLabel)
+function RankDisplay({ rank = 0 }) {
+  const normalizedRank = Math.max(1, Number(rank) || 1)
+  const isTopThree = normalizedRank <= 3
+
+  if (!isTopThree) {
+    return <span className="leaderboardRankText">{formatNumericValue(normalizedRank)}</span>
+  }
 
   return (
-    <span className={`leaderboardTierBadge is-${tierVariant}`}>
-      {rankImageSrc ? <img src={rankImageSrc} alt="" className="leaderboardTierBadgeIcon" /> : null}
-      <span>{normalizedLabel}</span>
+    <span className={`leaderboardRankBadge is-rank${normalizedRank}`}>
+      {normalizedRank}
     </span>
   )
 }
@@ -222,19 +212,16 @@ export default function LeaderboardPage({
     })
   }
 
-  function handleProfileOpen(player, isCurrentUser) {
-    if (isCurrentUser) {
-      navigate("/profile")
-      return
-    }
-
-    console.log(`[Leaderboard] Open profile requested for: ${player.username}`)
+  function handleProfileOpen(isCurrentUser) {
+    if (!isCurrentUser) return
+    navigate("/profile")
   }
 
-  function handleRowKeyDown(event, player, isCurrentUser) {
+  function handleRowKeyDown(event, isCurrentUser) {
+    if (!isCurrentUser) return
     if (event.key !== "Enter" && event.key !== " ") return
     event.preventDefault()
-    handleProfileOpen(player, isCurrentUser)
+    handleProfileOpen(isCurrentUser)
   }
 
   return (
@@ -300,13 +287,15 @@ export default function LeaderboardPage({
                 return (
                   <tr
                     key={`${player.userId}-${player.rank}`}
-                    className={`leaderboardTableRow${isCurrentUser ? " isCurrentUser" : ""}`}
-                    tabIndex={0}
-                    onClick={() => handleProfileOpen(player, isCurrentUser)}
-                    onKeyDown={(event) => handleRowKeyDown(event, player, isCurrentUser)}
-                    aria-label={`Open ${player.username} profile`}
+                    className={`leaderboardTableRow${isCurrentUser ? " isCurrentUser isInteractive" : ""}`}
+                    tabIndex={isCurrentUser ? 0 : undefined}
+                    onClick={isCurrentUser ? () => handleProfileOpen(true) : undefined}
+                    onKeyDown={isCurrentUser
+                      ? (event) => handleRowKeyDown(event, true)
+                      : undefined}
+                    aria-label={isCurrentUser ? `Open ${player.username} profile` : undefined}
                   >
-                    <td>{formatNumericValue(player.rank)}</td>
+                    <td><RankDisplay rank={player.rank} /></td>
                     <td>
                       <div className="leaderboardEntryHoverWrap">
                         <span className="leaderboardPlayerName">
@@ -319,17 +308,17 @@ export default function LeaderboardPage({
                             rankMmr={player.mmr}
                             coins={player.coins}
                             level={player.level}
-                            accuracy={player.accuracy}
+                            accuracyPercent={player.accuracyPercent}
                           />
                         </div>
                       </div>
                     </td>
-                    <td><TierBadge tierLabel={player.rankLabel} /></td>
+                    <td><TierBadge tierLabel={player.rankLabel} className="leaderboardTierBadge" /></td>
                     <td className="leaderboardNumeric">{formatNumericValue(player.mmr)}</td>
                     <td className="leaderboardNumeric">{formatNumericValue(player.bestScore)}</td>
                     <td className="leaderboardNumeric">{formatNumericValue(player.bestStreak)}</td>
                     <td className="leaderboardNumeric">
-                      {formatAccuracyPercent(player.accuracyPercent)}
+                      {formatPercent(player.accuracyPercent)}
                     </td>
                   </tr>
                 )

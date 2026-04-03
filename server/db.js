@@ -25,7 +25,6 @@ const DEFAULT_PROGRESS = {
 
 const DEFAULT_ADMIN_USERNAME = "admin"
 const DEFAULT_DATABASE_PORT = 3306
-const DEFAULT_ACCURACY = "0%"
 const DEFAULT_PROGRESSION_MODE = "non_ranked"
 
 const pool = mysql.createPool({
@@ -41,6 +40,13 @@ const pool = mysql.createPool({
 function toNonNegativeNumber(value, fallback = 0) {
   const numericValue = Number(value)
   return Number.isFinite(numericValue) && numericValue >= 0 ? numericValue : fallback
+}
+
+function toNullableNonNegativeNumber(value) {
+  const numericValue = Number(value)
+  return Number.isFinite(numericValue) && numericValue >= 0
+    ? Math.round(numericValue)
+    : null
 }
 
 function parseDateValue(value) {
@@ -99,6 +105,8 @@ function normalizeRoundHistoryEntry(entry = {}, index = 0) {
     hits,
     misses,
     bestStreak: toNonNegativeNumber(entry.bestStreak, 0),
+    avgReactionMs: toNullableNonNegativeNumber(entry.avgReactionMs),
+    bestReactionMs: toNullableNonNegativeNumber(entry.bestReactionMs),
     coinsEarned: toNonNegativeNumber(entry.coinsEarned, 0),
     xpEarned: toNonNegativeNumber(entry.xpEarned, 0),
     rankDelta: Number.isFinite(Number(entry.rankDelta)) ? Number(entry.rankDelta) : 0,
@@ -138,45 +146,6 @@ function normalizeProgressInput(record = {}) {
   }
 }
 
-function formatPlayedAtLabel(playedAtDate) {
-  const now = new Date()
-  const yesterday = new Date(now)
-  yesterday.setDate(now.getDate() - 1)
-
-  const isSameDay = (firstDate, secondDate) => (
-    firstDate.getFullYear() === secondDate.getFullYear() &&
-    firstDate.getMonth() === secondDate.getMonth() &&
-    firstDate.getDate() === secondDate.getDate()
-  )
-
-  const formatTimeOnly = (date) => date.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  })
-
-  if (isSameDay(playedAtDate, now)) {
-    return `Today, ${formatTimeOnly(playedAtDate)}`
-  }
-
-  if (isSameDay(playedAtDate, yesterday)) {
-    return `Yesterday, ${formatTimeOnly(playedAtDate)}`
-  }
-
-  return playedAtDate.toLocaleString([], {
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
-}
-
-function formatAccuracy(hits, misses) {
-  const totalAttempts = hits + misses
-  if (totalAttempts <= 0) return DEFAULT_ACCURACY
-  return `${Math.round((hits / totalAttempts) * 100)}%`
-}
-
 function mapUserRow(row) {
   if (!row) return null
 
@@ -199,13 +168,14 @@ function buildHistoryEntry(row) {
 
   return {
     id: `r-${row.id}`,
-    playedAt: formatPlayedAtLabel(playedAtDate),
     playedAtIso: playedAtDate.toISOString(),
     score: toNonNegativeNumber(row.score, 0),
     hits,
     misses,
     bestStreak: toNonNegativeNumber(row.bestStreak, 0),
-    accuracy: formatAccuracy(hits, misses),
+    accuracyPercent: hits + misses > 0 ? (hits / (hits + misses)) * 100 : 0,
+    avgReactionMs: toNullableNonNegativeNumber(row.avgReactionMs),
+    bestReactionMs: toNullableNonNegativeNumber(row.bestReactionMs),
     coinsEarned: toNonNegativeNumber(row.coinsEarned, 0),
     modeId: String(row.modeId || DEFAULT_PROGRESS.selectedModeId),
     difficultyId: String(row.modeId || DEFAULT_PROGRESS.selectedModeId),
@@ -258,6 +228,8 @@ async function buildProgressRecord(executor, userId) {
        hits,
        misses,
        best_streak AS bestStreak,
+       avg_reaction_ms AS avgReactionMs,
+       best_reaction_ms AS bestReactionMs,
        coins_earned AS coinsEarned,
        xp_earned AS xpEarned,
        rank_delta AS rankDelta,
@@ -371,6 +343,8 @@ async function syncRoundHistory(executor, userId, progress) {
       entry.hits,
       entry.misses,
       entry.bestStreak,
+      entry.avgReactionMs,
+      entry.bestReactionMs,
       entry.coinsEarned,
       entry.xpEarned,
       entry.rankDelta,
@@ -387,6 +361,8 @@ async function syncRoundHistory(executor, userId, progress) {
        hits,
        misses,
        best_streak,
+       avg_reaction_ms,
+       best_reaction_ms,
        coins_earned,
        xp_earned,
        rank_delta,

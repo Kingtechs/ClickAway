@@ -148,7 +148,7 @@ export const PROFILE_POINTS = [
 
 export const TRACKING_POINTS = [
   "History keeps the 50 most recent rounds, newest first, with time, mode, score, hits, misses, accuracy, coins, XP, and rank delta.",
-  "If your account has no saved rounds yet, the History page shows sample rows so the table is not empty.",
+  "If your account has no saved rounds yet, the History page shows an empty state with a quick link back to Game.",
   "Leaderboard only includes players with ranked history and currently loads up to 25 players from the server.",
   "Server rank order is MMR first, then best score, best streak, accuracy, username, and user id as tie-breakers.",
   "Leaderboard headers let you re-sort the visible rows by MMR, best score, best streak, or accuracy.",
@@ -181,8 +181,8 @@ export const FAQ_ITEMS = [
     answer: "No. Cosmetics are visual only and do not modify gameplay stats.",
   },
   {
-    question: "Why is my History page showing example matches?",
-    answer: "Until your account has real saved rounds, History falls back to sample rows so the table is still readable.",
+    question: "Why is my History page empty?",
+    answer: "History stays empty until your account has real saved rounds. Once you finish a match, the page starts logging time, mode, score, rewards, and rank delta.",
   },
   {
     question: "How do achievements unlock?",

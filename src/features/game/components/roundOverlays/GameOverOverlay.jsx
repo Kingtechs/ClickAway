@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import TierBadge from "../../../../components/TierBadge.jsx"
 import { getLevelProgress, getRequiredXpForLevel } from "../../../../utils/progressionUtils.js"
 import { getRankTierFromMmr } from "../../../../utils/rankUtils.js"
 import { easeOutCubic, useCountUpNumber, usePrefersReducedMotion } from "./useOverlayMotion.js"
@@ -29,6 +30,15 @@ function clampNonNegativeInteger(value) {
   const normalizedValue = Number(value)
   if (!Number.isFinite(normalizedValue)) return 0
   return Math.max(0, Math.floor(normalizedValue))
+}
+
+function formatReactionTime(value) {
+  const normalizedValue = Number(value)
+  if (!Number.isFinite(normalizedValue) || normalizedValue <= 0) {
+    return "\u2014"
+  }
+
+  return `${Math.round(normalizedValue)} ms`
 }
 
 function getTotalXpBeforeLevel(level = 1) {
@@ -127,7 +137,7 @@ function getModeRewardsSummary({
   return "Rewards: XP, Coins"
 }
 
-function GameOverSection({ title, rows = [], panelType = "neutral" }) {
+function GameOverSection({ title, rows = [], panelType = "neutral", caption = "" }) {
   if (!rows.length) return null
 
   return (
@@ -152,6 +162,9 @@ function GameOverSection({ title, rows = [], panelType = "neutral" }) {
           </article>
         ))}
       </div>
+      {caption ? (
+        <p className="gameOverSectionCaption">{caption}</p>
+      ) : null}
     </section>
   )
 }
@@ -232,10 +245,13 @@ export function GameOverOverlay({
   allowsCoinRewards = false,
   allowsLevelProgression = false,
   playerRankMmr = 0,
+  playerRankLabel = "Unranked",
   roundRankDelta = 0,
   allowsRankProgression = false,
   selectedModeId,
   bestScore = 0,
+  avgReactionMs = null,
+  bestReactionMs = null,
   onPlayAgain,
   onChooseMode,
 }) {
@@ -250,6 +266,17 @@ export function GameOverOverlay({
   const scoreBadgeText = isNewBestScore ? "New Personal Best!" : hasCleanRun ? "Clean Run" : ""
   const projectedMmr = Math.max(0, playerRankMmr + roundRankDelta)
   const projectedRankLabel = getRankTierFromMmr(projectedMmr).label
+  const currentRankLabel = playerRankLabel || projectedRankLabel
+  const isPromotion = (
+    allowsRankProgression &&
+    roundRankDelta > 0 &&
+    currentRankLabel !== "Unranked" &&
+    currentRankLabel !== projectedRankLabel
+  )
+  const hasReactionData = avgReactionMs !== null || bestReactionMs !== null
+  const reactionCaption = hasReactionData
+    ? ""
+    : "Reaction stats populate in timed modes after your first recorded hit."
   const tone = getGameOverTone({ hits, misses, accuracy, bestStreak })
   const prefersReducedMotion = usePrefersReducedMotion()
   const [initialXpSnapshot] = useState(() => ({
@@ -278,12 +305,15 @@ export function GameOverOverlay({
   ))
   const [levelUpMessage, setLevelUpMessage] = useState("")
   const [isXpAnimationComplete, setIsXpAnimationComplete] = useState(() => shouldBypassXpAnimation)
+  const [showPromotionOverlay, setShowPromotionOverlay] = useState(() => isPromotion)
 
   const performanceRows = [
     { label: "Hits", value: hits },
     { label: "Misses", value: misses },
     { label: "Accuracy", value: accuracy },
     { label: "Best Streak", value: bestStreak },
+    { label: "Avg Reaction", value: formatReactionTime(avgReactionMs) },
+    { label: "Best Reaction", value: formatReactionTime(bestReactionMs) },
   ]
 
   const rewardRows = []
@@ -306,7 +336,11 @@ export function GameOverOverlay({
   }
   if (allowsRankProgression) {
     rewardRows.push({ label: "MMR After Match", value: `${projectedMmr}`, group: "status" })
-    rewardRows.push({ label: "New Rank", value: projectedRankLabel, group: "status" })
+    rewardRows.push({
+      label: "Current Rank",
+      content: <TierBadge tierLabel={projectedRankLabel} className="gameOverTierBadge" />,
+      group: "status",
+    })
   }
   const animatedScore = useCountUpNumber(score, {
     durationMs: 700,
@@ -329,6 +363,10 @@ export function GameOverOverlay({
   })
   const isScoreAnimationDone = prefersReducedMotion || animatedScore === score
   const formattedScore = Number(animatedScore).toLocaleString()
+
+  useEffect(() => {
+    setShowPromotionOverlay(isPromotion)
+  }, [isPromotion])
 
   useEffect(() => {
     if (!allowsLevelProgression) {
@@ -475,6 +513,29 @@ export function GameOverOverlay({
       <section
         className={`gameOverCard gameOverCardWithDifficulty difficultyMood-${selectedModeId} gameOverTone-${tone}`}
       >
+        {showPromotionOverlay ? (
+          <div className="gameOverPromotionOverlay" role="status" aria-live="polite">
+            <div className="gameOverPromotionCard">
+              <p className="gameOverPromotionEyebrow">Rank Promotion</p>
+              <h3 className="gameOverPromotionTitle">Promotion Secured</h3>
+              <p className="gameOverPromotionLead">
+                You climbed from {currentRankLabel} to {projectedRankLabel}.
+              </p>
+              <div className="gameOverPromotionTierRow" aria-hidden="true">
+                <TierBadge tierLabel={currentRankLabel} className="gameOverPromotionTier isPrevious" />
+                <span className="gameOverPromotionArrow">→</span>
+                <TierBadge tierLabel={projectedRankLabel} className="gameOverPromotionTier isCurrent" />
+              </div>
+              <button
+                type="button"
+                className="primaryButton primaryButton-lg gameOverPromotionButton"
+                onClick={() => setShowPromotionOverlay(false)}
+              >
+                View Results
+              </button>
+            </div>
+          </div>
+        ) : null}
         <header className="gameOverHeader">
           <h2 id="game-over-title" className="gameOverTitle">
             Round Complete
@@ -492,7 +553,9 @@ export function GameOverOverlay({
               {scoreBadgeText}
             </p>
           ) : null}
-          <p className="gameOverDifficultyBadge">{modeLabel}</p>
+          <p className={`gameOverDifficultyBadge${allowsRankProgression ? " is-ranked" : ""}`}>
+            {allowsRankProgression ? `⚔ ${modeLabel}` : modeLabel}
+          </p>
           {summaryRewardRows.length ? (
             <div className="gameOverSummaryRewards" aria-label={rewardsSummaryText}>
               {summaryRewardRows.map((row) => (
@@ -509,7 +572,12 @@ export function GameOverOverlay({
 
         <div className="gameOverBody">
           <div className="gameOverSections" aria-label="Round summary">
-            <GameOverSection title="Performance" rows={performanceRows} panelType="performance" />
+            <GameOverSection
+              title="Performance"
+              rows={performanceRows}
+              panelType="performance"
+              caption={reactionCaption}
+            />
             <GameOverSection title="Rewards" rows={rewardRows} panelType="rewards" />
           </div>
           {isPracticeMode ? (
@@ -518,7 +586,7 @@ export function GameOverOverlay({
         </div>
 
         <div className="overlayActions gameOverActions">
-          <button className="primaryButton" onClick={onPlayAgain}>
+          <button className="primaryButton primaryButton-lg" onClick={onPlayAgain}>
             Play Again
           </button>
           {isPracticeMode ? (

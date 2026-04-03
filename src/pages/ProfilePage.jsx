@@ -7,7 +7,8 @@ import {
   DEFAULT_ACHIEVEMENT_CATEGORY_KEY,
 } from "../game/achievements/achievementsList.js"
 import { evaluateAchievements } from "../game/achievements/evaluateAchievements.js"
-import { formatAccuracy } from "../utils/gameMath.js"
+import { calculateAccuracyPercent } from "../utils/gameMath.js"
+import { buildCareerReactionStats } from "../utils/historyUtils.js"
 import { isRankedModeEntry } from "../utils/modeUtils.js"
 import { getProfileAvatarStyle, getProfileInitials } from "../utils/profileAvatar.js"
 import { getRankImageSrc } from "../utils/rankUtils.js"
@@ -42,7 +43,7 @@ function buildProfileStats(roundHistory = []) {
     rankedRounds,
     bestScore,
     bestStreak,
-    overallAccuracy: formatAccuracy(totalHits, totalMisses),
+    overallAccuracyPercent: calculateAccuracyPercent(totalHits, totalMisses),
   }
 }
 
@@ -72,12 +73,18 @@ function formatNumber(value = 0) {
   return Number(value).toLocaleString()
 }
 
-function getProfileTagline({ totalRounds, overallAccuracy, bestStreak }) {
-  const accuracyValue = Number.parseInt(String(overallAccuracy).replace("%", ""), 10) || 0
+function formatReactionTime(value) {
+  const normalizedValue = Number(value)
+  if (!Number.isFinite(normalizedValue) || normalizedValue <= 0) return "\u2014"
+  return `${Math.round(normalizedValue)} ms`
+}
 
+function getProfileTagline({ totalRounds, overallAccuracyPercent, bestStreak }) {
   if (totalRounds === 0) return "No rounds logged yet. Queue up and start your run."
-  if (accuracyValue >= 85 && bestStreak >= 10) return "Precision specialist. Your tempo is locked in."
-  if (accuracyValue >= 70) return "Strong fundamentals. Keep building consistency."
+  if (overallAccuracyPercent >= 85 && bestStreak >= 10) {
+    return "Precision specialist. Your tempo is locked in."
+  }
+  if (overallAccuracyPercent >= 70) return "Strong fundamentals. Keep building consistency."
   return "Momentum is building. Focus accuracy and chain longer streaks."
 }
 
@@ -142,6 +149,9 @@ function formatSignedValue(value = 0) {
   const normalized = Number(value) || 0
   return `${normalized > 0 ? "+" : ""}${normalized}`
 }
+
+const REACTION_UNAVAILABLE_TOOLTIP =
+  "Reaction time appears after at least one recorded hit in a timed round."
 
 export default function ProfilePage({
   onLogout,
@@ -229,6 +239,7 @@ export default function ProfilePage({
   }, [categoryMasterAchievements, evaluatedAchievements, selectedCategoryKey])
 
   const profileStats = buildProfileStats(roundHistory)
+  const reactionStats = buildCareerReactionStats(roundHistory)
   const rankedInsights = buildRankedInsights(roundHistory)
   const rankLabel = rankProgress.tierLabel ?? "Unranked"
   const rankMmr = rankProgress.mmr ?? 0
@@ -249,7 +260,7 @@ export default function ProfilePage({
   })
   const playerInitials = getProfileInitials(playerName)
   const hasProfileImage = Boolean(equippedProfileImage?.imageSrc)
-  const avatarStyle = hasProfileImage ? undefined : getProfileAvatarStyle()
+  const avatarStyle = hasProfileImage ? undefined : getProfileAvatarStyle(playerName)
   const avatarClassName = `profileAvatar ${equippedProfileImage?.effectClass ?? ""} ${hasProfileImage ? "hasImage" : ""}`
 
   const playerProgressStats = [
@@ -287,6 +298,22 @@ export default function ProfilePage({
       tooltip: "Longest uninterrupted combo chain.",
       tone: "streak",
       isFeatured: true,
+    },
+    {
+      label: "Avg Reaction",
+      value: formatReactionTime(reactionStats.avgReactionMs),
+      tooltip: reactionStats.avgReactionMs === null
+        ? REACTION_UNAVAILABLE_TOOLTIP
+        : "Average reaction time across recorded rounds with hit data.",
+      tone: "score",
+    },
+    {
+      label: "Best Reaction",
+      value: formatReactionTime(reactionStats.bestReactionMs),
+      tooltip: reactionStats.bestReactionMs === null
+        ? REACTION_UNAVAILABLE_TOOLTIP
+        : "Fastest recorded hit response in saved round history.",
+      tone: "level",
     },
   ]
   const combinedSummaryStats = [...playerProgressStats, ...performanceStats]
@@ -398,7 +425,7 @@ export default function ProfilePage({
             title="Player Summary"
             description="Progression and performance in one view."
             stats={combinedSummaryStats}
-            gridClassName="isFiveColumns"
+            gridClassName="isSummaryGrid"
           />
 
           <section className="profileStatsSection profileAchievementsSection" aria-label="Achievements">

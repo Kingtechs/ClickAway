@@ -9,7 +9,7 @@ export default function Layout({
   isAuthed,
   coins,
   level,
-  accuracy,
+  accuracyPercent,
   rankLabel,
   rankMmr,
 }) {
@@ -24,7 +24,7 @@ export default function Layout({
         isAuthed={isAuthed}
         coins={coins}
         level={level}
-        accuracy={accuracy}
+        accuracyPercent={accuracyPercent}
         rankLabel={rankLabel}
         rankMmr={rankMmr}
       />

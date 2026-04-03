@@ -1,5 +1,8 @@
 import { MAX_HISTORY_ENTRIES } from "../constants/historyConstants.js"
-import { formatAccuracy } from "./gameMath.js"
+import {
+  calculateAccuracyPercent,
+  normalizePercentValue,
+} from "./gameMath.js"
 
 function formatTimeOnly(date) {
   return date.toLocaleTimeString([], {
@@ -14,6 +17,56 @@ function isSameDay(firstDate, secondDate) {
     firstDate.getMonth() === secondDate.getMonth() &&
     firstDate.getDate() === secondDate.getDate()
   )
+}
+
+function normalizeReactionMetric(value) {
+  const numericValue = Number(value)
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return null
+  }
+
+  return Math.round(numericValue)
+}
+
+function normalizeNonNegativeNumber(value) {
+  return Math.max(0, Number(value) || 0)
+}
+
+function normalizePlayedAtIso(value, fallbackDate = new Date()) {
+  const parsedDate = value ? new Date(value) : fallbackDate
+  return Number.isNaN(parsedDate.getTime())
+    ? fallbackDate.toISOString()
+    : parsedDate.toISOString()
+}
+
+export function normalizeHistoryEntry(entry = {}, index = 0) {
+  const fallbackDate = new Date(Date.now() - index)
+  const playedAtIso = normalizePlayedAtIso(
+    entry.playedAtIso ?? entry.playedAt,
+    fallbackDate
+  )
+  const hits = normalizeNonNegativeNumber(entry.hits)
+  const misses = normalizeNonNegativeNumber(entry.misses)
+
+  return {
+    id: String(entry.id || `r-${Date.parse(playedAtIso)}-${index}`),
+    playedAtIso,
+    score: normalizeNonNegativeNumber(entry.score),
+    hits,
+    misses,
+    bestStreak: normalizeNonNegativeNumber(entry.bestStreak),
+    accuracyPercent: normalizePercentValue(
+      entry.accuracyPercent ?? calculateAccuracyPercent(hits, misses)
+    ),
+    avgReactionMs: normalizeReactionMetric(entry.avgReactionMs),
+    bestReactionMs: normalizeReactionMetric(entry.bestReactionMs),
+    coinsEarned: normalizeNonNegativeNumber(entry.coinsEarned),
+    modeId: String(entry.modeId || entry.difficultyId || ""),
+    difficultyId: String(entry.modeId || entry.difficultyId || ""),
+    progressionMode: String(entry.progressionMode || ""),
+    xpEarned: normalizeNonNegativeNumber(entry.xpEarned),
+    rankDelta: Number.isFinite(Number(entry.rankDelta)) ? Number(entry.rankDelta) : 0,
+  }
 }
 
 /**
@@ -60,6 +113,8 @@ export function createHistoryEntry({
   hits = 0,
   misses = 0,
   bestStreak = 0,
+  avgReactionMs = null,
+  bestReactionMs = null,
   coinsEarned = 0,
   modeId = "",
   difficultyId = "",
@@ -70,22 +125,23 @@ export function createHistoryEntry({
   const playedDate = new Date()
   const resolvedModeId = modeId || difficultyId
 
-  return {
+  return normalizeHistoryEntry({
     id: `r-${playedDate.getTime()}-${Math.random().toString(16).slice(2, 6)}`,
-    playedAt: formatPlayedAtLabel(playedDate),
     playedAtIso: playedDate.toISOString(),
     score,
     hits,
     misses,
     bestStreak,
-    accuracy: formatAccuracy(hits, misses),
+    accuracyPercent: calculateAccuracyPercent(hits, misses),
+    avgReactionMs: normalizeReactionMetric(avgReactionMs),
+    bestReactionMs: normalizeReactionMetric(bestReactionMs),
     coinsEarned,
     modeId: resolvedModeId,
     difficultyId: resolvedModeId,
     progressionMode,
     xpEarned,
     rankDelta,
-  }
+  })
 }
 
 /**
@@ -101,14 +157,14 @@ export function appendHistoryEntry(currentHistory, nextEntry) {
 /**
  * Creates leaderboard values from saved round history.
  * @param {Object[]} historyEntries
- * @returns {{bestScore: number, bestStreak: number, accuracy: string}}
+ * @returns {{bestScore: number, bestStreak: number, accuracyPercent: number}}
  */
 export function buildPlayerLeaderboardStats(historyEntries) {
   if (!historyEntries.length) {
     return {
       bestScore: 0,
       bestStreak: 0,
-      accuracy: "0%",
+      accuracyPercent: 0,
     }
   }
 
@@ -127,6 +183,36 @@ export function buildPlayerLeaderboardStats(historyEntries) {
   return {
     bestScore,
     bestStreak,
-    accuracy: formatAccuracy(totalHits, totalMisses),
+    accuracyPercent: calculateAccuracyPercent(totalHits, totalMisses),
+  }
+}
+
+export function buildCareerReactionStats(historyEntries = []) {
+  const rows = Array.isArray(historyEntries) ? historyEntries : []
+  let reactionRounds = 0
+  let totalAverageReactionMs = 0
+  let bestReactionMs = null
+
+  rows.forEach((entry) => {
+    const entryAverageReactionMs = normalizeReactionMetric(entry?.avgReactionMs)
+    const entryBestReactionMs = normalizeReactionMetric(entry?.bestReactionMs)
+
+    if (entryAverageReactionMs !== null) {
+      reactionRounds += 1
+      totalAverageReactionMs += entryAverageReactionMs
+    }
+
+    if (entryBestReactionMs !== null) {
+      bestReactionMs = bestReactionMs === null
+        ? entryBestReactionMs
+        : Math.min(bestReactionMs, entryBestReactionMs)
+    }
+  })
+
+  return {
+    avgReactionMs: reactionRounds > 0
+      ? Math.round(totalAverageReactionMs / reactionRounds)
+      : null,
+    bestReactionMs,
   }
 }

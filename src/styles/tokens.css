@@ -1,5 +1,9 @@
 /* Design tokens: shared colors, shadows, radii, and global theme variables. */
 :root {
+    --surface-0: #090f1d;
+    --surface-1: #111a30;
+    --surface-2: rgba(16, 24, 42, 0.92);
+    --surface-3: rgba(21, 33, 58, 0.88);
     --bg: #090f1d;
     --bg-soft: #111a30;
     --panel: rgba(16, 24, 42, 0.92);
@@ -9,6 +13,11 @@
     --line: rgba(255, 255, 255, 0.16);
     --brand: #4aa8ff;
     --brand-strong: #2d7fee;
+    --positive: #53d7b3;
+    --negative: #ff6a75;
+    --caution: #f4ad47;
+    --special: #c084fc;
+    --gold: #f3c966;
     --topbar-bg: rgba(10, 16, 31, 0.86);
     --game-bg-1: #101426;
     --game-bg-2: #242d4a;
@@ -20,4 +29,22 @@
     --radius-md: 16px;
     --radius-lg: 20px;
     --radius-pill: 999px;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --dur-fast: 0.12s;
+    --dur-quick: 0.18s;
+    --dur-base: 0.22s;
+    --dur-slow: 0.36s;
+    --z-base: 0;
+    --z-raised: 1;
+    --z-sticky: 40;
+    --z-overlay: 50;
+    --z-tooltip: 65;
+    --z-modal: 80;
 }

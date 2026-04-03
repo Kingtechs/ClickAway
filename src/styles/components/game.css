@@ -51,29 +51,50 @@
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.45px;
-    color: rgba(210, 226, 247, 0.84);
+    letter-spacing: 1.2px;
+    color: rgba(74, 168, 255, 0.6);
+}
+
+.hudTopMeta {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.2px;
+    color: rgba(226, 242, 255, 0.76);
+    text-align: center;
+}
+
+.scoreNumber,
+.timerText {
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    line-height: 1;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
 }
 
 .scoreNumber {
-    font-family: "Space Grotesk", "Verdana", sans-serif;
     font-size: clamp(42px, 7vw, 62px);
-    font-weight: 700;
     color: var(--score-color);
-    letter-spacing: 0.3px;
-    line-height: 1;
     text-shadow: 0 8px 24px var(--score-glow);
-    transition: color 0.2s ease, text-shadow 0.2s ease;
+    transition: color var(--dur-quick) ease, text-shadow var(--dur-quick) ease;
 }
 
 .timerText {
     color: var(--hud-color);
-    font-size: clamp(24px, 4.2vw, 36px);
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    line-height: 1.05;
-    text-align: center;
-    transition: color 0.2s ease;
+    font-size: clamp(42px, 7vw, 62px);
+    transition: color var(--dur-quick) ease;
+}
+
+.timerText.timerUrgent {
+    color: var(--caution);
+    animation: timerPulse 0.9s ease-in-out infinite;
+}
+
+.timerText.timerDanger {
+    color: var(--negative);
+    animation: timerPulse 0.5s ease-in-out infinite;
 }
 
 .hudStatusLine {
@@ -410,6 +431,7 @@
 }
 
 .gameOverCard {
+    position: relative;
     background: linear-gradient(170deg, rgba(17, 23, 41, 0.95), rgba(22, 32, 57, 0.92));
     color: #eff4ff;
     border: 1px solid rgba(255, 255, 255, 0.18);
@@ -543,6 +565,12 @@
     text-transform: uppercase;
     color: rgba(233, 244, 255, 0.95);
     background: rgba(255, 255, 255, 0.08);
+}
+
+.gameOverDifficultyBadge.is-ranked {
+    border-color: rgba(243, 196, 90, 0.52);
+    background: rgba(183, 140, 40, 0.18);
+    color: rgba(255, 228, 140, 0.96);
 }
 
 .gameOverRewardsLine {
@@ -932,18 +960,18 @@
 }
 
 .modeCard-ranked {
-    border-color: rgba(203, 120, 120, 0.42);
-    background: linear-gradient(170deg, rgba(153, 78, 78, 0.24), rgba(255, 255, 255, 0.04));
+    border-color: rgba(243, 196, 90, 0.5);
+    background: linear-gradient(170deg, rgba(183, 140, 40, 0.22), rgba(255, 255, 255, 0.04));
 }
 
 .modeCard-ranked::before {
-    background: rgba(219, 134, 134, 0.9);
+    background: rgba(243, 196, 90, 0.9);
 }
 
 .modeCard-ranked .modeCardGlyph,
 .modeCard-ranked .modeCardBadge {
-    border-color: rgba(214, 147, 147, 0.5);
-    background: rgba(190, 104, 104, 0.24);
+    border-color: rgba(243, 196, 90, 0.48);
+    background: rgba(183, 140, 40, 0.22);
 }
 
 .modeCardStats {
@@ -1108,10 +1136,96 @@
 
 .gameOverSection.panel-performance {
     background: linear-gradient(170deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.025));
+    animation: pageEnter 0.3s ease-out both;
 }
 
 .gameOverSection.panel-rewards {
     background: linear-gradient(170deg, rgba(104, 172, 237, 0.08), rgba(255, 255, 255, 0.03));
+    animation: pageEnter 0.3s ease-out both;
+    animation-delay: 300ms;
+}
+
+.gameOverTierBadge {
+    justify-self: end;
+}
+
+.gameOverPromotionOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-modal);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    border-radius: inherit;
+    background: rgba(5, 9, 18, 0.72);
+    backdrop-filter: blur(10px);
+}
+
+.gameOverPromotionCard {
+    width: min(440px, 100%);
+    display: grid;
+    justify-items: center;
+    gap: 14px;
+    padding: 28px 24px;
+    border: 1px solid rgba(243, 196, 90, 0.42);
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(243, 196, 90, 0.22), rgba(243, 196, 90, 0) 42%),
+        linear-gradient(180deg, rgba(35, 28, 20, 0.94), rgba(24, 20, 15, 0.94));
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.34),
+        0 0 32px rgba(243, 196, 90, 0.16);
+    animation: promotionCelebrate 0.42s ease-out both;
+}
+
+.gameOverPromotionEyebrow {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255, 227, 153, 0.96);
+}
+
+.gameOverPromotionTitle {
+    margin: 0;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: clamp(28px, 4vw, 38px);
+    line-height: 1;
+    color: #fff7e5;
+}
+
+.gameOverPromotionLead {
+    margin: 0;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.45;
+    color: rgba(255, 239, 207, 0.9);
+}
+
+.gameOverPromotionTierRow {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.gameOverPromotionTier.isPrevious {
+    opacity: 0.72;
+}
+
+.gameOverPromotionTier.isCurrent {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 1px rgba(243, 196, 90, 0.32), 0 0 20px rgba(243, 196, 90, 0.18);
+}
+
+.gameOverPromotionArrow {
+    font-size: 24px;
+    font-weight: 900;
+    color: rgba(255, 224, 148, 0.96);
+}
+
+.gameOverPromotionButton {
+    min-width: 190px;
 }
 
 .gameOverSectionTitle {
@@ -1119,8 +1233,8 @@
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.45px;
-    color: rgba(212, 228, 249, 0.84);
+    letter-spacing: 1.2px;
+    color: rgba(74, 168, 255, 0.6);
     text-align: left;
 }
 
@@ -1165,10 +1279,13 @@
     text-align: right;
     justify-self: end;
     min-width: 88px;
+    font-variant-numeric: tabular-nums;
 }
 
 .gameOverListContent {
     min-width: 0;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .gameOverListValue.isReward {
@@ -1198,15 +1315,17 @@
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.42px;
-    color: rgba(205, 222, 244, 0.82);
+    letter-spacing: 1.2px;
+    color: rgba(74, 168, 255, 0.6);
 }
 
 .gameOverXpProgressPercent {
     font-family: "Space Grotesk", "Verdana", sans-serif;
     font-size: 24px;
+    font-weight: 700;
     line-height: 1;
     color: #f6faff;
+    font-variant-numeric: tabular-nums;
 }
 
 .gameOverXpProgressSummary {
@@ -1291,6 +1410,13 @@
     text-align: center;
     color: rgba(208, 221, 242, 0.74);
     font-size: 11px;
+}
+
+.gameOverSectionCaption {
+    margin: 8px 2px 0;
+    font-size: 11px;
+    line-height: 1.4;
+    color: rgba(205, 220, 241, 0.74);
 }
 
 .gameOverActions {
@@ -1420,6 +1546,7 @@
     --arena-saturation: 1.22;
 }
 
+.scoreNumber.comboActive,
 .gameScreen.streakTier3 .scoreNumber,
 .gameScreen.streakTier4 .scoreNumber {
     animation: scoreBreath var(--pulse-duration) ease-in-out infinite;
@@ -1431,9 +1558,15 @@
 
 @media (prefers-reduced-motion: reduce) {
     .arena::before,
+    .scoreNumber.comboActive,
     .gameScreen.streakTier3 .scoreNumber,
     .gameScreen.streakTier4 .scoreNumber,
     .gameScreen.isShaking .arena,
+    .timerText.timerUrgent,
+    .timerText.timerDanger,
+    .gameOverPromotionCard,
+    .gameOverSection.panel-performance,
+    .gameOverSection.panel-rewards,
     .modeCard,
     .readyCardChoosing,
     .gameOverScorePanel.isComplete,
@@ -1590,10 +1723,6 @@
 
     .hudTopBlock {
         min-height: 68px;
-    }
-
-    .timerText {
-        font-size: clamp(22px, 6vw, 30px);
     }
 
     .gameStatusRow {

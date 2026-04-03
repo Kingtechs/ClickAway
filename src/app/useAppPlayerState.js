@@ -3,6 +3,7 @@ import { useCallback, useState } from "react"
 import { DEFAULT_EQUIPPED_IDS, STORAGE_KEYS } from "../constants/appStorage.js"
 import { DEFAULT_DIFFICULTY_ID as DEFAULT_MODE_ID } from "../constants/difficultyConfig.js"
 import { useLocalStorageState } from "../hooks/useLocalStorageState.js"
+import { normalizeHistoryEntry } from "../utils/historyUtils.js"
 import { readStringFromStorage } from "../utils/localStorage.js"
 import { INITIAL_RANK_MMR } from "../utils/rankUtils.js"
 
@@ -45,7 +46,8 @@ function normalizeProgress(progress = {}) {
     equippedProfileImageId: String(
       progress.equippedProfileImageId || DEFAULT_EQUIPPED_IDS.profileImage
     ),
-    roundHistory: Array.isArray(progress.roundHistory) ? progress.roundHistory : [],
+    roundHistory: (Array.isArray(progress.roundHistory) ? progress.roundHistory : [])
+      .map(normalizeHistoryEntry),
     unlockedAchievementIds: normalizeStringList(progress.unlockedAchievementIds),
   }
 }

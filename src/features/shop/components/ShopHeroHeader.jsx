@@ -29,7 +29,7 @@ function LoadoutStage({ playerName, buttonSkin, arenaTheme, profileImage }) {
       <div className="shopCommandLoadoutAvatarFrame">
         <span
           className={`shopCommandLoadoutAvatar ${hasProfileImage ? "hasImage" : ""}`}
-          style={hasProfileImage ? undefined : getProfileAvatarStyle()}
+          style={hasProfileImage ? undefined : getProfileAvatarStyle(playerName)}
           aria-hidden="true"
         >
           {hasProfileImage ? (

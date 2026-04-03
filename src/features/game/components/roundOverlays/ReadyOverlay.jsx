@@ -18,7 +18,7 @@ const MODE_COPY = [
   {
     name: "Ranked",
     description: "Earn XP + coins + rank. Harder penalties.",
-    glyph: "3",
+    glyph: "⚔",
   },
 ]
 
@@ -267,7 +267,11 @@ export function ReadyOverlay({
 
         <div className="overlayActions readyActions">
           <div className="readyPrimaryActionGroup">
-            <button className="primaryButton" onClick={handleStartSelectedMode} disabled={!selectedMode || isAnimating}>
+            <button
+              className="primaryButton primaryButton-lg"
+              onClick={handleStartSelectedMode}
+              disabled={!selectedMode || isAnimating}
+            >
               {startButtonLabel}
             </button>
             <Link className="secondaryButton readyHelpLink" to="/help">

@@ -4,27 +4,40 @@ export default function GameHud({
   score,
   timeLeft,
   isTimedRound = true,
+  modeLabel = "",
+  rankLabel = "Unranked",
   streak,
   comboMultiplier,
+  comboActive = false,
   bestStreak,
   isPlaying = false,
   onEndRound,
 }) {
   const timerDisplay = isTimedRound ? `${timeLeft}s` : "No Limit"
+  const timerStateClassName = !isTimedRound
+    ? ""
+    : timeLeft < 3
+      ? " timerDanger"
+      : timeLeft < 5
+        ? " timerUrgent"
+        : ""
+  const scoreClassName = `scoreNumber${comboActive ? " comboActive" : ""}`
 
   return (
     <>
       <div className="hudTopRow">
         <div className="hudTopBlock">
           <span className="hudTopLabel">Score</span>
-          <div className="scoreNumber" aria-live="polite">
+          <div className={scoreClassName} aria-live="polite">
             {score}
           </div>
+          <span className="hudTopMeta">Mode: {modeLabel || "Unknown"}</span>
         </div>
 
         <div className="hudTopBlock">
           <span className="hudTopLabel">Time Remaining</span>
-          <div className="timerText">{timerDisplay}</div>
+          <div className={`timerText${timerStateClassName}`}>{timerDisplay}</div>
+          <span className="hudTopMeta">Rank: {rankLabel || "Unranked"}</span>
         </div>
       </div>
 

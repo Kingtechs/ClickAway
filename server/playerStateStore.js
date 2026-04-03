@@ -4,7 +4,6 @@ import pool, {
   findUserProgressByUserId,
 } from "./db.js"
 import {
-  DEFAULT_PLAYER_STATE,
   getCatalogItemById,
   getMappedShopItemById,
 } from "./shopItemMap.js"
@@ -17,38 +16,14 @@ export class PlayerStateError extends Error {
   }
 }
 
-function normalizeOwnedItemIds(itemIds = []) {
-  return Array.from(
-    new Set(
-      (Array.isArray(itemIds) ? itemIds : [])
-        .filter((itemId) => typeof itemId === "string")
-        .filter((itemId) => !getCatalogItemById(itemId)?.builtIn)
-    )
-  )
-}
-
-function normalizePlayerState(state = {}) {
-  return {
-    coins: Math.max(0, Number(state.coins) || 0),
-    ownedItemIds: normalizeOwnedItemIds(state.ownedItemIds),
-    equippedButtonSkinId: String(
-      state.equippedButtonSkinId || DEFAULT_PLAYER_STATE.equippedButtonSkinId
-    ),
-    equippedArenaThemeId: String(
-      state.equippedArenaThemeId || DEFAULT_PLAYER_STATE.equippedArenaThemeId
-    ),
-    equippedProfileImageId: String(
-      state.equippedProfileImageId || DEFAULT_PLAYER_STATE.equippedProfileImageId
-    ),
-  }
-}
-
-function buildPlayerStateResponse(username, state = {}) {
+function buildPlayerProgressResponse(user, progress = {}) {
   return {
     user: {
-      username: String(username || "Player"),
+      id: user?.id,
+      username: String(user?.username || "Player"),
+      role: String(user?.role || "player"),
     },
-    state: normalizePlayerState(state),
+    progress,
   }
 }
 
@@ -91,7 +66,7 @@ export function createPlayerStateStore() {
     async getPlayerState({ user }) {
       const existingUser = await resolveExistingUser(user)
       const progress = await findUserProgressByUserId(existingUser.id)
-      return buildPlayerStateResponse(existingUser.username, progress)
+      return buildPlayerProgressResponse(existingUser, progress)
     },
 
     async purchaseItem({ user, itemId }) {
@@ -152,7 +127,7 @@ export function createPlayerStateStore() {
       }
 
       const progress = await findUserProgressByUserId(existingUser.id)
-      return buildPlayerStateResponse(existingUser.username, progress)
+      return buildPlayerProgressResponse(existingUser, progress)
     },
 
     async equipItem({ user, itemId }) {
@@ -205,7 +180,7 @@ export function createPlayerStateStore() {
       }
 
       const progress = await findUserProgressByUserId(existingUser.id)
-      return buildPlayerStateResponse(existingUser.username, progress)
+      return buildPlayerProgressResponse(existingUser, progress)
     },
 
     async syncCoins({ user, coins }) {

@@ -122,6 +122,10 @@ CREATE TABLE `round_history` (
   `hits` int(11) NOT NULL DEFAULT 0,
   `misses` int(11) NOT NULL DEFAULT 0,
   `best_streak` int(11) NOT NULL DEFAULT 0,
+  /* Included in bootstrap schema. Existing databases should use
+     server/data/migrations/001_add_round_reaction_metrics.sql. */
+  `avg_reaction_ms` int(11) DEFAULT NULL,
+  `best_reaction_ms` int(11) DEFAULT NULL,
   `coins_earned` int(11) NOT NULL DEFAULT 0,
   `xp_earned` int(11) NOT NULL DEFAULT 0,
   `rank_delta` int(11) NOT NULL DEFAULT 0,

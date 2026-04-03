@@ -1,3 +1,4 @@
+import { calculateAccuracyPercent } from "./gameMath.js"
 import { DIFFICULTY_IDS, PROGRESSION_MODE } from "../constants/difficultyConfig.js"
 
 export const INITIAL_RANK_MMR = 0
@@ -12,15 +13,6 @@ const RANK_TIERS = [
 function clampNonNegative(value) {
   const normalized = Number.isFinite(value) ? value : 0
   return Math.max(0, normalized)
-}
-
-function parseAccuracyPercent(accuracy) {
-  if (typeof accuracy === "number" && Number.isFinite(accuracy)) {
-    return Math.max(0, Math.min(100, accuracy))
-  }
-
-  const parsedValue = Number.parseInt(String(accuracy).replace("%", ""), 10)
-  return Number.isFinite(parsedValue) ? Math.max(0, Math.min(100, parsedValue)) : 0
 }
 
 export function getRankTierFromMmr(mmr = INITIAL_RANK_MMR) {
@@ -117,9 +109,7 @@ export function calculateRoundRankDelta({
   const normalizedMisses = clampNonNegative(misses)
   const normalizedBestStreak = clampNonNegative(bestStreak)
 
-  const totalAttempts = normalizedHits + normalizedMisses
-  const accuracyPercent = totalAttempts > 0 ? (normalizedHits / totalAttempts) * 100 : 0
-  const normalizedAccuracy = parseAccuracyPercent(accuracyPercent)
+  const normalizedAccuracy = calculateAccuracyPercent(normalizedHits, normalizedMisses)
 
   let delta = 0
 

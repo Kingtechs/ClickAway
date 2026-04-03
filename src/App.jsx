@@ -66,7 +66,6 @@ export default function App() {
     unlockedAchievementIds,
     setUnlockedAchievementIds,
     applyProgress,
-    applyPlayerState,
     applyAuthenticatedSession,
     resetPlayerState,
   } = useAppPlayerState()
@@ -162,6 +161,20 @@ export default function App() {
     return persistQueueRef.current
   }, [applyProgress, authToken])
 
+  const waitForPendingProgress = useCallback(
+    () => persistQueueRef.current.catch(() => null),
+    []
+  )
+
+  const syncProgressSnapshot = useCallback((nextProgress = {}) => {
+    progressSnapshotRef.current = {
+      ...progressSnapshotRef.current,
+      ...nextProgress,
+    }
+
+    return progressSnapshotRef.current
+  }, [])
+
   useAchievementSync({
     unlockedAchievementIds,
     setUnlockedAchievementIds,
@@ -185,7 +198,13 @@ export default function App() {
     authToken,
     coins,
     ownedItemIds,
-    applyPlayerState,
+    equippedButtonSkinId,
+    equippedArenaThemeId,
+    equippedProfileImageId,
+    applyProgress,
+    applyAuthenticatedSession,
+    waitForPendingProgress,
+    syncProgressSnapshot,
   })
 
   const handleModeChange = useCallback((nextModeId) => {
@@ -205,7 +224,7 @@ export default function App() {
             isAuthed={isAuthed}
             coins={coins}
             level={levelProgress.level}
-            accuracy={playerLeaderboardStats.accuracy}
+            accuracyPercent={playerLeaderboardStats.accuracyPercent}
             rankLabel={rankProgress.tierLabel}
             rankMmr={rankProgress.mmr}
           />
@@ -255,6 +274,7 @@ export default function App() {
                 playerXpIntoLevel={levelProgress.xpIntoLevel}
                 playerXpToNextLevel={levelProgress.xpToNextLevel}
                 playerRankMmr={rankProgress.mmr}
+                playerRankLabel={rankProgress.tierLabel}
                 playerBestScore={playerLeaderboardStats.bestScore}
                 buttonSkinClass={equippedButtonSkin?.effectClass}
                 buttonSkinImageSrc={equippedButtonSkin?.imageSrc}
