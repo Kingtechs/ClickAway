@@ -1,14 +1,7 @@
 import { useMemo } from "react"
 import { Link } from "react-router-dom"
 
-import InfoStrip from "../components/InfoStrip.jsx"
-import { buildLoadoutPresentation } from "../constants/buildcraftPresentation.js"
-import {
-  DIFFICULTY_IDS,
-  PROGRESSION_MODE,
-  getDifficultyById as getModeById,
-} from "../constants/difficultyConfig.js"
-import { HISTORY_INSIGHTS, HISTORY_PREVIEW_FIELDS } from "../features/history/historyData.js"
+import { HISTORY_PREVIEW_FIELDS } from "../features/history/historyData.js"
 import { buildHistorySnapshot } from "../features/history/historyInsights.js"
 import { formatPercent } from "../utils/gameMath.js"
 import { formatPlayedAtLabel } from "../utils/historyUtils.js"
@@ -61,22 +54,6 @@ function getRankResultToneClassName(round = {}) {
   if (normalizedDelta > 0) return "isPositive"
   if (normalizedDelta < 0) return "isNegative"
   return "isNeutral"
-}
-
-function resolveHistoryModeId(round = {}) {
-  if (round.modeId || round.difficultyId) {
-    return round.modeId ?? round.difficultyId
-  }
-
-  if (round.progressionMode === PROGRESSION_MODE.RANKED) {
-    return DIFFICULTY_IDS.HARD
-  }
-
-  if (round.progressionMode === PROGRESSION_MODE.PRACTICE) {
-    return DIFFICULTY_IDS.EASY
-  }
-
-  return DIFFICULTY_IDS.NORMAL
 }
 
 function getRoundMarkers(round = {}, historySnapshot = {}) {
@@ -204,21 +181,12 @@ export default function HistoryPage({ roundHistory = [] }) {
       <section className="cardWide historyPageCard">
         <header className="historyHero">
           <div className="historyHeroText">
-            <p className="historyEyebrow">Performance Timeline</p>
             <h1 className="cardTitle">Match History</h1>
             <p className="muted historyLead">
-              Review how your recent rounds, standout performances, and ranked pushes are stacking up over time.
+              Score, accuracy, and ranked results across every saved round.
             </p>
           </div>
         </header>
-
-        <InfoStrip
-          title="How history works"
-          points={HISTORY_INSIGHTS}
-          collapsible
-          defaultCollapsed
-          summary="Practice stays training-only. Ranked is the only mode that moves rating."
-        />
 
         {!hasHistory ? (
           <section className="historyEmptyState" role="status" aria-live="polite">
@@ -248,12 +216,7 @@ export default function HistoryPage({ roundHistory = [] }) {
             {highlightCards.length > 0 ? (
               <section className="historyHighlightsSection" aria-label="Round highlights">
                 <div className="historySectionHeader">
-                  <div>
-                    <h2 className="historySectionTitle">Highlights</h2>
-                    <p className="historySectionDescription">
-                      Callouts that make the log easier to scan and more rewarding to revisit.
-                    </p>
-                  </div>
+                  <h2 className="historySectionTitle">Highlights</h2>
                 </div>
                 <div className="historyHighlightsGrid">
                   {highlightCards.map((card) => (
@@ -273,12 +236,7 @@ export default function HistoryPage({ roundHistory = [] }) {
 
             <section className="historyLogSection" aria-label="Full match log">
               <div className="historySectionHeader">
-                <div>
-                  <h2 className="historySectionTitle">Full Log</h2>
-                  <p className="historySectionDescription">
-                    Every saved round, ordered from newest to oldest.
-                  </p>
-                </div>
+                <h2 className="historySectionTitle">Full Log</h2>
               </div>
 
               <div className="historyTableWrap">
@@ -287,7 +245,6 @@ export default function HistoryPage({ roundHistory = [] }) {
                     <tr>
                       <th>Played</th>
                       <th>Mode</th>
-                      <th>Build</th>
                       <th className="historyNumericColumn">Score</th>
                       <th className="historyNumericColumn">Hits</th>
                       <th className="historyNumericColumn">Misses</th>
@@ -300,10 +257,6 @@ export default function HistoryPage({ roundHistory = [] }) {
                   <tbody>
                     {historyRows.map((round) => {
                       const rowMarkers = getRoundMarkers(round, historySnapshot)
-                      const roundMode = getModeById(resolveHistoryModeId(round))
-                      const loadoutPresentation = round.loadoutSnapshot
-                        ? buildLoadoutPresentation(roundMode, round.loadoutSnapshot)
-                        : null
 
                       return (
                         <tr key={round.id} className="historyTableRow">
@@ -323,14 +276,6 @@ export default function HistoryPage({ roundHistory = [] }) {
                             <span className={`historyModeBadge ${getModeToneClassName(round)}`}>
                               {getModeLabelFromHistoryEntry(round)}
                             </span>
-                          </td>
-                          <td className="historyBuildCell">
-                            <strong className="historyBuildName">
-                              {round.loadoutSnapshot?.loadoutName ?? "\u2014"}
-                            </strong>
-                            {loadoutPresentation?.titleLine ? (
-                              <span className="historyBuildMeta">{loadoutPresentation.titleLine}</span>
-                            ) : null}
                           </td>
                           <td className="historyNumericCell historyScoreCell">{formatNumber(round.score)}</td>
                           <td className="historyNumericCell">{formatNumber(round.hits)}</td>

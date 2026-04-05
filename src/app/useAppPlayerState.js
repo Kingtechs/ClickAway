@@ -5,6 +5,10 @@ import {
   DEFAULT_SAVED_LOADOUTS,
   normalizeLoadoutState,
 } from "../constants/buildcraft.js"
+import {
+  BUILD_WALKTHROUGH_STATUS,
+  normalizeBuildWalkthrough,
+} from "../constants/buildWalkthrough.js"
 import { DEFAULT_EQUIPPED_IDS, STORAGE_KEYS } from "../constants/appStorage.js"
 import { DEFAULT_DIFFICULTY_ID as DEFAULT_MODE_ID } from "../constants/difficultyConfig.js"
 import { useLocalStorageState } from "../hooks/useLocalStorageState.js"
@@ -31,6 +35,10 @@ const DEFAULT_PROGRESS = {
   unlockedAchievementIds: [],
   savedLoadouts: DEFAULT_SAVED_LOADOUTS,
   activeLoadoutId: ACTIVE_LOADOUT_ID_DEFAULT,
+  buildWalkthrough: normalizeBuildWalkthrough(
+    {},
+    BUILD_WALKTHROUGH_STATUS.DISMISSED
+  ),
 }
 
 function normalizeStringList(values = []) {
@@ -79,6 +87,10 @@ function normalizeProgress(progress = {}) {
     unlockedAchievementIds: normalizeStringList(progress.unlockedAchievementIds),
     savedLoadouts: normalizedLoadouts.savedLoadouts,
     activeLoadoutId: normalizedLoadouts.activeLoadoutId,
+    buildWalkthrough: normalizeBuildWalkthrough(
+      progress.buildWalkthrough,
+      BUILD_WALKTHROUGH_STATUS.DISMISSED
+    ),
   }
 }
 
@@ -127,6 +139,7 @@ export function useAppPlayerState() {
   )
   const [savedLoadouts, setSavedLoadouts] = useState(DEFAULT_PROGRESS.savedLoadouts)
   const [activeLoadoutId, setActiveLoadoutId] = useState(DEFAULT_PROGRESS.activeLoadoutId)
+  const [buildWalkthrough, setBuildWalkthrough] = useState(DEFAULT_PROGRESS.buildWalkthrough)
 
   const applyProgress = useCallback((progress = {}) => {
     const normalizedProgress = normalizeProgress(progress)
@@ -143,6 +156,7 @@ export function useAppPlayerState() {
     setUnlockedAchievementIds(normalizedProgress.unlockedAchievementIds)
     setSavedLoadouts(normalizedProgress.savedLoadouts)
     setActiveLoadoutId(normalizedProgress.activeLoadoutId)
+    setBuildWalkthrough(normalizedProgress.buildWalkthrough)
 
     return normalizedProgress
   }, [])
@@ -221,6 +235,8 @@ export function useAppPlayerState() {
     setSavedLoadouts,
     activeLoadoutId,
     setActiveLoadoutId,
+    buildWalkthrough,
+    setBuildWalkthrough,
     applyProgress,
     applyPlayerState,
     applyAuthenticatedSession,

@@ -117,9 +117,9 @@ export default function ShopHeroHeader({
             />
 
             <div className="shopCommandLoadoutMeta" aria-label="Equipped item summary">
-              <span><strong>Button:</strong><span>{buttonSkin?.name ?? "Default Button"}</span></span>
-              <span><strong>Arena:</strong><span>{arenaTheme?.name ?? "Default Theme"}</span></span>
-              <span><strong>Profile:</strong><span>{profileImage?.name ?? "Default Profile"}</span></span>
+              <span><strong>Button</strong><span>{buttonSkin?.name ?? "Default"}</span></span>
+              <span><strong>Arena</strong><span>{arenaTheme?.name ?? "Default"}</span></span>
+              <span><strong>Profile</strong><span>{profileImage?.name ?? "Default"}</span></span>
             </div>
           </section>
         </div>

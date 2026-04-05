@@ -24,6 +24,7 @@ import ProfilePage from "./pages/ProfilePage.jsx"
 import ShopPage from "./pages/ShopPage.jsx"
 import SignupPage from "./pages/SignupPage.jsx"
 import { DIFFICULTIES as MODES } from "./constants/difficultyConfig.js"
+import { normalizeBuildWalkthrough } from "./constants/buildWalkthrough.js"
 
 function SessionLoadingScreen() {
   return (
@@ -74,6 +75,8 @@ export default function App() {
     setSavedLoadouts,
     activeLoadoutId,
     setActiveLoadoutId,
+    buildWalkthrough,
+    setBuildWalkthrough,
     applyProgress,
     applyAuthenticatedSession,
     resetPlayerState,
@@ -135,9 +138,11 @@ export default function App() {
       unlockedAchievementIds,
       savedLoadouts,
       activeLoadoutId,
+      buildWalkthrough,
     }
   }, [
     activeLoadoutId,
+    buildWalkthrough,
     coins,
     equippedArenaThemeId,
     equippedButtonSkinId,
@@ -217,6 +222,22 @@ export default function App() {
     savedLoadouts,
     setActiveLoadoutId,
     setSavedLoadouts,
+    syncProgressSnapshot,
+  ])
+
+  const handleBuildWalkthroughChange = useCallback((nextBuildWalkthrough = {}) => {
+    const normalizedBuildWalkthrough = normalizeBuildWalkthrough(nextBuildWalkthrough)
+
+    setBuildWalkthrough(normalizedBuildWalkthrough)
+    syncProgressSnapshot({
+      buildWalkthrough: normalizedBuildWalkthrough,
+    })
+    void persistProgress({
+      buildWalkthrough: normalizedBuildWalkthrough,
+    })
+  }, [
+    persistProgress,
+    setBuildWalkthrough,
     syncProgressSnapshot,
   ])
 
@@ -332,6 +353,7 @@ export default function App() {
                 activeLoadoutId={activeLoadoutId}
                 activeLoadout={activeLoadout}
                 onLoadoutStateChange={handleLoadoutStateChange}
+                buildWalkthrough={buildWalkthrough}
                 buttonSkinClass={equippedButtonSkin?.effectClass}
                 buttonSkinImageSrc={equippedButtonSkin?.imageSrc}
                 buttonSkinImageScale={
@@ -356,6 +378,8 @@ export default function App() {
                 savedLoadouts={savedLoadouts}
                 activeLoadoutId={activeLoadoutId}
                 onLoadoutStateChange={handleLoadoutStateChange}
+                buildWalkthrough={buildWalkthrough}
+                onBuildWalkthroughChange={handleBuildWalkthroughChange}
               />
             </ProtectedRoute>
           }

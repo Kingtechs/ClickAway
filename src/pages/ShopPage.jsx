@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
+import toast from "react-hot-toast"
 import { SHOP_CATEGORIES, SHOP_ITEMS_BY_ID } from "../constants/shopCatalog.js"
 import ShopCategoryTabs from "../features/shop/components/ShopCategoryTabs.jsx"
 import ShopHeroHeader from "../features/shop/components/ShopHeroHeader.jsx"
@@ -22,7 +23,6 @@ export default function ShopPage({
   equippedProfileImageId = "profile_default",
 }) {
   const [activeCategoryId, setActiveCategoryId] = useState(ALL_TAB_ID)
-  const [actionFeedback, setActionFeedback] = useState(null)
 
   const totalItems = SHOP_ITEMS.length
   const categoryOwnedCounts = useMemo(
@@ -65,43 +65,25 @@ export default function ShopPage({
   const equippedArenaTheme = SHOP_ITEMS_BY_ID[equippedArenaThemeId] ?? null
   const equippedProfileImage = SHOP_ITEMS_BY_ID[equippedProfileImageId] ?? null
 
-  useEffect(() => {
-    if (!actionFeedback) return undefined
-
-    const timeoutId = setTimeout(() => {
-      setActionFeedback(null)
-    }, 2800)
-
-    return () => clearTimeout(timeoutId)
-  }, [actionFeedback])
-
-  function showFeedback(type, message) {
-    setActionFeedback({
-      id: Date.now(),
-      type,
-      message,
-    })
-  }
-
   async function handlePurchase(item) {
     const purchaseResult = await onPurchase?.(item)
     if (purchaseResult?.ok) {
-      showFeedback("success", `${item.name} unlocked.`)
+      toast.success(`${item.name} unlocked.`)
       return true
     }
 
-    showFeedback("error", purchaseResult?.error || `Could not unlock ${item.name}.`)
+    toast.error(purchaseResult?.error || `Could not unlock ${item.name}.`)
     return false
   }
 
   async function handleEquip(item) {
     const equipResult = await onEquip?.(item)
     if (equipResult?.ok) {
-      showFeedback("success", `${item.name} equipped.`)
+      toast.success(`${item.name} equipped.`)
       return true
     }
 
-    showFeedback("error", equipResult?.error || `Could not equip ${item.name}.`)
+    toast.error(equipResult?.error || `Could not equip ${item.name}.`)
     return false
   }
 
@@ -124,26 +106,6 @@ export default function ShopPage({
           activeCategoryId={activeCategoryId}
           onChange={setActiveCategoryId}
         />
-
-        {actionFeedback ? (
-          <div
-            key={actionFeedback.id}
-            className={`shopFeedback ${actionFeedback.type}`}
-            role="status"
-            aria-live="polite"
-          >
-            <span className="shopFeedbackDot" aria-hidden="true" />
-            <span>{actionFeedback.message}</span>
-            <button
-              type="button"
-              className="shopFeedbackDismiss"
-              aria-label="Dismiss shop feedback"
-              onClick={() => setActionFeedback(null)}
-            >
-              Dismiss
-            </button>
-          </div>
-        ) : null}
 
         <div className="shopInventoryDeck">
           {visibleCategories.map((category) => (

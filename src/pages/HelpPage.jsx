@@ -34,9 +34,7 @@ export default function HelpPage() {
     <div className="pageCenter">
       <section className="card helpDoc">
         <div className="helpHero">
-          <h1 className="helpHeroTitle">
-            <span className="helpHeroTitleAccent">Help</span> Center
-          </h1>
+          <h1 className="helpHeroTitle">Help Center</h1>
           <p className="helpHeroCopy">
             Learn the first round fast, then dip into deeper systems only when you need them.
           </p>

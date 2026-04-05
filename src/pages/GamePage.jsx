@@ -3,7 +3,7 @@ import { ROUND_PHASE } from "../constants/gameConstants.js"
 import GameArena from "../features/game/components/GameArena.jsx"
 import GameHud from "../features/game/components/GameHud.jsx"
 import PowerupTray from "../features/game/components/PowerupTray.jsx"
-import { CountdownOverlay, GameOverOverlay, ReadyOverlay } from "../features/game/components/RoundOverlaysBarrel.jsx"
+import { CountdownOverlay, GameOverFlow, ReadyOverlay } from "../features/game/components/RoundOverlaysBarrel.jsx"
 import { useGameScreenController } from "../features/game/hooks/useGameScreenController.js"
 
 const MotionDiv = motion.div
@@ -23,7 +23,7 @@ export default function GamePage(props) {
   } else if (game.phase === ROUND_PHASE.COUNTDOWN) {
     activeOverlay = <CountdownOverlay key="countdown-overlay" {...game.countdownOverlayProps} />
   } else if (game.phase === ROUND_PHASE.GAME_OVER) {
-    activeOverlay = <GameOverOverlay key="game-over-overlay" {...game.gameOverOverlayProps} />
+    activeOverlay = <GameOverFlow key="game-over-flow" {...game.gameOverOverlayProps} />
   }
 
   return (
@@ -34,7 +34,7 @@ export default function GamePage(props) {
 
       <PowerupTray {...game.powerupTrayProps} />
 
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {activeOverlay ? (
           <MotionDiv
             key="overlay-stage"

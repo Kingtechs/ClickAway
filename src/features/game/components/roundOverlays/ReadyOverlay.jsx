@@ -2,9 +2,6 @@ import { AnimatePresence, motion } from "motion/react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 
-import { getLoadoutById } from "../../../../constants/buildcraft.js"
-import { buildLoadoutPresentation } from "../../../../constants/buildcraftPresentation.js"
-import { BuildIdentityGlyph } from "../../../buildcraft/buildcraftGlyphs.jsx"
 import { usePrefersReducedMotion } from "./useOverlayMotion.js"
 
 const MotionSection = motion.section
@@ -112,58 +109,24 @@ function ModePreviewContent({ mode }) {
   )
 }
 
-function ReadyQuickBuildCard({
-  loadout,
-  index,
-  presentation,
-  isActive = false,
-  onClick,
-}) {
-  return (
-    <button
-      type="button"
-      className={`readyQuickBuildCard ${isActive ? "isActive" : ""}`}
-      onClick={onClick}
-    >
-      <span className="readyQuickBuildGlyph" aria-hidden="true">
-        <BuildIdentityGlyph
-          identity={presentation?.identity.label}
-          className="readyQuickBuildGlyphIcon"
-        />
-      </span>
-      <div className="readyQuickBuildBody">
-        <span className="readyQuickBuildLabel">Build {index + 1}</span>
-        <strong className="readyQuickBuildName">{loadout.name}</strong>
-        <span className="readyQuickBuildMeta">{presentation?.titleLine ?? "Balanced"}</span>
-      </div>
-    </button>
-  )
-}
-
 export function ReadyOverlay({
   onStart,
   modes = [],
   selectedModeId,
   onSelectMode,
   canChangeMode = true,
-  savedLoadouts = [],
-  activeLoadoutId = "",
-  onLoadoutStateChange,
+  activeLoadoutName = "Loadout",
+  showArmoryWalkthroughBadge = false,
   onClose,
 }) {
   const prefersReducedMotion = usePrefersReducedMotion()
   const overlayCardRef = useRef(null)
   const [localSelectedModeId, setLocalSelectedModeId] = useState(selectedModeId)
-  const [localActiveLoadoutId, setLocalActiveLoadoutId] = useState(activeLoadoutId)
   const [modeTransitionDirection, setModeTransitionDirection] = useState(1)
 
   useEffect(() => {
     setLocalSelectedModeId(selectedModeId)
   }, [selectedModeId])
-
-  useEffect(() => {
-    setLocalActiveLoadoutId(activeLoadoutId)
-  }, [activeLoadoutId])
 
   useEffect(() => {
     overlayCardRef.current?.focus()
@@ -176,30 +139,6 @@ export function ReadyOverlay({
   const modeCount = modeSlides.length
   const activeModeIndex = Math.max(0, modeSlides.findIndex((mode) => mode.id === localSelectedModeId))
   const selectedMode = modeSlides[activeModeIndex] ?? modeSlides[0] ?? null
-  const activeLoadout = useMemo(
-    () => getLoadoutById(savedLoadouts, localActiveLoadoutId),
-    [localActiveLoadoutId, savedLoadouts]
-  )
-  const loadoutPresentations = useMemo(() => {
-    if (!selectedMode) return {}
-
-    return Object.fromEntries(
-      savedLoadouts.map((loadout) => [
-        loadout.id,
-        buildLoadoutPresentation(selectedMode, loadout),
-      ])
-    )
-  }, [savedLoadouts, selectedMode])
-  const activePresentation = activeLoadout?.id ? loadoutPresentations[activeLoadout.id] : null
-
-  function handleActivateLoadout(nextLoadoutId) {
-    if (!nextLoadoutId || nextLoadoutId === localActiveLoadoutId) return
-    setLocalActiveLoadoutId(nextLoadoutId)
-    onLoadoutStateChange?.({
-      savedLoadouts,
-      activeLoadoutId: nextLoadoutId,
-    })
-  }
 
   function goPrevMode() {
     if (!canChangeMode || !modeCount) return
@@ -223,7 +162,7 @@ export function ReadyOverlay({
 
   function handleStartSelectedMode() {
     if (!selectedMode) return
-    onStart?.(selectedMode.id, localActiveLoadoutId)
+    onStart?.(selectedMode.id)
   }
 
   function handleKeyDown(event) {
@@ -280,7 +219,7 @@ export function ReadyOverlay({
             Choose Round
           </h2>
           <p className="readyLead">
-            Pick a mode, glance at your active build, and start. Open Armory only when you want to retune the build itself.
+            Pick your mode and start. Armory is where you change the build.
           </p>
         </MotionDiv>
 
@@ -353,50 +292,6 @@ export function ReadyOverlay({
           </button>
         </MotionDiv>
 
-        {activeLoadout && activePresentation ? (
-          <MotionDiv
-            className="readyBuildStrip readyBuildStripV2"
-            aria-label="Current build"
-            variants={prefersReducedMotion ? undefined : readySectionVariants}
-          >
-            <div className="readyBuildStripIdentity">
-              <span className="readyBuildStripGlyph" aria-hidden="true">
-                <BuildIdentityGlyph
-                  identity={activePresentation.identity.label}
-                  className="readyBuildStripGlyphIcon"
-                />
-              </span>
-              <div className="readyBuildStripCopy">
-                <span className="readyBuildStripLabel">Current Build</span>
-                <strong className="readyBuildStripName">
-                  {activeLoadout.name} • {activePresentation.titleLine}
-                </strong>
-                <span className="readyBuildStripSummary">
-                  {activePresentation.glanceText} • {activePresentation.bestFor}
-                </span>
-              </div>
-            </div>
-          </MotionDiv>
-        ) : null}
-
-        {selectedMode ? (
-          <MotionDiv
-            className="readyQuickBuildRow"
-            variants={prefersReducedMotion ? undefined : readySectionVariants}
-          >
-            {savedLoadouts.map((loadout, index) => (
-              <ReadyQuickBuildCard
-                key={loadout.id}
-                loadout={loadout}
-                index={index}
-                presentation={loadoutPresentations[loadout.id]}
-                isActive={loadout.id === localActiveLoadoutId}
-                onClick={() => handleActivateLoadout(loadout.id)}
-              />
-            ))}
-          </MotionDiv>
-        ) : null}
-
         <MotionDiv
           className="overlayActions readyActions"
           variants={prefersReducedMotion ? undefined : readySectionVariants}
@@ -412,8 +307,14 @@ export function ReadyOverlay({
               </button>
               <Link className="readyBuildButton" to="/armory">
                 Open Armory
+                {showArmoryWalkthroughBadge ? (
+                  <span className="readyBuildButtonBadge">New</span>
+                ) : null}
               </Link>
             </div>
+            <p className="readyPassiveBuildLabel" aria-label="Current active build">
+              Active build: <strong>{activeLoadoutName || "Loadout"}</strong>
+            </p>
             <Link className="secondaryButton readyHelpLink" to="/help">
               How To Play
             </Link>

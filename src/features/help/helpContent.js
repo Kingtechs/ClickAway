@@ -12,7 +12,7 @@ export const QUICKSTART_CARDS = [
   {
     eyebrow: "2",
     title: "Start the round",
-    body: "Pick your active build in Ready, press Start Round, and use the 3-second countdown to center up.",
+    body: "Pick your mode in Ready, press Start Round, and use the 3-second countdown to center up.",
   },
   {
     eyebrow: "3",
@@ -139,10 +139,11 @@ export const POWERUP_RULES_POINTS = [
 ]
 
 export const LOADOUT_POINTS = [
-  "Every account has 3 saved loadout slots, and the active slot is chosen in Ready before a round starts.",
+  "Every account has 3 saved loadout slots, and Ready always uses whichever slot is active in Armory.",
   "Each loadout contains 3 passive modules: Tempo Core, Streak Lens, and Power Rig.",
   "Passive modules always come with tradeoffs. Faster scoring setups usually make misses or target pressure harsher.",
   "Armory is where you rename builds, swap modules and powers, and compare how they feel in each mode.",
+  "New accounts get a one-time guided Armory walkthrough, and you can restart it later from the Armory rail.",
   "Builds are legal in every mode, including Ranked. XP, coin, and rating formulas stay the same; only gameplay conditions change.",
 ]
 

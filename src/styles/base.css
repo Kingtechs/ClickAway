@@ -20,3 +20,29 @@ body {
         linear-gradient(155deg, var(--surface-0) 0%, var(--surface-1) 100%);
 }
 
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(74, 168, 255, 0.22);
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 168, 255, 0.42);
+}
+
+/* ── Global focus ring ── */
+:focus-visible {
+    outline: 2px solid rgba(74, 168, 255, 0.82);
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+

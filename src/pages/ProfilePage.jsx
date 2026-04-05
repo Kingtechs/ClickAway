@@ -137,12 +137,11 @@ function StatCard({ label, value, tooltip = "", tone = "neutral", isFeatured = f
   )
 }
 
-function StatsSection({ title, description, stats = [], gridClassName = "" }) {
+function StatsSection({ title, stats = [], gridClassName = "" }) {
   return (
     <section className="profileStatsSection" aria-label={title}>
       <header className="profileStatsSectionHeader">
         <h2 className="profileStatsSectionTitle">{title}</h2>
-        <p className="profileStatsSectionDescription">{description}</p>
       </header>
       <div className={`profileStatsGrid ${gridClassName}`.trim()}>
         {stats.map((stat) => (
@@ -337,9 +336,6 @@ export default function ProfilePage({
       <section className="card profileCard">
         <header className="profileHero">
           <div className="profileHeroMain">
-            <p className="profileEyebrow">Player Identity</p>
-            <h1 className="cardTitle profileTitle">Arena Profile</h1>
-
             <div className="profileIdentityRow">
               <div className={avatarClassName} style={avatarStyle} aria-hidden="true">
                 {hasProfileImage ? (
@@ -357,11 +353,6 @@ export default function ProfilePage({
             <p className="profileLead">
               {profileTagline}
             </p>
-
-            <div className="profileHeroChips">
-              <span className="profileHeroChip tone-coins">Coins {formatNumber(coins)}</span>
-              <span className="profileHeroChip tone-level">Level {levelValue}</span>
-            </div>
 
             <div className="profileLevelProgress">
               <div className="profileLevelProgressTop">
@@ -435,7 +426,6 @@ export default function ProfilePage({
         <div className="profileStatsSections">
           <StatsSection
             title="Player Summary"
-            description="Progression and performance in one view."
             stats={combinedSummaryStats}
             gridClassName="isSummaryGrid"
           />
@@ -444,9 +434,6 @@ export default function ProfilePage({
             <div className="achievementHeaderRow">
               <div className="achievementHeaderText">
                 <h2 className="profileStatsSectionTitle">Achievements</h2>
-                <p className="profileStatsSectionDescription">
-                  Track unlock progress across rounds, levels, economy, streaks, and ranked play.
-                </p>
               </div>
 
                 <div className="achievementCategoryTabs" role="tablist" aria-label="Achievement categories">

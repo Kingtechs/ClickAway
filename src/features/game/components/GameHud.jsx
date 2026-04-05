@@ -7,7 +7,6 @@ export default function GameHud({
   modeLabel = "",
   rankLabel = "Unranked",
   loadoutName = "Loadout",
-  loadoutPresentation = null,
   streak,
   comboMultiplier,
   comboActive = false,
@@ -24,10 +23,6 @@ export default function GameHud({
         ? " timerUrgent"
         : ""
   const scoreClassName = `scoreNumber${comboActive ? " comboActive" : ""}`
-  const buildMeta = loadoutPresentation?.glanceText
-    ? `${loadoutPresentation.titleLine} • ${loadoutPresentation.glanceText}`
-    : loadoutPresentation?.titleLine ?? "Balanced"
-
   return (
     <>
       <div className="hudTopRow">
@@ -37,7 +32,7 @@ export default function GameHud({
             {score}
           </div>
           <span className="hudTopMeta">
-            Mode: {modeLabel || "Unknown"} • Rank: {rankLabel || "Unranked"}
+            Mode: {modeLabel || "Unknown"} / Rank: {rankLabel || "Unranked"}
           </span>
         </div>
 
@@ -45,7 +40,7 @@ export default function GameHud({
           <span className="hudTopLabel">Time Remaining</span>
           <div className={`timerText${timerStateClassName}`}>{timerDisplay}</div>
           <span className="hudTopMeta">
-            Build: {loadoutName || "Loadout"} • {buildMeta}
+            Build: {loadoutName || "Loadout"}
           </span>
         </div>
       </div>

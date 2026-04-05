@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
-import InfoStrip from "../components/InfoStrip.jsx"
 import PlayerHoverCard from "../components/PlayerHoverCard.jsx"
 import TierBadge from "../components/TierBadge.jsx"
-import { LEADERBOARD_INSIGHTS } from "../features/leaderboard/leaderboardData.js"
 import { fetchLeaderboard } from "../services/api.js"
 import { formatPercent, normalizePercentValue } from "../utils/gameMath.js"
 import { buildPlayerLeaderboardStats } from "../utils/historyUtils.js"
@@ -353,15 +351,6 @@ export default function LeaderboardPage({
     <div className="pageCenter">
       <section className="card">
         <h1 className="cardTitle">Leaderboard</h1>
-        <p className="muted">
-          View your current ranked placement and competitive rating.
-        </p>
-
-        <InfoStrip
-          points={LEADERBOARD_INSIGHTS}
-          collapsible
-          defaultCollapsed
-        />
 
         <LeaderboardStandingPanel
           currentVisiblePlayer={currentVisiblePlayer}
@@ -397,28 +386,16 @@ export default function LeaderboardPage({
         {!isLoading && !loadError && sortedRows.length > 0 ? (
           <>
             <div className="leaderboardTableIntro" aria-label="Leaderboard context">
-              <div className="leaderboardTableIntroText">
-                <p className="leaderboardSectionEyebrow">Competitive Ladder</p>
-                <p className="leaderboardTableIntroLead">
-                  Showing up to the top {VISIBLE_LEADERBOARD_LIMIT} placed players. Ladder rank always follows rating order.
-                </p>
-              </div>
               <span className={`leaderboardSortContextBadge${isDefaultLadderSort ? " isDefault" : ""}`}>
                 Sorted by {activeSortLabel}
                 {sortConfig.direction === "asc" ? " (Low to High)" : " (High to Low)"}
               </span>
             </div>
 
-            {!isDefaultLadderSort ? (
-              <p className="leaderboardSortContextNote">
-                Rows are re-ordered by {activeSortLabel}, but each ladder rank still reflects rating position.
-              </p>
-            ) : null}
-
             <table className="table helpTable leaderboardTable">
               <thead>
                 <tr>
-                  <th>Ladder Rank</th>
+                  <th>#</th>
                   <th>Player</th>
                   <th>Tier</th>
                   {SORTABLE_COLUMNS.map((column) => (

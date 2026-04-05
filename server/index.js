@@ -87,6 +87,7 @@ function normalizeProgressPayload(body = {}) {
     selectedModeId: body.selectedModeId,
     roundHistory: body.roundHistory,
     unlockedAchievementIds: body.unlockedAchievementIds,
+    buildWalkthrough: body.buildWalkthrough,
   }
 }
 

@@ -7,6 +7,10 @@ import {
   DEFAULT_SAVED_LOADOUTS,
   normalizeLoadoutState,
 } from "../src/constants/buildcraft.js"
+import {
+  BUILD_WALKTHROUGH_STATUS,
+  normalizeBuildWalkthrough,
+} from "../src/constants/buildWalkthrough.js"
 import { getLevelProgress } from "../src/utils/progressionUtils.js"
 import {
   buildDefaultRankedState,
@@ -35,6 +39,10 @@ const DEFAULT_PROGRESS = {
   selectedModeId: "normal",
   roundHistory: [],
   unlockedAchievementIds: [],
+  buildWalkthrough: normalizeBuildWalkthrough(
+    {},
+    BUILD_WALKTHROUGH_STATUS.DISMISSED
+  ),
 }
 
 const DEFAULT_ADMIN_USERNAME = "admin"
@@ -218,6 +226,10 @@ function normalizeProgressInput(record = {}) {
     selectedModeId: String(record.selectedModeId || DEFAULT_PROGRESS.selectedModeId),
     roundHistory: normalizedRoundHistory,
     unlockedAchievementIds: normalizeStringList(record.unlockedAchievementIds),
+    buildWalkthrough: normalizeBuildWalkthrough(
+      record.buildWalkthrough ?? record.buildWalkthroughStatus,
+      BUILD_WALKTHROUGH_STATUS.DISMISSED
+    ),
   }
 }
 
@@ -291,7 +303,8 @@ async function getUserStateRow(executor, userId, options = {}) {
        current_button_skin_id AS currentButtonSkinId,
        current_arena_theme_id AS currentArenaThemeId,
        current_profile_theme_id AS currentProfileThemeId,
-       active_loadout_slot AS activeLoadoutId
+       active_loadout_slot AS activeLoadoutId,
+       build_walkthrough_status AS buildWalkthroughStatus
      FROM users
      WHERE id = ?
      LIMIT 1${lockClause}`,
@@ -438,6 +451,10 @@ async function buildProgressRecord(executor, userId) {
     roundHistory: normalizedRoundHistory,
     unlockedAchievementIds: normalizeStringList(
       achievementRows.map((row) => row.achievementId)
+    ),
+    buildWalkthrough: normalizeBuildWalkthrough(
+      userRow.buildWalkthroughStatus,
+      BUILD_WALKTHROUGH_STATUS.DISMISSED
     ),
   }
 }
@@ -626,8 +643,16 @@ export async function findUserById(id) {
 
 export async function createUser({ username, passwordHash }) {
   const [result] = await pool.execute(
-    "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-    [String(username || "").trim(), String(passwordHash || "")]
+    `INSERT INTO users (
+       username,
+       password_hash,
+       build_walkthrough_status
+     ) VALUES (?, ?, ?)`,
+    [
+      String(username || "").trim(),
+      String(passwordHash || ""),
+      BUILD_WALKTHROUGH_STATUS.NOT_STARTED,
+    ]
   )
 
   return findUserById(result.insertId)
@@ -735,7 +760,8 @@ export async function saveUserProgress({ userId, ...progress }) {
            current_button_skin_id = ?,
            current_arena_theme_id = ?,
            current_profile_theme_id = ?,
-           active_loadout_slot = ?
+           active_loadout_slot = ?,
+           build_walkthrough_status = ?
        WHERE id = ?`,
       [
         normalizedProgress.coins,
@@ -748,6 +774,7 @@ export async function saveUserProgress({ userId, ...progress }) {
         arenaTheme?.dbItemId ?? null,
         profileImage?.dbItemId ?? null,
         normalizedProgress.activeLoadoutId,
+        normalizedProgress.buildWalkthrough.status,
         userId,
       ]
     )

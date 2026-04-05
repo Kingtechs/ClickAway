@@ -18,11 +18,24 @@
     display: flex;
 }
 
+.mainContent.armoryMain {
+    padding: 12px;
+    display: flex;
+}
+
+.mainContent.armoryMain > * {
+    flex: 1;
+}
+
 .mainContent.gameMain > * {
     flex: 1;
 }
 
 .gameRouteActive {
+    overflow: hidden;
+}
+
+.armoryRouteActive {
     overflow: hidden;
 }
 
@@ -48,6 +61,22 @@
     align-items: center;
     column-gap: 14px;
     row-gap: 8px;
+}
+
+.topbar.topbarArmory {
+    border-bottom-color: rgba(173, 210, 248, 0.12);
+    background:
+        linear-gradient(180deg, rgba(11, 17, 31, 0.94), rgba(10, 15, 28, 0.9)),
+        radial-gradient(circle at 8% -10%, rgba(95, 173, 255, 0.16), rgba(95, 173, 255, 0) 48%);
+}
+
+.topbar.topbarArmory .topbarInner {
+    width: min(1360px, 100%);
+    padding-block: 10px;
+}
+
+.topbar.topbarArmory .brandTag {
+    display: none;
 }
 
 .brandCluster {
@@ -142,10 +171,11 @@
     border-radius: var(--radius-sm);
     min-height: var(--nav-pill-height);
     height: var(--nav-pill-height);
-    padding: 0 14px;
+    padding: 0 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 5px;
     color: #ffffff;
     text-decoration: none;
     font-size: 13px;
@@ -160,6 +190,11 @@
         background-color var(--dur-fast) ease,
         box-shadow var(--dur-fast) ease,
         border-color var(--dur-fast) ease;
+}
+
+.navItemIcon {
+    flex-shrink: 0;
+    display: block;
 }
 
 .navButton {
@@ -187,7 +222,13 @@
     opacity: 1;
     background: rgba(74, 168, 255, 0.22);
     border: 1px solid rgba(74, 168, 255, 0.4);
-    box-shadow: none;
+    box-shadow: 0 0 10px rgba(74, 168, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    animation: navActiveGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes navActiveGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(74, 168, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+    50% { box-shadow: 0 0 16px rgba(74, 168, 255, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.14); }
 }
 
 .navItem:focus-visible,
@@ -356,7 +397,16 @@
     box-shadow: var(--shadow-soft);
     padding: clamp(20px, 3vw, 34px);
     backdrop-filter: blur(8px);
-    animation: pageEnter 0.28s ease-out both;
+    transition: box-shadow var(--dur-quick) ease, border-color var(--dur-quick) ease;
+}
+
+.card:hover,
+.cardWide:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow:
+        var(--shadow-soft),
+        0 0 0 1px rgba(74, 168, 255, 0.06),
+        0 24px 56px rgba(4, 8, 20, 0.48);
 }
 
 .card {
@@ -462,6 +512,15 @@
     min-height: 48px;
     padding: 13px 26px;
     font-size: 16px;
+}
+
+@keyframes primaryCtaGlow {
+    0%, 100% { box-shadow: 0 8px 20px rgba(44, 118, 232, 0.34); }
+    50% { box-shadow: 0 8px 26px rgba(74, 148, 255, 0.54), 0 0 12px rgba(74, 148, 255, 0.2); }
+}
+
+.primaryButton.primaryButton-lg {
+    animation: primaryCtaGlow 2.2s ease-in-out infinite;
 }
 
 /* Help page styles live in src/styles/components/help.css */
@@ -1031,11 +1090,6 @@
     .leaderboardTableRow td,
     .infoStripBody {
         transition: none;
-    }
-
-    .card,
-    .cardWide {
-        animation: none;
     }
 }
 

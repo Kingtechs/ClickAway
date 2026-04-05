@@ -146,12 +146,14 @@
 }
 
 .historyTableWrap {
-    overflow-x: auto;
+    overflow-x: visible;
     width: 100%;
 }
 
 .historyTable {
-    min-width: 960px;
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
     margin-top: 0;
     border: 0;
     background: transparent;
@@ -182,7 +184,7 @@
 }
 
 .historyPlayedCell {
-    min-width: 180px;
+    width: 20%;
 }
 
 .historyPlayedPrimary {
@@ -245,26 +247,6 @@
     background: rgba(96, 215, 179, 0.1);
 }
 
-.historyTable td.historyBuildCell {
-    min-width: 156px;
-    display: grid;
-    gap: 3px;
-    color: #e7f0fd;
-}
-
-.historyBuildName {
-    color: #eef5ff;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.3;
-}
-
-.historyBuildMeta {
-    color: rgba(198, 217, 240, 0.72);
-    font-size: 11px;
-    line-height: 1.35;
-}
-
 .historyTable td.historyScoreCell,
 .historyTable td.historyAccuracyCell {
     color: #eef5ff;
@@ -272,10 +254,25 @@
 }
 
 .historyRankBadge {
-    min-width: 94px;
     border: 1px solid rgba(175, 208, 244, 0.18);
     background: rgba(255, 255, 255, 0.04);
     color: rgba(229, 239, 252, 0.88);
+}
+
+.historyTable th,
+.historyTable td {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.historyTable th:first-child,
+.historyTable td:first-child {
+    padding-left: 12px;
+}
+
+.historyTable th:last-child,
+.historyTable td:last-child {
+    padding-right: 12px;
 }
 
 .historyRankBadge.isPositive {

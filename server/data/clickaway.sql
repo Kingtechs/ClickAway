@@ -106,6 +106,7 @@ CREATE TABLE `users` (
   `current_arena_theme_id` bigint(20) DEFAULT NULL,
   `current_profile_theme_id` bigint(20) DEFAULT NULL,
   `active_loadout_slot` varchar(20) NOT NULL DEFAULT 'loadout_1',
+  `build_walkthrough_status` varchar(20) NOT NULL DEFAULT 'dismissed',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_username` (`username`),
   KEY `idx_users_mmr_id` (`mmr`, `id`),

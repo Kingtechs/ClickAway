@@ -40,19 +40,10 @@ function normalizeLoadoutSnapshot(snapshot = {}) {
   }
 }
 
-function formatTimeOnly(date) {
-  return date.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  })
-}
-
-function isSameDay(firstDate, secondDate) {
-  return (
-    firstDate.getFullYear() === secondDate.getFullYear() &&
-    firstDate.getMonth() === secondDate.getMonth() &&
-    firstDate.getDate() === secondDate.getDate()
-  )
+function formatRelativeTime(value, unit) {
+  const normalizedValue = Math.max(1, Math.floor(value))
+  const suffix = normalizedValue === 1 ? "" : "s"
+  return `${normalizedValue} ${unit}${suffix} ago`
 }
 
 function normalizeReactionMetric(value) {
@@ -129,24 +120,24 @@ export function normalizeHistoryEntry(entry = {}, index = 0) {
  */
 export function formatPlayedAtLabel(playedDate) {
   const now = new Date()
-  const yesterday = new Date(now)
-  yesterday.setDate(now.getDate() - 1)
+  const elapsedMs = Math.max(0, now.getTime() - playedDate.getTime())
+  const elapsedHours = elapsedMs / (1000 * 60 * 60)
 
-  if (isSameDay(playedDate, now)) {
-    return `Today, ${formatTimeOnly(playedDate)}`
+  if (elapsedHours < 24) {
+    return formatRelativeTime(elapsedHours, "hour")
   }
 
-  if (isSameDay(playedDate, yesterday)) {
-    return `Yesterday, ${formatTimeOnly(playedDate)}`
+  const elapsedDays = elapsedHours / 24
+  if (elapsedDays < 30) {
+    return formatRelativeTime(elapsedDays, "day")
   }
 
-  return playedDate.toLocaleString([], {
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
+  const elapsedMonths = elapsedDays / 30
+  if (elapsedMonths < 12) {
+    return formatRelativeTime(elapsedMonths, "month")
+  }
+
+  return formatRelativeTime(elapsedDays / 365, "year")
 }
 
 /**
