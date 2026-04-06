@@ -187,6 +187,10 @@ export default function App() {
       ...nextProgress,
     }
 
+    if (nextProgress.buildWalkthrough === undefined) {
+      progressPayload.buildWalkthrough = buildWalkthrough
+    }
+
     progressSnapshotRef.current = progressPayload
 
     persistQueueRef.current = persistQueueRef.current
@@ -226,7 +230,7 @@ export default function App() {
       })
 
     return persistQueueRef.current
-  }, [applyProgress, authToken])
+  }, [applyProgress, authToken, buildWalkthrough])
 
   useEffect(() => {
     persistProgressRef.current = persistProgress

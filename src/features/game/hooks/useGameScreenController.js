@@ -799,6 +799,7 @@ export function useGameScreenController({
 
   return {
     phase,
+    allowsCoinRewards,
     gameScreenClassName,
     hudProps: {
       score,
