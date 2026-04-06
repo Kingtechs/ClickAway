@@ -1,4 +1,4 @@
-import "dotenv/config"
+﻿import "dotenv/config"
 
 import bcrypt from "bcryptjs"
 import cors from "cors"
@@ -13,7 +13,7 @@ import {
   findUserByUsername,
   saveUserProgress,
   updateUserPassword,
-} from "./db.js"
+} from "./playerMysqlDatabase.js"
 import { createPlayerStateStore, PlayerStateError } from "./playerStateStore.js"
 
 const app = express()

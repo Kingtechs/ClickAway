@@ -1,4 +1,4 @@
-import { getProfileAvatarStyle, getProfileInitials } from "../../../utils/profileAvatar.js"
+﻿import { getProfileAvatarStyle, getProfileInitials } from "../../../utils/profileAvatarStyling.js"
 
 function formatCoins(value) {
   return Number.isFinite(value) ? value.toLocaleString() : "0"

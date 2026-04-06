@@ -10,7 +10,7 @@ import {
   DEFAULT_DIFFICULTY_ID as DEFAULT_MODE_ID,
   DIFFICULTIES as MODES,
   getDifficultyById as getModeById,
-} from "../../../constants/difficultyConfig.js"
+} from "../../../constants/gameModesConfig.js"
 import {
   FEEDBACK_LIFETIME_MS,
   FEEDBACK_OFFSET,

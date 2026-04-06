@@ -1,6 +1,6 @@
 import { useCallback } from "react"
 
-import { PROGRESSION_MODE } from "../constants/difficultyConfig.js"
+import { PROGRESSION_MODE } from "../constants/gameModesConfig.js"
 import { appendHistoryEntry, createHistoryEntry } from "../utils/historyUtils.js"
 import { calculateRoundXp } from "../utils/progressionUtils.js"
 import {

@@ -1,4 +1,4 @@
-import "dotenv/config"
+﻿import "dotenv/config"
 
 import mysql from "mysql2/promise"
 
@@ -23,7 +23,7 @@ import {
   getDefaultItemIdForType,
   getFrontendItemIdByDbItemId,
   getMappedShopItemById,
-} from "./shopItemMap.js"
+} from "./serverShopCatalogIdMappings.js"
 
 const DEFAULT_PROGRESS = {
   coins: 0,

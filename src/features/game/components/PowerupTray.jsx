@@ -1,4 +1,4 @@
-import { PowerupGlyph } from "../../buildcraft/buildcraftGlyphs.jsx"
+﻿import { PowerupGlyph } from "../../buildcraft/loadoutBuildcraftGlyphIcons.jsx"
 
 const SEGMENT_COUNT = 5
 

@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+﻿import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 import PlayerHoverCard from "../components/PlayerHoverCard.jsx"
 import TierBadge from "../components/TierBadge.jsx"
-import { fetchLeaderboard } from "../services/api.js"
+import { fetchLeaderboard } from "../services/clickAwayHttpApiClient.js"
 import { formatPercent, normalizePercentValue } from "../utils/gameMath.js"
 import { buildPlayerLeaderboardStats } from "../utils/historyUtils.js"
-import { isRankedModeEntry } from "../utils/modeUtils.js"
+import { isRankedModeEntry } from "../utils/gameModeLabelsAndRankedFilters.js"
 import { getLevelProgress } from "../utils/progressionUtils.js"
 import {
   PLACEMENT_MATCH_COUNT,

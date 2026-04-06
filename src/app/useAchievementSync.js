@@ -1,6 +1,6 @@
-import { useEffect } from "react"
+﻿import { useEffect } from "react"
 
-import { mergeUnlockedAchievementIds } from "./appStateHelpers.js"
+import { mergeUnlockedAchievementIds } from "./appAccountStateHelpers.js"
 
 export function useAchievementSync({
   unlockedAchievementIds,
