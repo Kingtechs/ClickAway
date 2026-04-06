@@ -31,6 +31,63 @@
     flex: 1;
 }
 
+/* Route change: subtle enter only (CSS; avoids AnimatePresence exit/sync issues). */
+.routeOutlet {
+    animation: routeOutletEnter 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes routeOutletEnter {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mainContent.gameMain > .routeOutlet {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.mainContent.armoryMain > .routeOutlet {
+    min-height: 0;
+    min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .routeOutlet {
+        animation: none;
+    }
+}
+
+.routeFallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: min(200px, 36dvh);
+}
+
+.routeFallbackText {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(220, 230, 255, 0.55);
+    letter-spacing: 0.02em;
+}
+
+.mainContent.gameMain > .routeOutlet > .routeFallback {
+    flex: 1;
+    min-height: 0;
+}
+
+.mainContent.armoryMain > .routeOutlet > .routeFallback {
+    flex: 1;
+    min-height: 0;
+}
+
 .gameRouteActive {
     overflow: hidden;
 }

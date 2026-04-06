@@ -522,12 +522,6 @@ export default function ArmoryPage({
   const passiveLaneRef = useRef(null)
   const hotbarEditorRef = useRef(null)
   const reviewPanelRef = useRef(null)
-  const walkthroughSessionRef = useRef({
-    isVisible: false,
-    source: null,
-    status: BUILD_WALKTHROUGH_STATUS.DISMISSED,
-  })
-
   const [localSavedLoadouts, setLocalSavedLoadouts] = useState(savedLoadouts)
   const [localActiveLoadoutId, setLocalActiveLoadoutId] = useState(activeLoadoutId)
   const [activeStepId, setActiveStepId] = useState("slot")
@@ -822,26 +816,6 @@ export default function ArmoryPage({
       workspaceElement?.removeEventListener("scroll", handleReposition)
     }
   }, [isWalkthroughVisible, measureWalkthroughTarget])
-
-  useEffect(() => {
-    walkthroughSessionRef.current = {
-      isVisible: isWalkthroughVisible,
-      source: walkthroughSource,
-      status: buildWalkthroughStatus,
-    }
-  }, [buildWalkthroughStatus, isWalkthroughVisible, walkthroughSource])
-
-  useEffect(() => () => {
-    const activeSession = walkthroughSessionRef.current
-
-    if (
-      activeSession.isVisible &&
-      activeSession.source === "auto" &&
-      activeSession.status === BUILD_WALKTHROUGH_STATUS.NOT_STARTED
-    ) {
-      onBuildWalkthroughChange?.({ status: BUILD_WALKTHROUGH_STATUS.DISMISSED })
-    }
-  }, [onBuildWalkthroughChange])
 
   if (!selectedMode || !activeLoadout || !activePresentation || !selectedModuleSlot) {
     return null

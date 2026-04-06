@@ -1,18 +1,21 @@
-import { AnimatePresence, motion } from "motion/react"
+import { Suspense } from "react"
 import { Toaster } from "react-hot-toast"
 import { Outlet, useLocation } from "react-router-dom"
 import Navbar from "./Navbar.jsx"
 import { useBodyClass } from "../hooks/useBodyClass.js"
 
-const MotionDiv = motion.div
 const GAME_ROUTE_PREFIX = "/game"
 const GAME_ROUTE_BODY_CLASS = "gameRouteActive"
 const ARMORY_ROUTE_PREFIX = "/armory"
 const ARMORY_ROUTE_BODY_CLASS = "armoryRouteActive"
-const PAGE_EASE = [0.4, 0, 0.2, 1]
 
-// Game route: suppress min-height so the flex item doesn't overflow. flex: 1 comes from .gameMain > * CSS rule.
-const gamePageStyle = { minHeight: 0, overflow: "hidden" }
+function RouteFallback() {
+  return (
+    <div className="routeFallback" aria-busy="true" aria-live="polite">
+      <span className="routeFallbackText">Loading…</span>
+    </div>
+  )
+}
 
 const TOAST_STYLE = {
   background: "rgba(11, 18, 36, 0.97)",
@@ -35,15 +38,15 @@ export default function Layout({
   rankLabel,
   rankMmr,
 }) {
-  const location = useLocation()
-  const isGameRoute = location.pathname.startsWith(GAME_ROUTE_PREFIX)
-  const isArmoryRoute = location.pathname.startsWith(ARMORY_ROUTE_PREFIX)
+  const { pathname } = useLocation()
+  const isGameRoute = pathname.startsWith(GAME_ROUTE_PREFIX)
+  const isArmoryRoute = pathname.startsWith(ARMORY_ROUTE_PREFIX)
+
   useBodyClass(GAME_ROUTE_BODY_CLASS, isGameRoute)
   useBodyClass(ARMORY_ROUTE_BODY_CLASS, isArmoryRoute)
 
   return (
     <div className="appShell">
-      {/* Navbar visibility/links are driven by auth state from App-level routing. */}
       <Navbar
         isArmoryRoute={isArmoryRoute}
         isAuthed={isAuthed}
@@ -54,22 +57,15 @@ export default function Layout({
         rankLabel={rankLabel}
         rankMmr={rankMmr}
       />
-      <main className={`mainContent ${isGameRoute ? "gameMain" : ""} ${isArmoryRoute ? "armoryMain" : ""}`.trim()}>
-        <AnimatePresence mode="wait" initial={false}>
-          <MotionDiv
-            key={location.pathname}
-            style={isGameRoute ? gamePageStyle : undefined}
-            initial={isGameRoute ? { opacity: 0, y: 4 } : { opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={isGameRoute ? { opacity: 0 } : { opacity: 0, y: -10, scale: 0.993 }}
-            transition={{
-              duration: isGameRoute ? 0.13 : 0.2,
-              ease: PAGE_EASE,
-            }}
-          >
+      <main
+        className={`mainContent ${isGameRoute ? "gameMain" : ""} ${isArmoryRoute ? "armoryMain" : ""}`.trim()}
+      >
+        {/* key={pathname}: new route remounts this wrapper so only the incoming page animates in (no exit stack / double intro). */}
+        <div key={pathname} className="routeOutlet">
+          <Suspense fallback={<RouteFallback />}>
             <Outlet />
-          </MotionDiv>
-        </AnimatePresence>
+          </Suspense>
+        </div>
       </main>
 
       <Toaster
