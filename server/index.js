@@ -23,7 +23,7 @@ import {
   updateUserPassword,
   initializeSchema,
   default as pool,
-} from "./db.js"
+} from "./playerMysqlDatabase.js"
 import { calculateRewards, simulateRound } from "./roundRewards.js"
 import { createPlayerStateStore, PlayerStateError } from "./playerStateStore.js"
 
