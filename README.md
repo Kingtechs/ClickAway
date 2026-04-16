@@ -52,6 +52,19 @@ That SQL file creates the tables the app currently expects:
 - `user_achievement_progress`
 - lookup tables for cosmetics and achievements
 
+### 2a. Apply incremental migrations when needed
+
+Fresh databases created from `server/data/clickaway.sql` already include the
+current reaction-time columns on `round_history`.
+
+If you are upgrading an older local database instead of bootstrapping a new one,
+check `server/data/MIGRATIONS.md` and run any numbered scripts in
+`server/data/migrations/` that your database is missing.
+
+The first tracked migration is:
+
+- `001_add_round_reaction_metrics.sql`
+
 ### 3. Create your environment file
 
 Copy `.env.example` to `.env`.
@@ -170,20 +183,20 @@ The profile page summarizes a player's account:
 - coins
 - level progress
 - rank tier and MMR
-- best score and streak
+- best score, streak, and reaction metrics
 - achievement progress
 
 ### History
 
-The history page shows previously completed rounds, including score, hits, misses, rewards, and rank movement.
+The history page shows previously completed rounds, including score, hits, misses, rewards, reaction metrics, and rank movement.
 
 ### Leaderboard
 
-The leaderboard page currently combines the logged-in player's ranked stats with mock leaderboard entries. It is useful for UI work, but it is not backed by a real leaderboard API yet.
+The leaderboard page is backed by `GET /api/leaderboard` and renders live ranked standings returned by the server.
 
 ### Help
 
-The help page explains controls, formulas, modes, ranking, progression, and other gameplay rules. Most of its content comes from structured data in `src/features/help/helpContent.js`.
+The help page explains controls, formulas, modes, ranking, progression, and other gameplay rules. Most of its content comes from structured data in `src/features/help/helpPageStructuredContent.js`.
 
 ## Backend Auth Setup
 1. Copy `.env.example` to `.env`
@@ -200,11 +213,14 @@ You can run frontend + backend together with:
 ClickAway/
 |- public/                         Static images and rank/cosmetic assets
 |- server/
-|  |- data/clickaway (3).sql       Bootstrap MySQL schema
+|  |- data/
+|  |  |- clickaway.sql             Bootstrap MySQL schema for fresh databases
+|  |  |- MIGRATIONS.md             Manual migration ledger and environment notes
+|  |  |- migrations/               Incremental patches for older databases
 |  |- index.js                     Express app and API routes
-|  |- db.js                        MySQL queries and persistence helpers
+|  |- playerMysqlDatabase.js       MySQL pool, queries, and persistence helpers
 |  |- playerStateStore.js          Purchase/equip logic for player state
-|  |- shopItemMap.js               Mapping between frontend item ids and DB ids
+|  |- serverShopCatalogIdMappings.js   Mapping between frontend item ids and DB ids
 |- src/
 |  |- app/                         App-level state and synchronization hooks
 |  |- components/                  Reusable UI shared across pages
@@ -219,7 +235,6 @@ ClickAway/
 |  |- App.jsx                      Main route tree and page wiring
 |  |- main.jsx                     React app entry point
 |- .env.example                    Environment variable template
-|- MYSQL_AUDIT.md                  Notes on current MySQL ownership and gaps
 ```
 
 ## How State And Data Flow Through The App
@@ -230,15 +245,15 @@ At a high level, the app works like this:
 2. `src/App.jsx` owns route wiring plus the top-level player/session state.
 3. `src/app/useAuthSession.js` restores and verifies the current session.
 4. `src/app/useAppPlayerState.js` stores the local in-memory player state used across pages.
-5. `src/services/api.js` wraps the backend API calls.
+5. `src/services/clickAwayHttpApiClient.js` wraps the backend API calls.
 6. The backend in `server/index.js` handles auth, shop, and progress routes.
-7. `server/db.js` reads from and writes to MySQL.
+7. `server/playerMysqlDatabase.js` reads from and writes to MySQL.
 
 A common path looks like this:
 
 - user logs in
 - backend returns a token and the user's saved progress
-- frontend stores the token and hydrates coins, XP, MMR, inventory, and history
+- frontend stores only the auth token in `localStorage` and hydrates coins, XP, MMR, inventory, and history from the server response
 - completing rounds updates local state
 - the frontend persists that state back to the backend through `PUT /api/progress`
 
@@ -246,22 +261,22 @@ A common path looks like this:
 
 If you are changing a specific part of the app, these are the main entry points:
 
-- Game mode tuning: `src/constants/difficultyConfig.js`
+- Game mode tuning: `src/constants/gameModesConfig.js`
 - Shop catalog and cosmetic metadata: `src/constants/shopCatalog.js`
-- Help page content: `src/features/help/helpContent.js`
+- Help page content: `src/features/help/helpPageStructuredContent.js`
 - Backend routes: `server/index.js`
-- Database reads/writes: `server/db.js`
-- Frontend/backend cosmetic ID mapping: `server/shopItemMap.js`
+- Database reads/writes: `server/playerMysqlDatabase.js`
+- Frontend/backend cosmetic ID mapping: `server/serverShopCatalogIdMappings.js`
 
 ## Important Current Notes
 
 These are useful to know before making deeper changes:
 
-- The MySQL schema is bootstrapped from `server/data/clickaway (3).sql`; there is no migration system yet.
-- The leaderboard is not fully backend-driven yet. The current page still uses mock data for non-local players.
+- The MySQL schema is bootstrapped from `server/data/clickaway.sql`; there is no migration system yet.
+- The leaderboard is backend-driven through `GET /api/leaderboard`.
 - Shop metadata lives in the frontend, while the backend only knows item ids and mappings.
 - Achievement rules are evaluated in the frontend, while unlocked achievement ids are persisted in MySQL.
-- If you add or rename a cosmetic item, you usually need to update both `src/constants/shopCatalog.js` and `server/shopItemMap.js`, and keep the SQL seed ids aligned.
+- If you add or rename a cosmetic item, you usually need to update both `src/constants/shopCatalog.js` and `server/serverShopCatalogIdMappings.js`, and keep the SQL seed ids aligned.
 
 ## Troubleshooting
 
@@ -297,5 +312,5 @@ If you only want the shortest path to understanding the repo:
 1. Read `src/App.jsx` to see the routes and the top-level state wiring.
 2. Read `src/pages/GamePage.jsx` and `src/features/game/` to understand the core gameplay loop.
 3. Read `server/index.js` to see the API surface.
-4. Read `server/db.js` to see what data is persisted.
+4. Read `server/playerMysqlDatabase.js` to see what data is persisted.
 5. Read `MYSQL_AUDIT.md` to understand what is fully implemented versus still frontend-owned or mocked.

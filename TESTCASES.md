@@ -100,10 +100,11 @@
 | ID | Test Case | Steps | Expected Result |
 |----|-----------|-------|-----------------|
 | F-PR01 | Progress syncs to server after round | Complete any Casual or Ranked round | `PUT /api/progress` is called; server-side progress updated |
-| F-PR02 | Progress loads on login | Log in from a fresh browser tab | Frontend state hydrates from the server response (no stale localStorage) |
+| F-PR02 | Progress loads on login | Log in from a fresh browser tab | Frontend state hydrates from the server response; only the auth token is read from `localStorage` |
 | F-PR03 | Partial progress update preserves other fields | Send `PUT /api/progress` with only `coins` in the body | Other fields (XP, MMR, etc.) remain unchanged on the server |
 | F-PR04 | Level XP accumulates correctly | Complete multiple Casual rounds | `levelXp` accumulates; level display increases at correct thresholds |
 | F-PR05 | Ranked MMR increases on good round | Score well in a Ranked round | `rankMmr` increases; rank badge may upgrade |
+| F-PR06 | Reaction metrics persist with round history | Complete a Casual or Ranked round with at least one hit, then log out and back in | `avgReactionMs` and `bestReactionMs` are still present in saved history and derived profile stats |
 
 ---
 
@@ -132,7 +133,7 @@
 
 | ID | Test Case | Steps | Expected Result |
 |----|-----------|-------|-----------------|
-| F-H01 | Round is recorded after completion | Complete a Casual or Ranked round | New entry appears in `roundHistory` with score, mode, date, and streak |
+| F-H01 | Round is recorded after completion | Complete a Casual or Ranked round | New entry appears in `roundHistory` with score, mode, date, streak, and reaction metrics when available |
 | F-H02 | History page displays all past rounds | Navigate to `/history` | All entries in `roundHistory` are listed, newest first |
 | F-H03 | Practice rounds not recorded | Complete a Practice round | No new entry added to `roundHistory` |
 
@@ -146,7 +147,7 @@
 |----|-----------|----------|
 | U-UI01 | Click feedback appears on hit | A `+N` floating label appears at the click position within one frame |
 | U-UI02 | Score display updates immediately | Score number changes without a visible delay after each hit |
-| U-UI03 | Timer color changes when low | Timer text visually warns (e.g. turns red) when ≤5 s remain |
+| U-UI03 | Timer urgency changes at thresholds | Timer text enters warning state below 5 s and danger state below 3 s |
 | U-UI04 | Screen shakes on streak milestone | At streak multiples of 10, a brief screen shake animation plays |
 | U-UI05 | "End Practice Round" button does not shift layout | In Practice mode the button sits inline with the stats row — the arena does not move |
 | U-UI06 | Powerup tray fills correctly | Segment bar for each powerup fills smoothly as streak builds; does not overfill |
@@ -154,6 +155,7 @@
 | U-UI08 | Shop preview reflects equipped item | Equipping a skin in the shop updates the preview card without a page reload |
 | U-UI09 | Navbar active link highlighted | The nav item for the current route is visually active |
 | U-UI10 | Layout adapts below 700 px | At mobile widths the powerup tray, HUD, and arena stack without overflow |
+| U-UI11 | Reduced-motion disables non-essential animation | With `prefers-reduced-motion: reduce`, page-enter, timer pulse, score pulse, stagger, and unlock animations do not play |
 
 ---
 
@@ -227,7 +229,7 @@
 
 | ID | Test Case | Steps | Expected Result |
 |----|-----------|-------|-----------------|
-| S-FE01 | No secrets stored in `localStorage` | Inspect `localStorage` in DevTools after login | Only the JWT token and game progress are stored; no raw passwords |
+| S-FE01 | No secrets stored in `localStorage` | Inspect `localStorage` in DevTools after login | Only the JWT token is stored; no raw passwords or persisted progress blobs |
 | S-FE02 | Token is cleared on logout | Log out | `localStorage` entry for the token is removed; subsequent API calls fail with `401` |
 | S-FE03 | No sensitive data in page source | View page source of a rendered page | No user credentials, secrets, or internal API keys visible |
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+﻿import { useMemo, useState } from "react"
 
 import AchievementTile from "../components/achievements/AchievementTile.jsx"
 import AchievementsCarousel from "../components/achievements/AchievementsCarousel.jsx"
@@ -7,10 +7,15 @@ import {
   DEFAULT_ACHIEVEMENT_CATEGORY_KEY,
 } from "../game/achievements/achievementsList.js"
 import { evaluateAchievements } from "../game/achievements/evaluateAchievements.js"
-import { formatAccuracy } from "../utils/gameMath.js"
-import { isRankedModeEntry } from "../utils/modeUtils.js"
-import { getProfileAvatarStyle, getProfileInitials } from "../utils/profileAvatar.js"
-import { getRankImageSrc } from "../utils/rankUtils.js"
+import { calculateAccuracyPercent } from "../utils/gameMath.js"
+import { buildCareerReactionStats } from "../utils/historyUtils.js"
+import { isRankedModeEntry } from "../utils/gameModeLabelsAndRankedFilters.js"
+import { getProfileAvatarStyle, getProfileInitials } from "../utils/profileAvatarStyling.js"
+import {
+  PLACEMENT_MATCH_COUNT,
+  getRankImageSrc,
+  getRankToneClassName,
+} from "../utils/rankUtils.js"
 
 function buildProfileStats(roundHistory = []) {
   const rows = Array.isArray(roundHistory) ? roundHistory : []
@@ -42,7 +47,7 @@ function buildProfileStats(roundHistory = []) {
     rankedRounds,
     bestScore,
     bestStreak,
-    overallAccuracy: formatAccuracy(totalHits, totalMisses),
+    overallAccuracyPercent: calculateAccuracyPercent(totalHits, totalMisses),
   }
 }
 
@@ -72,31 +77,48 @@ function formatNumber(value = 0) {
   return Number(value).toLocaleString()
 }
 
-function getProfileTagline({ totalRounds, overallAccuracy, bestStreak }) {
-  const accuracyValue = Number.parseInt(String(overallAccuracy).replace("%", ""), 10) || 0
+function formatReactionTime(value) {
+  const normalizedValue = Number(value)
+  if (!Number.isFinite(normalizedValue) || normalizedValue <= 0) return "\u2014"
+  return `${Math.round(normalizedValue)} ms`
+}
 
+function getProfileTagline({ totalRounds, overallAccuracyPercent, bestStreak }) {
   if (totalRounds === 0) return "No rounds logged yet. Queue up and start your run."
-  if (accuracyValue >= 85 && bestStreak >= 10) return "Precision specialist. Your tempo is locked in."
-  if (accuracyValue >= 70) return "Strong fundamentals. Keep building consistency."
+  if (overallAccuracyPercent >= 85 && bestStreak >= 10) {
+    return "Precision specialist. Your tempo is locked in."
+  }
+  if (overallAccuracyPercent >= 70) return "Strong fundamentals. Keep building consistency."
   return "Momentum is building. Focus accuracy and chain longer streaks."
 }
 
 function getPlayerTitle({ totalRounds, rankedRounds, bestStreak, rankLabel = "" }) {
+  const normalizedRankLabel = rankLabel.toLowerCase()
   if (totalRounds === 0) return "Arena Rookie"
-  if (rankLabel.toLowerCase() === "gold") return "Gold Contender"
+  if (normalizedRankLabel.includes("deadeye")) return "Deadeye Contender"
+  if (normalizedRankLabel.includes("diamond")) return "Diamond Operator"
+  if (normalizedRankLabel.includes("platinum")) return "Platinum Climber"
+  if (normalizedRankLabel.includes("gold")) return "Gold Contender"
   if (rankedRounds >= 25) return "Ranked Specialist"
   if (bestStreak >= 15) return "Combo Architect"
   if (totalRounds >= 60) return "Arena Veteran"
   return "Rising Contender"
 }
 
-function getRankToneClass(rankLabel = "", isUnranked = false) {
-  if (isUnranked) return "rank-unranked"
-  const normalizedRank = String(rankLabel).trim().toLowerCase()
-  if (normalizedRank === "bronze" || normalizedRank === "silver" || normalizedRank === "gold") {
-    return `rank-${normalizedRank}`
+function getRankMetaText(rankProgress = {}) {
+  if (rankProgress.isUnranked) {
+    return `Complete ${PLACEMENT_MATCH_COUNT} placement matches to reveal your rank`
   }
-  return "rank-unranked"
+
+  if (rankProgress.isPlacement) {
+    return `${rankProgress.tierLabel} • ${rankProgress.placementMatchesRemaining} matches remaining`
+  }
+
+  if (rankProgress.isTopRank) {
+    return `${formatNumber(rankProgress.mmr)} rating`
+  }
+
+  return `${formatNumber(rankProgress.rr)} / ${formatNumber(rankProgress.rrMax)} RR`
 }
 
 function StatCard({ label, value, tooltip = "", tone = "neutral", isFeatured = false }) {
@@ -115,12 +137,11 @@ function StatCard({ label, value, tooltip = "", tone = "neutral", isFeatured = f
   )
 }
 
-function StatsSection({ title, description, stats = [], gridClassName = "" }) {
+function StatsSection({ title, stats = [], gridClassName = "" }) {
   return (
     <section className="profileStatsSection" aria-label={title}>
       <header className="profileStatsSectionHeader">
         <h2 className="profileStatsSectionTitle">{title}</h2>
-        <p className="profileStatsSectionDescription">{description}</p>
       </header>
       <div className={`profileStatsGrid ${gridClassName}`.trim()}>
         {stats.map((stat) => (
@@ -142,6 +163,9 @@ function formatSignedValue(value = 0) {
   const normalized = Number(value) || 0
   return `${normalized > 0 ? "+" : ""}${normalized}`
 }
+
+const REACTION_UNAVAILABLE_TOOLTIP =
+  "Reaction time appears after at least one recorded hit in a timed round."
 
 export default function ProfilePage({
   onLogout,
@@ -229,11 +253,11 @@ export default function ProfilePage({
   }, [categoryMasterAchievements, evaluatedAchievements, selectedCategoryKey])
 
   const profileStats = buildProfileStats(roundHistory)
+  const reactionStats = buildCareerReactionStats(roundHistory)
   const rankedInsights = buildRankedInsights(roundHistory)
   const rankLabel = rankProgress.tierLabel ?? "Unranked"
-  const rankMmr = rankProgress.mmr ?? 0
   const rankIconSrc = getRankImageSrc(rankLabel)
-  const rankToneClass = getRankToneClass(rankLabel, rankProgress.isUnranked)
+  const rankToneClass = getRankToneClassName(rankProgress)
   const levelValue = levelProgress.level ?? 1
   const xpIntoLevel = levelProgress.xpIntoLevel ?? 0
   const xpToNextLevel = levelProgress.xpToNextLevel ?? 0
@@ -249,7 +273,7 @@ export default function ProfilePage({
   })
   const playerInitials = getProfileInitials(playerName)
   const hasProfileImage = Boolean(equippedProfileImage?.imageSrc)
-  const avatarStyle = hasProfileImage ? undefined : getProfileAvatarStyle()
+  const avatarStyle = hasProfileImage ? undefined : getProfileAvatarStyle(playerName)
   const avatarClassName = `profileAvatar ${equippedProfileImage?.effectClass ?? ""} ${hasProfileImage ? "hasImage" : ""}`
 
   const playerProgressStats = [
@@ -288,6 +312,22 @@ export default function ProfilePage({
       tone: "streak",
       isFeatured: true,
     },
+    {
+      label: "Avg Reaction",
+      value: formatReactionTime(reactionStats.avgReactionMs),
+      tooltip: reactionStats.avgReactionMs === null
+        ? REACTION_UNAVAILABLE_TOOLTIP
+        : "Average reaction time across recorded rounds with hit data.",
+      tone: "score",
+    },
+    {
+      label: "Best Reaction",
+      value: formatReactionTime(reactionStats.bestReactionMs),
+      tooltip: reactionStats.bestReactionMs === null
+        ? REACTION_UNAVAILABLE_TOOLTIP
+        : "Fastest recorded hit response in saved round history.",
+      tone: "level",
+    },
   ]
   const combinedSummaryStats = [...playerProgressStats, ...performanceStats]
 
@@ -296,9 +336,6 @@ export default function ProfilePage({
       <section className="card profileCard">
         <header className="profileHero">
           <div className="profileHeroMain">
-            <p className="profileEyebrow">Player Identity</p>
-            <h1 className="cardTitle profileTitle">Arena Profile</h1>
-
             <div className="profileIdentityRow">
               <div className={avatarClassName} style={avatarStyle} aria-hidden="true">
                 {hasProfileImage ? (
@@ -316,11 +353,6 @@ export default function ProfilePage({
             <p className="profileLead">
               {profileTagline}
             </p>
-
-            <div className="profileHeroChips">
-              <span className="profileHeroChip tone-coins">Coins {formatNumber(coins)}</span>
-              <span className="profileHeroChip tone-level">Level {levelValue}</span>
-            </div>
 
             <div className="profileLevelProgress">
               <div className="profileLevelProgressTop">
@@ -355,18 +387,16 @@ export default function ProfilePage({
                 )}
               </div>
               <div className="profileRankPrimaryText">
-                <p className="profileRankLabel">Ranked Skill Rating</p>
+                <p className="profileRankLabel">Ranked Division</p>
                 <h2 className="profileRankTitle">{rankLabel}</h2>
                 <p className="profileRankMeta">
-                  {rankProgress.isUnranked
-                    ? "Play Ranked to place"
-                    : `${formatNumber(rankMmr)} MMR`}
+                  {getRankMetaText(rankProgress)}
                 </p>
               </div>
             </div>
             <div className="profileRankInsights" aria-label="Recent ranked trend">
               <article className="profileRankInsightItem">
-                <span className="profileRankInsightLabel">Last 10 Delta</span>
+                <span className="profileRankInsightLabel">Last 10 Movement</span>
                 <strong className="profileRankInsightValue">
                   {formatSignedValue(rankedInsights.recentRankDelta)}
                 </strong>
@@ -396,38 +426,34 @@ export default function ProfilePage({
         <div className="profileStatsSections">
           <StatsSection
             title="Player Summary"
-            description="Progression and performance in one view."
             stats={combinedSummaryStats}
-            gridClassName="isFiveColumns"
+            gridClassName="isSummaryGrid"
           />
 
           <section className="profileStatsSection profileAchievementsSection" aria-label="Achievements">
             <div className="achievementHeaderRow">
               <div className="achievementHeaderText">
                 <h2 className="profileStatsSectionTitle">Achievements</h2>
-                <p className="profileStatsSectionDescription">
-                  Track unlock progress across level, consistency, and ranked play.
-                </p>
               </div>
 
-              <div className="achievementCategoryTabs" role="tablist" aria-label="Achievement categories">
-                {availableAchievementCategories.map((category) => {
-                  const isSelected = category.key === selectedCategoryKey
+                <div className="achievementCategoryTabs" role="tablist" aria-label="Achievement categories">
+                  {availableAchievementCategories.map((category) => {
+                    const isSelected = category.key === selectedCategoryKey
 
-                  return (
-                    <button
-                      key={category.key}
-                      type="button"
-                      role="tab"
-                      aria-selected={isSelected}
-                      className={`achievementCategoryTab ${isSelected ? "isSelected" : ""}`}
-                      onClick={() => setRequestedCategoryKey(category.key)}
-                    >
-                      {category.label}
-                    </button>
-                  )
-                })}
-              </div>
+                    return (
+                      <button
+                        key={category.key}
+                        type="button"
+                        role="tab"
+                        aria-selected={isSelected}
+                        className={`achievementCategoryTab ${isSelected ? "isSelected" : ""}`}
+                        onClick={() => setRequestedCategoryKey(category.key)}
+                      >
+                        {category.label}
+                      </button>
+                    )
+                  })}
+                </div>
             </div>
 
             <div className="achievementFeaturedBannerWrap" aria-label="Featured master achievement">

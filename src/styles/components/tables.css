@@ -25,6 +25,14 @@
     background: rgba(255, 255, 255, 0.04);
 }
 
+.table tbody tr {
+    transition: background var(--dur-fast) ease;
+}
+
+.table tbody tr:hover {
+    background: rgba(74, 168, 255, 0.07) !important;
+}
+
 .table th {
     color: #eef4ff;
     font-weight: 800;
@@ -40,4 +48,100 @@
 .leaderboardTable tr,
 .leaderboardTable td {
     overflow: visible;
+}
+
+.historyEmptyState {
+    margin-top: 16px;
+    border-radius: 16px;
+    border: 1px dashed rgba(178, 208, 241, 0.24);
+    padding: 24px 20px;
+    background:
+        radial-gradient(circle at top right, rgba(105, 197, 255, 0.12), rgba(105, 197, 255, 0) 42%),
+        rgba(13, 21, 37, 0.56);
+    text-align: center;
+}
+
+.historyEmptyEyebrow {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: rgba(128, 193, 255, 0.82);
+}
+
+.historyEmptyTitle {
+    margin: 10px 0 8px;
+    color: #eef6ff;
+    font-size: clamp(22px, 3vw, 28px);
+    line-height: 1.15;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+}
+
+.historyEmptyLead {
+    width: min(560px, 100%);
+    margin: 0 auto;
+    color: rgba(214, 228, 245, 0.82);
+    line-height: 1.55;
+}
+
+.historyEmptyActions {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+}
+
+.historyPreviewWrap {
+    width: min(640px, 100%);
+    margin: 22px auto 0;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.historyPreviewTitle {
+    margin: 0 0 12px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.05px;
+    text-transform: uppercase;
+    color: rgba(198, 217, 239, 0.7);
+}
+
+.historyPreviewGrid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 9px;
+}
+
+.historyPreviewChip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(175, 210, 245, 0.26);
+    padding: 7px 12px;
+    background: rgba(105, 197, 255, 0.08);
+    color: rgba(233, 243, 255, 0.92);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .historyEmptyState {
+        padding: 20px 16px;
+    }
+
+    .historyPreviewGrid {
+        gap: 8px;
+    }
+
+    .historyPreviewChip {
+        width: calc(50% - 4px);
+        white-space: normal;
+        text-align: center;
+        line-height: 1.2;
+    }
 }

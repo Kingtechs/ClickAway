@@ -1,4 +1,4 @@
-import { getProfileAvatarStyle, getProfileInitials } from "../../../utils/profileAvatar.js"
+﻿import { getProfileAvatarStyle, getProfileInitials } from "../../../utils/profileAvatarStyling.js"
 
 function formatCoins(value) {
   return Number.isFinite(value) ? value.toLocaleString() : "0"
@@ -29,7 +29,7 @@ function LoadoutStage({ playerName, buttonSkin, arenaTheme, profileImage }) {
       <div className="shopCommandLoadoutAvatarFrame">
         <span
           className={`shopCommandLoadoutAvatar ${hasProfileImage ? "hasImage" : ""}`}
-          style={hasProfileImage ? undefined : getProfileAvatarStyle()}
+          style={hasProfileImage ? undefined : getProfileAvatarStyle(playerName)}
           aria-hidden="true"
         >
           {hasProfileImage ? (
@@ -58,6 +58,7 @@ export default function ShopHeroHeader({
   buttonSkin = null,
   arenaTheme = null,
   profileImage = null,
+  balancePulseKey = 0,
 }) {
   const remainingCount = Math.max(0, totalItems - totalOwnedCount)
 
@@ -75,7 +76,12 @@ export default function ShopHeroHeader({
             <section className="shopCommandSection shopCommandSection-balance">
               <span className="shopCommandLabel">Available Coins</span>
               <strong className="shopCommandValue shopCommandValue-balance">
-                <span className="shopCommandValueMain">{formatCoins(coins)}</span>
+                <span
+                  key={balancePulseKey}
+                  className={`shopCommandValueMain${balancePulseKey > 0 ? " shopCommandValueMain--pulseOnce" : ""}`}
+                >
+                  {formatCoins(coins)}
+                </span>
               </strong>
             </section>
 
@@ -117,9 +123,9 @@ export default function ShopHeroHeader({
             />
 
             <div className="shopCommandLoadoutMeta" aria-label="Equipped item summary">
-              <span><strong>Button:</strong><span>{buttonSkin?.name ?? "Default Button"}</span></span>
-              <span><strong>Arena:</strong><span>{arenaTheme?.name ?? "Default Theme"}</span></span>
-              <span><strong>Profile:</strong><span>{profileImage?.name ?? "Default Profile"}</span></span>
+              <span><strong>Button</strong><span>{buttonSkin?.name ?? "Default"}</span></span>
+              <span><strong>Arena</strong><span>{arenaTheme?.name ?? "Default"}</span></span>
+              <span><strong>Profile</strong><span>{profileImage?.name ?? "Default"}</span></span>
             </div>
           </section>
         </div>

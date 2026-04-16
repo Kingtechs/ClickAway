@@ -1,0 +1,1048 @@
+/* Armory page: guided build editor with a fixed command rail and a focused workspace. */
+.armoryPage {
+    width: min(1380px, 100%);
+    align-self: stretch;
+}
+
+.armoryShell {
+    width: 100%;
+    height: calc(100dvh - 112px);
+    min-height: 720px;
+    padding: 0;
+    position: relative;
+    display: grid;
+    grid-template-columns: 310px minmax(0, 1fr);
+    overflow: hidden;
+    border-color: rgba(166, 201, 238, 0.16);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(84, 168, 255, 0.12), rgba(84, 168, 255, 0) 32%),
+        linear-gradient(180deg, rgba(14, 20, 36, 0.98), rgba(11, 17, 31, 0.99));
+    box-shadow:
+        0 22px 60px rgba(4, 10, 20, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.armoryRail {
+    min-height: 0;
+    padding: 20px 18px;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    gap: 18px;
+    border-right: 1px solid rgba(176, 206, 240, 0.1);
+    background:
+        radial-gradient(circle at 0% 0%, rgba(98, 173, 255, 0.15), rgba(98, 173, 255, 0) 40%),
+        linear-gradient(180deg, rgba(18, 26, 44, 0.98), rgba(13, 19, 33, 0.99));
+}
+
+.armoryRailTop,
+.armoryRailIdentityCopy,
+.armoryRailProgress,
+.armoryRailStepBody,
+.armorySlotRailBody,
+.armoryWorkspace,
+.armoryStepStack,
+.armoryStepHeading,
+.armoryStepContent,
+.armoryChoiceBody,
+.armoryDetailHeader,
+.armoryReviewHeroCopy,
+.armoryReviewPowerBody,
+.armoryHotbarBody,
+.armoryLanePanelCopy,
+.armoryLaneTabBody,
+.armoryIntroHeader {
+    display: grid;
+}
+
+.armoryRailTop,
+.armoryRailIdentityCopy,
+.armoryRailStepBody,
+.armorySlotRailBody,
+.armoryStepHeading,
+.armoryChoiceBody,
+.armoryHotbarBody,
+.armoryReviewPowerBody,
+.armoryLanePanelCopy,
+.armoryLaneTabBody,
+.armoryDetailHeader {
+    gap: 4px;
+}
+
+.armoryRailEyebrow,
+.armoryDetailEyebrow,
+.armoryReviewEyebrow,
+.armorySnapshotLabel,
+.armoryFieldLabel,
+.armoryRailSectionLabel {
+    margin: 0;
+    color: rgba(149, 204, 255, 0.72);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.32px;
+    text-transform: uppercase;
+}
+
+.armoryRailIdentity {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(176, 206, 240, 0.12);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(98, 173, 255, 0.14), rgba(98, 173, 255, 0) 42%),
+        rgba(255, 255, 255, 0.035);
+}
+
+.armoryRailIdentityGlyph {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    border: 1px solid rgba(176, 206, 240, 0.14);
+    background:
+        radial-gradient(circle at 50% 50%, rgba(98, 173, 255, 0.16), rgba(98, 173, 255, 0) 56%),
+        rgba(255, 255, 255, 0.04);
+    display: grid;
+    place-items: center;
+}
+
+.armoryRailIdentityGlyphIcon,
+.armorySlotRailGlyphIcon,
+.armoryRailStepGlyphIcon,
+.armoryStepGlyphIcon,
+.armoryIntroItemGlyphIcon,
+.armorySnapshotChipIcon,
+.armoryReviewPowerGlyph svg,
+.armoryHotbarGlyph svg,
+.armoryChoiceIcon svg,
+.armoryLanePanelIcon svg,
+.armoryLaneTabIcon svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.armoryRailIdentityGlyphIcon {
+    width: 42px;
+    height: 42px;
+    color: rgba(241, 247, 255, 0.96);
+    stroke-width: 6;
+}
+
+.armoryRailLabel,
+.armoryStepLead,
+.armoryRailHint,
+.armorySlotRailLabel,
+.armoryChoiceHint,
+.armoryModeButtonMeta,
+.armoryHotbarMeta,
+.armoryReviewPowerMeta,
+.armoryLaneTabMeta,
+.armoryDetailLabel,
+.armoryMetricLabel {
+    color: rgba(197, 219, 243, 0.72);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.armoryRailName,
+.armoryIntroTitle,
+.armoryStepTitle,
+.armoryLanePanelTitle,
+.armoryDetailTitle,
+.armoryReviewTitle {
+    margin: 0;
+    color: #f6fbff;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+}
+
+.armoryRailName {
+    font-size: 24px;
+    line-height: 1.02;
+}
+
+.armoryStepTitle,
+.armoryLanePanelTitle {
+    font-size: 18px;
+    line-height: 1.1;
+}
+
+.armoryRailHint {
+    font-size: 12px;
+}
+
+.armoryRailProgress {
+    gap: 8px;
+}
+
+.armoryRailStepButton {
+    border: 1px solid rgba(176, 206, 240, 0.12);
+    border-radius: 16px;
+    padding: 11px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #eef6ff;
+    font: inherit;
+    text-align: left;
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.armoryRailStepButton:hover,
+.armorySlotRailButton:hover,
+.armoryModeButton:hover,
+.armoryHotbarButton:hover,
+.armoryLaneTab:hover,
+.armoryChoiceCard:hover:not(:disabled),
+.armoryStepToggle:hover {
+    transform: translateY(-1px);
+    border-color: rgba(145, 210, 255, 0.34);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.armoryRailStepButton.isActive,
+.armorySlotRailButton.isActive,
+.armoryModeButton.isActive,
+.armoryHotbarButton.isActive,
+.armoryLaneTab.isActive {
+    border-color: rgba(118, 197, 255, 0.46);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(118, 197, 255, 0.14), rgba(255, 255, 255, 0) 40%),
+        rgba(82, 165, 255, 0.12);
+}
+
+.armoryRailStepIndex,
+.armoryStepIndex,
+.armoryIntroItemIndex,
+.armorySnapshotKey,
+.armoryReviewPowerKey,
+.armoryHotbarKey,
+.armorySlotRailIndex {
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    border: 1px solid rgba(176, 206, 240, 0.16);
+    background: rgba(7, 12, 23, 0.24);
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #f5fbff;
+    flex-shrink: 0;
+}
+
+.armoryRailStepGlyph,
+.armoryStepGlyph,
+.armoryIntroItemGlyph,
+.armoryLanePanelIcon,
+.armoryLaneTabIcon,
+.armoryChoiceIcon,
+.armoryHotbarGlyph,
+.armorySlotRailGlyph,
+.armoryReviewPowerGlyph {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid rgba(176, 206, 240, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    display: grid;
+    place-items: center;
+    color: rgba(239, 246, 255, 0.96);
+}
+
+.armoryRailStepGlyphIcon,
+.armoryStepGlyphIcon,
+.armoryIntroItemGlyphIcon,
+.armoryLanePanelIcon svg,
+.armoryLaneTabIcon svg,
+.armoryChoiceIcon svg,
+.armoryHotbarGlyph svg,
+.armoryReviewPowerGlyph svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 1.8;
+}
+
+.armoryRailStepTitle {
+    color: #f4f9ff;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.armoryRailSection {
+    min-height: 0;
+    display: grid;
+    align-content: start;
+    gap: 10px;
+}
+
+.armorySlotRailList {
+    display: grid;
+    gap: 8px;
+}
+
+.armorySlotRailButton {
+    border: 1px solid rgba(176, 206, 240, 0.12);
+    border-radius: 16px;
+    padding: 10px 11px;
+    background: rgba(255, 255, 255, 0.035);
+    color: #eef6ff;
+    font: inherit;
+    text-align: left;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.armorySlotRailLabel {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.28px;
+    text-transform: uppercase;
+}
+
+.armorySlotRailName {
+    color: #f4f9ff;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.armorySlotRailGlyphIcon {
+    width: 20px;
+    height: 20px;
+    color: rgba(239, 246, 255, 0.96);
+    stroke-width: 7;
+}
+
+.armoryRailActions {
+    display: grid;
+    gap: 8px;
+}
+
+.armoryRailActions .secondaryButton {
+    width: 100%;
+    justify-content: center;
+}
+
+.armoryWorkspace {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 20px;
+    gap: 18px;
+    scrollbar-gutter: stable;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(98, 173, 255, 0.1), rgba(98, 173, 255, 0) 30%),
+        linear-gradient(180deg, rgba(16, 24, 40, 0.98), rgba(14, 21, 37, 0.99));
+}
+
+.armoryIntroCard,
+.armoryStepCard,
+.armoryLanePanel,
+.armorySnapshotPanel,
+.armoryDetailPanel,
+.armoryReviewHero,
+.armoryReviewPanel,
+.armoryReviewDetails,
+.armoryMetricCard {
+    border: 1px solid rgba(176, 206, 240, 0.12);
+    border-radius: 20px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015)),
+        rgba(255, 255, 255, 0.03);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.armoryIntroCard {
+    padding: 18px;
+    display: grid;
+    gap: 16px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(116, 196, 255, 0.12), rgba(116, 196, 255, 0) 40%),
+        radial-gradient(circle at 0% 100%, rgba(243, 196, 90, 0.08), rgba(243, 196, 90, 0) 28%),
+        rgba(255, 255, 255, 0.035);
+}
+
+.armoryIntroHeader {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+}
+
+.armoryIntroTitle {
+    font-size: clamp(22px, 3vw, 30px);
+    line-height: 1.08;
+}
+
+.armoryIntroGrid,
+.armoryReviewMetrics,
+.armorySnapshotGrid,
+.armoryChoiceGrid,
+.armoryReviewGrid {
+    display: grid;
+    gap: 12px;
+}
+
+.armoryIntroGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.armoryIntroItem {
+    min-height: 0;
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(176, 206, 240, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.armoryIntroItemTitle {
+    color: #f4f9ff;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.armoryIntroItemLead,
+.armoryDetailLead,
+.armoryReviewLead,
+.armoryReviewNote,
+.armoryLanePanelLead,
+.armoryChoiceImpact {
+    margin: 0;
+    color: rgba(210, 228, 248, 0.8);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.armoryStepStack {
+    gap: 12px;
+}
+
+.armoryStepCard {
+    overflow: hidden;
+}
+
+.armoryStepToggle {
+    width: 100%;
+    border: 0;
+    padding: 14px 16px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.16s ease;
+}
+
+.armoryStepCard.isActive .armoryStepToggle {
+    border-bottom: 1px solid rgba(176, 206, 240, 0.1);
+}
+
+.armoryStepSummary {
+    color: rgba(225, 239, 255, 0.86);
+    font-size: 12px;
+    line-height: 1.4;
+    text-align: right;
+}
+
+.armoryStepContent {
+    gap: 16px;
+    padding: 16px;
+}
+
+.armoryStepCard-slot.isActive {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(96, 174, 255, 0.12), rgba(96, 174, 255, 0) 36%),
+        rgba(255, 255, 255, 0.03);
+}
+
+.armoryStepCard-passives.isActive {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(86, 178, 150, 0.12), rgba(86, 178, 150, 0) 36%),
+        rgba(255, 255, 255, 0.03);
+}
+
+.armoryStepCard-hotbar.isActive {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(243, 196, 90, 0.14), rgba(243, 196, 90, 0) 36%),
+        rgba(255, 255, 255, 0.03);
+}
+
+.armoryStepCard-review.isActive {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(255, 143, 125, 0.12), rgba(255, 143, 125, 0) 36%),
+        rgba(255, 255, 255, 0.03);
+}
+
+.armoryStatusRow,
+.armoryActionRow,
+.armoryChipRow,
+.armoryReviewModeRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.armoryStatusChip,
+.armorySnapshotChip,
+.armoryExactChip {
+    min-height: 30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(176, 206, 240, 0.14);
+    background: rgba(255, 255, 255, 0.045);
+    color: rgba(235, 244, 255, 0.92);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12px;
+}
+
+.armorySnapshotGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.armorySnapshotPanel,
+.armoryReviewPanel {
+    padding: 14px;
+    display: grid;
+    gap: 10px;
+}
+
+.armorySnapshotChipIcon {
+    width: 14px;
+    height: 14px;
+    color: rgba(241, 247, 255, 0.92);
+    stroke-width: 2;
+}
+
+.armorySnapshotChip.tone-tempoCore {
+    background: rgba(98, 173, 255, 0.14);
+}
+
+.armorySnapshotChip.tone-streakLens {
+    background: rgba(84, 177, 149, 0.14);
+}
+
+.armorySnapshotChip.tone-power,
+.armorySnapshotChip.tone-powerRig {
+    background: rgba(243, 196, 90, 0.14);
+}
+
+.armorySnapshotChip.tone-good {
+    background: rgba(120, 226, 184, 0.14);
+}
+
+.armorySnapshotChip.tone-risk {
+    background: rgba(255, 160, 128, 0.12);
+}
+
+.armoryField {
+    display: grid;
+    gap: 6px;
+}
+
+.armoryNameInput {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 14px;
+    border: 1px solid rgba(169, 205, 240, 0.18);
+    background: rgba(7, 12, 23, 0.42);
+    color: #eef5ff;
+    padding: 10px 12px;
+    font: inherit;
+}
+
+.armoryNameInput:focus {
+    outline: 2px solid rgba(117, 199, 255, 0.68);
+    outline-offset: 1px;
+}
+
+.armoryLaneTabs,
+.armoryHotbarTabs {
+    display: grid;
+    gap: 10px;
+}
+
+.armoryHotbarEditor {
+    display: grid;
+    gap: 16px;
+}
+
+.armoryLaneTabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.armoryHotbarTabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.armoryLaneTab,
+.armoryHotbarButton,
+.armoryModeButton {
+    border: 1px solid rgba(176, 206, 240, 0.14);
+    border-radius: 16px;
+    padding: 10px 11px;
+    background: rgba(255, 255, 255, 0.035);
+    color: #eef6ff;
+    font: inherit;
+    text-align: left;
+    display: grid;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.armoryLaneTab {
+    grid-template-columns: auto minmax(0, 1fr);
+}
+
+.armoryHotbarButton {
+    grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+.armoryModeButton {
+    min-width: 112px;
+    gap: 4px;
+    padding: 10px 12px;
+}
+
+.armoryLaneTabIcon.tone-tempoCore,
+.armoryLanePanelIcon.tone-tempoCore {
+    background: rgba(98, 173, 255, 0.16);
+}
+
+.armoryLaneTabIcon.tone-streakLens,
+.armoryLanePanelIcon.tone-streakLens {
+    background: rgba(84, 177, 149, 0.16);
+}
+
+.armoryLaneTabIcon.tone-powerRig,
+.armoryLanePanelIcon.tone-powerRig {
+    background: rgba(243, 196, 90, 0.16);
+}
+
+.armoryLaneTabLabel,
+.armoryHotbarLabel,
+.armoryModeButtonLabel,
+.armoryReviewPanelTitle,
+.armoryMetricValue,
+.armoryReviewPowerLabel,
+.armoryChoiceLabel {
+    color: #f4f9ff;
+    font-size: 14px;
+    line-height: 1.25;
+}
+
+.armoryLanePanel {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+}
+
+.armoryLanePanel.tone-tempoCore {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(98, 173, 255, 0.12), rgba(98, 173, 255, 0) 40%),
+        rgba(255, 255, 255, 0.03);
+}
+
+.armoryLanePanel.tone-streakLens {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(84, 177, 149, 0.12), rgba(84, 177, 149, 0) 40%),
+        rgba(255, 255, 255, 0.03);
+}
+
+.armoryLanePanel.tone-powerRig {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(243, 196, 90, 0.12), rgba(243, 196, 90, 0) 40%),
+        rgba(255, 255, 255, 0.03);
+}
+
+.armoryLanePanelHeader {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+}
+
+.armoryChoiceGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.armoryChoiceGrid.armoryChoiceGrid-powers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.armoryChoiceCard {
+    min-height: 118px;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    position: relative;
+    text-align: left;
+    border-radius: 18px;
+    border: 1px solid rgba(176, 206, 240, 0.16);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(232, 243, 255, 0.9);
+    transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.armoryChoiceCard.isSelected {
+    border-color: rgba(118, 197, 255, 0.52);
+    background: rgba(82, 165, 255, 0.12);
+}
+
+.armoryChoiceCard:disabled {
+    opacity: 0.62;
+    cursor: not-allowed;
+}
+
+.armoryChoiceCard.tone-tempoCore::before,
+.armoryChoiceCard.tone-streakLens::before,
+.armoryChoiceCard.tone-power::before,
+.armoryChoiceCard.tone-powerRig::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 4px;
+    border-radius: 18px 18px 0 0;
+}
+
+.armoryChoiceCard.tone-tempoCore::before {
+    background: linear-gradient(90deg, rgba(109, 194, 255, 0.96), rgba(80, 145, 255, 0.9));
+}
+
+.armoryChoiceCard.tone-streakLens::before {
+    background: linear-gradient(90deg, rgba(120, 226, 184, 0.96), rgba(83, 215, 179, 0.9));
+}
+
+.armoryChoiceCard.tone-power::before,
+.armoryChoiceCard.tone-powerRig::before {
+    background: linear-gradient(90deg, rgba(255, 214, 113, 0.96), rgba(244, 173, 71, 0.9));
+}
+
+.armoryChoiceHint {
+    grid-column: 1 / -1;
+    margin-top: auto;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16px;
+    text-transform: uppercase;
+}
+
+.armoryDetailPanel,
+.armoryReviewDetails {
+    padding: 14px;
+    display: grid;
+    gap: 12px;
+}
+
+.armoryDetailTitle,
+.armoryReviewTitle {
+    font-size: 20px;
+    line-height: 1.08;
+}
+
+.armoryDetailRows {
+    display: grid;
+    gap: 8px;
+}
+
+.armoryDetailRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(176, 206, 240, 0.08);
+}
+
+.armoryDetailValue {
+    color: #f6fbff;
+    font-size: 12px;
+    line-height: 1.4;
+    text-align: right;
+}
+
+.armoryExactList,
+.armoryReviewPowerList {
+    display: grid;
+    gap: 8px;
+}
+
+.armoryReviewHero {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(255, 150, 120, 0.12), rgba(255, 150, 120, 0) 34%),
+        radial-gradient(circle at 0% 100%, rgba(111, 193, 255, 0.12), rgba(111, 193, 255, 0) 26%),
+        rgba(255, 255, 255, 0.035);
+}
+
+.armoryReviewMetrics {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.armoryMetricCard {
+    padding: 12px;
+    display: grid;
+    gap: 6px;
+}
+
+.armoryReviewGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.armoryReviewPowerItem {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(176, 206, 240, 0.1);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.armoryWalkthroughOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    pointer-events: none;
+}
+
+.armoryWalkthroughBlocker {
+    position: absolute;
+    background: rgba(3, 7, 16, 0.78);
+    backdrop-filter: blur(6px);
+    pointer-events: auto;
+}
+
+.armoryWalkthroughBlockerFull {
+    inset: 0;
+}
+
+.armoryWalkthroughSpotlight {
+    position: absolute;
+    border-radius: 22px;
+    border: 1px solid rgba(145, 210, 255, 0.46);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04),
+        0 0 0 9999px rgba(0, 0, 0, 0);
+    background:
+        radial-gradient(circle at 50% 50%, rgba(118, 197, 255, 0.08), rgba(118, 197, 255, 0) 68%);
+    pointer-events: none;
+}
+
+.armoryWalkthroughPanel {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    width: min(360px, calc(100% - 40px));
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(176, 206, 240, 0.2);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(98, 173, 255, 0.16), rgba(98, 173, 255, 0) 42%),
+        linear-gradient(180deg, rgba(12, 19, 33, 0.98), rgba(9, 15, 27, 0.985));
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.34);
+    display: grid;
+    gap: 14px;
+    pointer-events: auto;
+}
+
+.armoryWalkthroughPanel.isCentered {
+    left: 50%;
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+}
+
+.armoryWalkthroughPanelHeader,
+.armoryWalkthroughCopy,
+.armoryWalkthroughActions {
+    display: grid;
+}
+
+.armoryWalkthroughPanelHeader {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.armoryWalkthroughEyebrow {
+    margin: 0;
+    color: rgba(149, 204, 255, 0.72);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.32px;
+    text-transform: uppercase;
+}
+
+.armoryWalkthroughDismiss {
+    border: 0;
+    background: transparent;
+    color: rgba(203, 224, 247, 0.76);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.armoryWalkthroughCopy {
+    gap: 6px;
+}
+
+.armoryWalkthroughTitle {
+    margin: 0;
+    color: #f6fbff;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: 24px;
+    line-height: 1.08;
+}
+
+.armoryWalkthroughLead,
+.armoryWalkthroughNote {
+    margin: 0;
+    color: rgba(214, 231, 250, 0.84);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.armoryWalkthroughNote {
+    color: rgba(191, 214, 239, 0.68);
+    font-size: 11px;
+}
+
+.armoryWalkthroughActions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.armoryWalkthroughActions .primaryButton,
+.armoryWalkthroughActions .secondaryButton {
+    width: 100%;
+    justify-content: center;
+}
+
+.armoryWalkthroughActions > :only-child {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 1100px) {
+    .armoryShell {
+        grid-template-columns: 280px minmax(0, 1fr);
+    }
+
+    .armoryIntroGrid,
+    .armoryReviewGrid,
+    .armoryReviewMetrics,
+    .armorySnapshotGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 940px) {
+    .armoryShell {
+        height: auto;
+        min-height: 0;
+        grid-template-columns: 1fr;
+    }
+
+    .armoryRail {
+        border-right: 0;
+        border-bottom: 1px solid rgba(176, 206, 240, 0.1);
+    }
+
+    .armoryWorkspace {
+        overflow: visible;
+    }
+
+    .armoryIntroHeader,
+    .armoryReviewHero,
+    .armoryStepToggle {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+
+    .armoryStepSummary {
+        text-align: left;
+    }
+
+    .armoryLaneTabs,
+    .armoryHotbarTabs,
+    .armoryChoiceGrid,
+    .armoryChoiceGrid.armoryChoiceGrid-powers,
+    .armoryReviewMetrics,
+    .armoryReviewGrid,
+    .armorySnapshotGrid,
+    .armoryIntroGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .armoryPage {
+        width: 100%;
+    }
+
+    .armoryShell {
+        border-radius: 20px;
+    }
+
+    .armoryRail,
+    .armoryWorkspace {
+        padding: 16px;
+    }
+
+    .armoryWalkthroughPanel {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        width: auto;
+    }
+
+    .armoryRailName,
+    .armoryIntroTitle,
+    .armoryDetailTitle,
+    .armoryReviewTitle {
+        font-size: 18px;
+    }
+
+    .armoryRailIdentity,
+    .armoryLanePanelHeader {
+        grid-template-columns: 1fr;
+    }
+
+    .armorySlotRailButton {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .armorySlotRailGlyph {
+        display: none;
+    }
+}

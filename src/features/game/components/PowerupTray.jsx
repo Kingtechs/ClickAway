@@ -1,65 +1,93 @@
-import { POWERUPS } from "../../../constants/gameConstants.js"
+import { PowerupGlyph } from "../../buildcraft/loadoutBuildcraftGlyphIcons.jsx"
 
 const SEGMENT_COUNT = 5
 
-export default function PowerupTray({
-  powerupCharges,
-  streak = 0,
-  onUsePowerup,
-  isPlaying = false,
-}) {
+function getFilledSegments({ charges, streak, awardEvery }) {
+  if (charges > 0) return SEGMENT_COUNT
+
+  const safeAwardEvery = Math.max(1, Number(awardEvery) || 1)
+  const hitsPerSegment = safeAwardEvery / SEGMENT_COUNT
+  return Math.floor((streak % safeAwardEvery) / hitsPerSegment)
+}
+
+function getPowerupState(powerup, charges) {
+  if (powerup.effectType === "combo_surge" && powerup.comboSurgeHitsRemaining > 0) {
+    return {
+      label: `${powerup.comboSurgeHitsRemaining} hits left`,
+      tone: "active",
+    }
+  }
+
+  if (powerup.effectType === "guard_charge" && powerup.isGuardActive) {
+    return {
+      label: "Guard active",
+      tone: "active",
+    }
+  }
+
+  if (charges > 0) {
+    return {
+      label: "Ready",
+      tone: "ready",
+    }
+  }
+
+  return {
+    label: "Charging",
+    tone: "idle",
+  }
+}
+
+export default function PowerupTray({ powerupSlots = [], streak = 0 }) {
   return (
-    <section className="powerupPanel" aria-label="Power-ups">
-      <div className="powerupTray">
-        {POWERUPS.map((powerup) => {
-          const charges = powerupCharges[powerup.id] ?? 0
-          const isReady = charges > 0
-          const isDisabled = !isPlaying || !isReady
-          const hitsPerSegment = powerup.awardEvery / SEGMENT_COUNT
-          const filledSegments = isReady
-            ? SEGMENT_COUNT
-            : Math.floor((streak % powerup.awardEvery) / hitsPerSegment)
+    <div className="powerupTray" aria-label="Power hotbar">
+      {powerupSlots.map((powerup) => {
+        const charges = powerup.charges ?? 0
+        const powerupState = getPowerupState(powerup, charges)
+        const filledSegments = getFilledSegments({
+          charges,
+          streak,
+          awardEvery: powerup.awardEvery,
+        })
 
-          return (
-            <button
-              key={powerup.id}
-              type="button"
-              className={`powerupItem ${isReady ? "ready" : ""}`}
-              onClick={() => onUsePowerup?.(powerup.id)}
-              disabled={isDisabled}
-              aria-label={`${powerup.label} (${charges} charges)`}
-              title={powerup.description}
-            >
-              <div className="powerupTop">
-                <strong className="powerupLabel">{powerup.label}</strong>
-                <div className="powerupMeta">
-                  {isReady ? <span className="powerupReadyCue">Ready</span> : null}
-                  <div className="powerupCount">x{charges}</div>
+        return (
+          <div
+            key={powerup.slotKey}
+            className={`powerupItem ${charges > 0 ? "ready" : ""} ${powerupState.tone === "active" ? "active" : ""}`}
+          >
+            <div className="powerupTop">
+              <div className="powerupHeading">
+                <div className="powerupLead">
+                  <div className="powerupSlotBadge" aria-hidden="true">
+                    {powerup.slotKey}
+                  </div>
+                  <span className="powerupIconWrap" aria-hidden="true">
+                    <PowerupGlyph powerupId={powerup.id} />
+                  </span>
+                </div>
+                <div className="powerupHeadingCopy">
+                  <strong className="powerupLabel">{powerup.label}</strong>
+                  <span className={`powerupStateLabel powerupStateLabel-${powerupState.tone}`}>
+                    {powerupState.label}
+                  </span>
                 </div>
               </div>
-              <div className="powerupBottom">
-                <div className="powerupSlotBadge" aria-hidden="true">
-                  {powerup.key}
-                </div>
-                <img src={powerup.icon} alt="" className="powerupIcon" />
-                <div className="powerupSegmentBar">
-                  {Array.from({ length: SEGMENT_COUNT }, (_, index) => (
-                    <div
-                      key={index}
-                      className={`powerupSegment ${index < filledSegments ? "filled" : ""}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </button>
-          )
-        })}
-      </div>
+              {charges > 1 ? <div className="powerupCount">x{charges}</div> : null}
+            </div>
 
-      <div className="powerupPanelFooter">
-        <h2 className="powerupPanelTitle">Power Ups</h2>
-        <p className="powerupPanelHint">Tap a card or use keys 1, 2, and 3.</p>
-      </div>
-    </section>
+            <div className="powerupBottom">
+              <div className="powerupSegmentBar" aria-hidden="true">
+                {Array.from({ length: SEGMENT_COUNT }, (_, index) => (
+                  <div
+                    key={index}
+                    className={`powerupSegment ${index < filledSegments ? "filled" : ""}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
   )
 }

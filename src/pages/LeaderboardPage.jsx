@@ -1,39 +1,37 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+﻿import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
-import InfoStrip from "../components/InfoStrip.jsx"
 import PlayerHoverCard from "../components/PlayerHoverCard.jsx"
-import { LEADERBOARD_INSIGHTS } from "../features/leaderboard/leaderboardData.js"
-import { fetchLeaderboard } from "../services/api.js"
+import TierBadge from "../components/TierBadge.jsx"
+import { fetchLeaderboard } from "../services/clickAwayHttpApiClient.js"
+import { formatPercent, normalizePercentValue } from "../utils/gameMath.js"
+import { buildPlayerLeaderboardStats } from "../utils/historyUtils.js"
+import { isRankedModeEntry } from "../utils/gameModeLabelsAndRankedFilters.js"
 import { getLevelProgress } from "../utils/progressionUtils.js"
-import { getRankImageSrc, getRankProgressWithPlacement } from "../utils/rankUtils.js"
+import {
+  PLACEMENT_MATCH_COUNT,
+  getRankProgressWithPlacement,
+} from "../utils/rankUtils.js"
 
 const SORTABLE_COLUMNS = [
-  { key: "mmr", label: "MMR" },
+  { key: "mmr", label: "Rating" },
   { key: "bestScore", label: "Best Score" },
   { key: "bestStreak", label: "Best Streak" },
   { key: "accuracyPercent", label: "Accuracy" },
 ]
 
 const DEFAULT_SORT = { key: "mmr", direction: "desc" }
-
-function parseAccuracyPercent(accuracy) {
-  if (typeof accuracy === "number" && Number.isFinite(accuracy)) {
-    return Math.max(0, Math.min(100, Math.round(accuracy)))
-  }
-
-  const parsedValue = Number.parseInt(String(accuracy ?? "").replace("%", ""), 10)
-  return Number.isFinite(parsedValue) ? Math.max(0, Math.min(100, parsedValue)) : 0
-}
-
-function formatAccuracyPercent(accuracy) {
-  return `${parseAccuracyPercent(accuracy)}%`
-}
+const VISIBLE_LEADERBOARD_LIMIT = 25
+const LEADERBOARD_SKELETON_ROW_COUNT = 8
 
 function formatNumericValue(value) {
   const normalizedValue = Number(value)
   if (!Number.isFinite(normalizedValue)) return "0"
   return Math.max(0, normalizedValue).toLocaleString()
+}
+
+function getSortLabel(sortKey) {
+  return SORTABLE_COLUMNS.find((column) => column.key === sortKey)?.label ?? "Rating"
 }
 
 function getSortableValue(player, sortKey) {
@@ -61,10 +59,14 @@ function isCurrentUserRow(player, currentUserId, currentUsername) {
 function normalizeLeaderboardRow(row = {}, rowIndex = 0) {
   const rankedRounds = Math.max(0, Number(row.rankedRounds) || 0)
   const mmr = Math.max(0, Number(row.mmr) || 0)
-  const accuracyPercent = parseAccuracyPercent(row.accuracyPercent)
+  const accuracyPercent = normalizePercentValue(row.accuracyPercent)
   const levelXp = Math.max(0, Number(row.levelXp) || 0)
   const level = getLevelProgress(levelXp).level
-  const rankProgress = getRankProgressWithPlacement(mmr, rankedRounds > 0)
+  const rankProgress = getRankProgressWithPlacement({
+    mmr,
+    hasRankedHistory: rankedRounds > 0,
+    rankedState: { placementMatchesPlayed: PLACEMENT_MATCH_COUNT },
+  })
 
   return {
     rank: Math.max(1, Number(row.rank) || (rowIndex + 1)),
@@ -77,7 +79,7 @@ function normalizeLeaderboardRow(row = {}, rowIndex = 0) {
     bestScore: Math.max(0, Number(row.bestScore) || 0),
     bestStreak: Math.max(0, Number(row.bestStreak) || 0),
     accuracyPercent,
-    accuracy: formatAccuracyPercent(accuracyPercent),
+    rankProgress,
     rankLabel: rankProgress.tierLabel,
   }
 }
@@ -85,6 +87,58 @@ function normalizeLeaderboardRow(row = {}, rowIndex = 0) {
 async function requestLeaderboardRows(authToken) {
   const response = await fetchLeaderboard(authToken)
   return (Array.isArray(response?.rows) ? response.rows : []).map(normalizeLeaderboardRow)
+}
+
+function LeaderboardTableSkeleton() {
+  return (
+    <div
+      className="leaderboardSkeletonWrap"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label="Loading leaderboard standings"
+    >
+      <div className="leaderboardSkeletonIntro">
+        <div className="skeletonBlock skeletonBlock--pill" aria-hidden="true" />
+      </div>
+      <table className="table helpTable leaderboardTable leaderboardSkeletonTable">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Player</th>
+            <th scope="col">Tier</th>
+            {SORTABLE_COLUMNS.map((column) => (
+              <th key={column.key} scope="col" className="leaderboardNumeric">
+                {column.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: LEADERBOARD_SKELETON_ROW_COUNT }, (_, rowIndex) => (
+            <tr
+              key={`leaderboard-skeleton-${rowIndex}`}
+              className="leaderboardTableRow leaderboardSkeletonRow"
+            >
+              <td>
+                <div className="skeletonBlock skeletonBlock--rank" aria-hidden="true" />
+              </td>
+              <td>
+                <div className="skeletonBlock skeletonBlock--md leaderboardSkeletonPlayer" aria-hidden="true" />
+              </td>
+              <td>
+                <div className="skeletonBlock skeletonBlock--tier" aria-hidden="true" />
+              </td>
+              {SORTABLE_COLUMNS.map((column) => (
+                <td key={column.key} className="leaderboardNumeric">
+                  <div className="skeletonBlock skeletonBlock--num" aria-hidden="true" />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }
 
 function SortableHeader({ label, columnKey, sortConfig, onSort }) {
@@ -112,16 +166,111 @@ function SortableHeader({ label, columnKey, sortConfig, onSort }) {
   )
 }
 
-function TierBadge({ tierLabel = "Unranked" }) {
-  const normalizedLabel = String(tierLabel || "Unranked").trim()
-  const tierVariant = normalizedLabel.toLowerCase()
-  const rankImageSrc = getRankImageSrc(normalizedLabel)
+function RankDisplay({ rank = 0 }) {
+  const normalizedRank = Math.max(1, Number(rank) || 1)
+  const isTopThree = normalizedRank <= 3
+
+  if (!isTopThree) {
+    return <span className="leaderboardRankText">{formatNumericValue(normalizedRank)}</span>
+  }
 
   return (
-    <span className={`leaderboardTierBadge is-${tierVariant}`}>
-      {rankImageSrc ? <img src={rankImageSrc} alt="" className="leaderboardTierBadgeIcon" /> : null}
-      <span>{normalizedLabel}</span>
+    <span className={`leaderboardRankBadge is-rank${normalizedRank}`}>
+      {normalizedRank}
     </span>
+  )
+}
+
+function LeaderboardStandingPanel({
+  currentVisiblePlayer = null,
+  currentRankProgress = null,
+  currentLeaderboardStats = {},
+  rankedRounds = 0,
+}) {
+  const normalizedRankedRounds = Math.max(0, Number(rankedRounds) || 0)
+  const placementMatchesRemaining = Math.max(
+    0,
+    Number(currentRankProgress?.placementMatchesRemaining) || 0
+  )
+  const displaySpot = currentVisiblePlayer
+    ? `#${currentVisiblePlayer.rank}`
+    : currentRankProgress?.isPlacement
+      ? "PLACEMENT"
+      : currentRankProgress?.isUnranked
+        ? "--"
+        : `TOP ${VISIBLE_LEADERBOARD_LIMIT}+`
+
+  let title = "Outside the visible ladder"
+  let lead = `You have a placed rank, but only the top ${VISIBLE_LEADERBOARD_LIMIT} players are visible right now.`
+
+  if (currentVisiblePlayer) {
+    title = `Visible at #${formatNumericValue(currentVisiblePlayer.rank)}`
+    lead = `You are currently in the visible top ${VISIBLE_LEADERBOARD_LIMIT} and your ladder rank is easy to track here.`
+  } else if (currentRankProgress?.isPlacement) {
+    title = "Placement in progress"
+    lead = placementMatchesRemaining > 0
+      ? `${formatNumericValue(placementMatchesRemaining)} placement matches remain before your first visible rank is revealed.`
+      : "Your initial rank is being finalized."
+  } else if (currentRankProgress?.isUnranked) {
+    title = "Play Ranked to place"
+    lead = `Complete ${PLACEMENT_MATCH_COUNT} placement matches to unlock your visible ladder standing.`
+  }
+
+  const statItems = [
+    {
+      label: "Rating",
+      value: formatNumericValue(currentRankProgress?.mmr),
+    },
+    {
+      label: "Best Score",
+      value: formatNumericValue(currentLeaderboardStats.bestScore),
+    },
+    {
+      label: "Best Streak",
+      value: formatNumericValue(currentLeaderboardStats.bestStreak),
+    },
+    {
+      label: "Accuracy",
+      value: formatPercent(currentLeaderboardStats.accuracyPercent),
+    },
+    {
+      label: "Ranked Rounds",
+      value: formatNumericValue(normalizedRankedRounds),
+    },
+  ]
+
+  return (
+    <section className="leaderboardStandingPanel" aria-label="Your leaderboard standing">
+      <div className="leaderboardStandingMain">
+        <div className="leaderboardStandingText">
+          <p className="leaderboardSectionEyebrow">Your Standing</p>
+          <div className="leaderboardStandingHeading">
+            <div className="leaderboardStandingTitleGroup">
+              <h2 className="cardH2 leaderboardStandingTitle">{title}</h2>
+              <p className="leaderboardStandingLead">{lead}</p>
+            </div>
+            <TierBadge
+              tierLabel={currentRankProgress?.tierLabel || "Unranked"}
+              className="leaderboardStandingTierBadge"
+            />
+          </div>
+        </div>
+
+        <div className="leaderboardStandingSpotlight" aria-label="Visible ladder spot">
+          <span className="leaderboardStandingSpotlightLabel">Ladder Spot</span>
+          <strong className="leaderboardStandingSpotlightValue">{displaySpot}</strong>
+        </div>
+      </div>
+
+      <div className="leaderboardStandingStats" aria-label="Your ranked summary">
+        {statItems.map((item) => (
+          <article key={item.label} className="leaderboardStandingStat">
+            <span className="leaderboardStandingStatLabel">{item.label}</span>
+            <strong className="leaderboardStandingStatValue">{item.value}</strong>
+          </article>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -129,6 +278,8 @@ export default function LeaderboardPage({
   authToken = "",
   currentUserId = "",
   currentUsername = "",
+  currentRankProgress = null,
+  roundHistory = [],
 }) {
   const navigate = useNavigate()
   const [sortConfig, setSortConfig] = useState(DEFAULT_SORT)
@@ -209,6 +360,21 @@ export default function LeaderboardPage({
     })
   }, [leaderboardRows, sortConfig])
 
+  const rankedRounds = useMemo(
+    () => (Array.isArray(roundHistory) ? roundHistory : []).filter(isRankedModeEntry),
+    [roundHistory]
+  )
+  const currentLeaderboardStats = useMemo(
+    () => buildPlayerLeaderboardStats(rankedRounds),
+    [rankedRounds]
+  )
+  const currentVisiblePlayer = useMemo(
+    () => leaderboardRows.find((player) => isCurrentUserRow(player, currentUserId, currentUsername)) ?? null,
+    [currentUserId, currentUsername, leaderboardRows]
+  )
+  const activeSortLabel = getSortLabel(sortConfig.key)
+  const isDefaultLadderSort = sortConfig.key === DEFAULT_SORT.key && sortConfig.direction === DEFAULT_SORT.direction
+
   function handleSort(columnKey) {
     setSortConfig((currentSort) => {
       if (currentSort.key === columnKey) {
@@ -222,41 +388,31 @@ export default function LeaderboardPage({
     })
   }
 
-  function handleProfileOpen(player, isCurrentUser) {
-    if (isCurrentUser) {
-      navigate("/profile")
-      return
-    }
-
-    console.log(`[Leaderboard] Open profile requested for: ${player.username}`)
+  function handleProfileOpen(isCurrentUser) {
+    if (!isCurrentUser) return
+    navigate("/profile")
   }
 
-  function handleRowKeyDown(event, player, isCurrentUser) {
+  function handleRowKeyDown(event, isCurrentUser) {
+    if (!isCurrentUser) return
     if (event.key !== "Enter" && event.key !== " ") return
     event.preventDefault()
-    handleProfileOpen(player, isCurrentUser)
+    handleProfileOpen(isCurrentUser)
   }
 
   return (
     <div className="pageCenter">
       <section className="card">
         <h1 className="cardTitle">Leaderboard</h1>
-        <p className="muted">
-          View your current rank/MMR placement.
-        </p>
 
-        <InfoStrip
-          points={LEADERBOARD_INSIGHTS}
-          collapsible
-          defaultCollapsed
+        <LeaderboardStandingPanel
+          currentVisiblePlayer={currentVisiblePlayer}
+          currentRankProgress={currentRankProgress}
+          currentLeaderboardStats={currentLeaderboardStats}
+          rankedRounds={rankedRounds.length}
         />
 
-        {isLoading ? (
-          <div className="leaderboardStatusCard" role="status" aria-live="polite">
-            <p className="leaderboardStatusTitle">Loading leaderboard...</p>
-            <p className="muted">Fetching ranked standings from the server.</p>
-          </div>
-        ) : null}
+        {isLoading ? <LeaderboardTableSkeleton /> : null}
 
         {!isLoading && loadError ? (
           <div className="leaderboardStatusCard" role="alert">
@@ -271,71 +427,90 @@ export default function LeaderboardPage({
         {!isLoading && !loadError && sortedRows.length === 0 ? (
           <div className="leaderboardStatusCard" role="status" aria-live="polite">
             <p className="leaderboardStatusTitle">No ranked players yet.</p>
-            <p className="muted">Play a Ranked round to start populating the ladder.</p>
+            <p className="muted">Finish your placement matches to start populating the ladder.</p>
           </div>
         ) : null}
 
         {!isLoading && !loadError && sortedRows.length > 0 ? (
-          <table className="table helpTable leaderboardTable">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Tier</th>
-                {SORTABLE_COLUMNS.map((column) => (
-                  <SortableHeader
-                    key={column.key}
-                    label={column.label}
-                    columnKey={column.key}
-                    sortConfig={sortConfig}
-                    onSort={handleSort}
-                  />
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedRows.map((player) => {
-                const isCurrentUser = isCurrentUserRow(player, currentUserId, currentUsername)
+          <>
+            <div className="leaderboardTableIntro" aria-label="Leaderboard context">
+              <span className={`leaderboardSortContextBadge${isDefaultLadderSort ? " isDefault" : ""}`}>
+                Sorted by {activeSortLabel}
+                {sortConfig.direction === "asc" ? " (Low to High)" : " (High to Low)"}
+              </span>
+            </div>
 
-                return (
-                  <tr
-                    key={`${player.userId}-${player.rank}`}
-                    className={`leaderboardTableRow${isCurrentUser ? " isCurrentUser" : ""}`}
-                    tabIndex={0}
-                    onClick={() => handleProfileOpen(player, isCurrentUser)}
-                    onKeyDown={(event) => handleRowKeyDown(event, player, isCurrentUser)}
-                    aria-label={`Open ${player.username} profile`}
-                  >
-                    <td>{formatNumericValue(player.rank)}</td>
-                    <td>
-                      <div className="leaderboardEntryHoverWrap">
-                        <span className="leaderboardPlayerName">
-                          {player.username}
-                          {isCurrentUser ? <span className="leaderboardYouBadge">YOU</span> : null}
-                        </span>
-                        <div className="leaderboardEntryHoverCard">
-                          <PlayerHoverCard
-                            rankLabel={player.rankLabel}
-                            rankMmr={player.mmr}
-                            coins={player.coins}
-                            level={player.level}
-                            accuracy={player.accuracy}
-                          />
+            <table className="table helpTable leaderboardTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Player</th>
+                  <th>Tier</th>
+                  {SORTABLE_COLUMNS.map((column) => (
+                    <SortableHeader
+                      key={column.key}
+                      label={column.label}
+                      columnKey={column.key}
+                      sortConfig={sortConfig}
+                      onSort={handleSort}
+                    />
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedRows.map((player) => {
+                  const isCurrentUser = isCurrentUserRow(player, currentUserId, currentUsername)
+                  const isPodium = player.rank <= 3
+                  const rowClassName = [
+                    "leaderboardTableRow",
+                    isPodium ? "isPodium" : "",
+                    isPodium ? `isRank${player.rank}` : "",
+                    isCurrentUser ? "isCurrentUser isInteractive" : "",
+                  ].filter(Boolean).join(" ")
+
+                  return (
+                    <tr
+                      key={`${player.userId}-${player.rank}`}
+                      className={rowClassName}
+                      tabIndex={isCurrentUser ? 0 : undefined}
+                      onClick={isCurrentUser ? () => handleProfileOpen(true) : undefined}
+                      onKeyDown={isCurrentUser
+                        ? (event) => handleRowKeyDown(event, true)
+                        : undefined}
+                      aria-label={isCurrentUser ? `Open ${player.username} profile` : undefined}
+                    >
+                      <td><RankDisplay rank={player.rank} /></td>
+                      <td>
+                        <div className="leaderboardEntryHoverWrap">
+                          <span className="leaderboardPlayerName">
+                            {player.username}
+                            {isCurrentUser ? <span className="leaderboardYouBadge">YOU</span> : null}
+                          </span>
+                          <div className="leaderboardEntryHoverCard">
+                            <PlayerHoverCard
+                              rankProgress={player.rankProgress}
+                              rankLabel={player.rankLabel}
+                              rankMmr={player.mmr}
+                              coins={player.coins}
+                              level={player.level}
+                              accuracyPercent={player.accuracyPercent}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td><TierBadge tierLabel={player.rankLabel} /></td>
-                    <td className="leaderboardNumeric">{formatNumericValue(player.mmr)}</td>
-                    <td className="leaderboardNumeric">{formatNumericValue(player.bestScore)}</td>
-                    <td className="leaderboardNumeric">{formatNumericValue(player.bestStreak)}</td>
-                    <td className="leaderboardNumeric">
-                      {formatAccuracyPercent(player.accuracyPercent)}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td><TierBadge tierLabel={player.rankLabel} className="leaderboardTierBadge" /></td>
+                      <td className="leaderboardNumeric">{formatNumericValue(player.mmr)}</td>
+                      <td className="leaderboardNumeric">{formatNumericValue(player.bestScore)}</td>
+                      <td className="leaderboardNumeric">{formatNumericValue(player.bestStreak)}</td>
+                      <td className="leaderboardNumeric">
+                        {formatPercent(player.accuracyPercent)}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </>
         ) : null}
       </section>
     </div>

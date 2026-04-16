@@ -1,5 +1,7 @@
+﻿import HelpFlowSection from "../features/help/components/HelpFlowSection.jsx"
 import HelpFaqSection from "../features/help/components/HelpFaqSection.jsx"
 import HelpListSection from "../features/help/components/HelpListSection.jsx"
+import HelpQuickStartSection from "../features/help/components/HelpQuickStartSection.jsx"
 import HelpRankTiersSection from "../features/help/components/HelpRankTiersSection.jsx"
 import HelpTableSection from "../features/help/components/HelpTableSection.jsx"
 import {
@@ -8,8 +10,8 @@ import {
   DATA_SYSTEM_POINTS,
   DIFFICULTY_ROWS,
   FAQ_ITEMS,
-  GETTING_STARTED_STEPS,
   HELP_QUICK_NAV,
+  LOADOUT_POINTS,
   MODE_EXPLANATION_POINTS,
   MODE_TUNING_ROWS,
   NAVIGATION_ROWS,
@@ -18,64 +20,51 @@ import {
   POWERUP_RULES_POINTS,
   PROFILE_POINTS,
   PROGRESSION_POINTS,
+  QUICKSTART_CARDS,
   RANK_RULES_POINTS,
   RANK_TIER_ROWS,
-  ROUND_FLOW_POINTS,
+  ROUND_FLOW_STEPS,
   SCORING_ROWS,
   SHOP_POINTS,
   TRACKING_POINTS,
-} from "../features/help/helpContent.js"
+} from "../features/help/helpPageStructuredContent.js"
 
 export default function HelpPage() {
   return (
     <div className="pageCenter">
       <section className="card helpDoc">
-        <h1 className="cardTitle">Help Center</h1>
-        <p className="muted helpIntro">
-          New here? Start with the Quick Start card, then use the quick nav to jump by topic.
-        </p>
-
-        <section className="helpQuickNav" aria-label="Quick help navigation">
-          <span className="helpQuickNavLabel">Jump To</span>
-          <div className="helpQuickNavLinks">
-            {HELP_QUICK_NAV.map((item) => (
-              <a key={item.id} className="helpQuickNavLink" href={`#${item.id}`}>
-                {item.label}
-              </a>
-            ))}
-          </div>
-        </section>
+        <div className="helpHero">
+          <h1 className="helpHeroTitle">Help Center</h1>
+          <p className="helpHeroCopy">
+            Learn the first round fast, then dip into deeper systems only when you need them.
+          </p>
+          <nav className="helpQuickNav" aria-label="Quick help navigation">
+            <span className="helpQuickNavLabel">Jump To</span>
+            <div className="helpQuickNavLinks">
+              {HELP_QUICK_NAV.map((item) => (
+                <a key={item.id} className="helpQuickNavLink" href={`#${item.id}`}>
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </nav>
+        </div>
 
         <section id="start" className="helpTopicGroup" aria-label="Start here">
-          <h2 className="helpGroupTitle">| Start Here</h2>
-          <section className="helpBlock quickStartFeature" aria-label="Quick Start">
-            <header className="quickStartHeader">
-              <h3 className="cardH2 quickStartTitle">Quick Start</h3>
-              <p className="quickStartLead">
-                This is the fastest path to a strong first session. If you read one section, read this one.
-              </p>
-            </header>
-            <div className="quickStartBody">
-              <ol className="helpList quickStartList">
-                {GETTING_STARTED_STEPS.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ol>
-            </div>
-          </section>
-
-          <HelpListSection title="Round Flow" items={ROUND_FLOW_POINTS} />
+          <div className="helpGroupHeader">
+            <h2 className="helpGroupTitle">First Round</h2>
+          </div>
+          <HelpQuickStartSection cards={QUICKSTART_CARDS} />
+          <HelpFlowSection title="Round Flow" steps={ROUND_FLOW_STEPS} />
         </section>
 
         <section id="core" className="helpTopicGroup" aria-label="Core gameplay systems">
-          <h2 className="helpGroupTitle">| Core Gameplay</h2>
+          <div className="helpGroupHeader">
+            <h2 className="helpGroupTitle">Core Gameplay</h2>
+          </div>
           <div className="helpGrid">
-            <HelpTableSection
-              title="Navigation"
-              columns={["Page", "What You Use It For"]}
-              rows={NAVIGATION_ROWS}
-            />
             <HelpTableSection title="Controls" columns={["Action", "Input"]} rows={CONTROLS_ROWS} />
+            <HelpListSection title="Buildcraft Loadouts" items={LOADOUT_POINTS} />
           </div>
 
           <HelpTableSection
@@ -87,7 +76,7 @@ export default function HelpPage() {
           <div className="helpGrid">
             <HelpTableSection
               title="Power-Ups"
-              columns={["Key", "Power-Up", "How You Earn It", "Effect"]}
+              columns={["Power-Up", "Unlock", "Charge Rate", "Effect"]}
               rows={POWERUP_ROWS}
               note="Power-ups only work during live rounds and require charges."
             />
@@ -96,26 +85,33 @@ export default function HelpPage() {
         </section>
 
         <section id="modes" className="helpTopicGroup" aria-label="Modes and ranked rules">
-          <h2 className="helpGroupTitle">| Modes and Ranked</h2>
-          <HelpTableSection
-            title="Mode Rules"
-            columns={["Mode", "Timer", "Miss Penalty", "Coin Rate", "XP", "Rank"]}
-            rows={DIFFICULTY_ROWS}
-          />
+          <div className="helpGroupHeader">
+            <h2 className="helpGroupTitle">Modes and Ranked</h2>
+          </div>
+          <div className="helpGrid">
+            <HelpListSection title="Modes Explained" items={MODE_EXPLANATION_POINTS} />
+            <HelpTableSection
+              title="Mode Rules"
+              columns={["Mode", "Timer", "Miss Penalty", "Coin Rate", "XP", "Rank"]}
+              rows={DIFFICULTY_ROWS}
+            />
+          </div>
+          <div className="helpGrid">
+            <HelpRankTiersSection tiers={RANK_TIER_ROWS} />
+            <HelpListSection title="Rank and Rating Rules" items={RANK_RULES_POINTS} />
+          </div>
           <HelpTableSection
             title="Mode Tuning"
             columns={["Mode", "Initial Size", "Min Size", "Shrink Factor", "Combo Step", "Max Time Buffer"]}
             rows={MODE_TUNING_ROWS}
+            note="Advanced reference: these values explain why each mode feels different once you already know the basics."
           />
-          <div className="helpGrid">
-            <HelpListSection title="Modes Explained" items={MODE_EXPLANATION_POINTS} />
-            <HelpRankTiersSection tiers={RANK_TIER_ROWS} />
-          </div>
-          <HelpListSection title="Rank and MMR Rules" items={RANK_RULES_POINTS} />
         </section>
 
         <section id="progression" className="helpTopicGroup" aria-label="Progression and economy">
-          <h2 className="helpGroupTitle">| Progression and Economy</h2>
+          <div className="helpGroupHeader">
+            <h2 className="helpGroupTitle">Progression and Economy</h2>
+          </div>
           <div className="helpGrid">
             <HelpListSection title="Progression Math" items={PROGRESSION_POINTS} />
             <HelpListSection title="Shop and Cosmetics" items={SHOP_POINTS} />
@@ -126,21 +122,32 @@ export default function HelpPage() {
           </div>
         </section>
 
-        <section id="account" className="helpTopicGroup" aria-label="Account, profile, and tracking">
-          <h2 className="helpGroupTitle">| Account, Profile, and Tracking</h2>
+        <section id="account" className="helpTopicGroup" aria-label="Account, tracking, and navigation">
+          <div className="helpGroupHeader">
+            <h2 className="helpGroupTitle">Account, Tracking, and Navigation</h2>
+          </div>
           <div className="helpGrid">
             <HelpTableSection
               title="Account Access"
               columns={["Task", "How It Works"]}
               rows={ACCOUNT_ROWS}
             />
-            <HelpListSection title="Profile and Achievements" items={PROFILE_POINTS} />
+            <HelpTableSection
+              title="Navigation"
+              columns={["Page", "What You Use It For"]}
+              rows={NAVIGATION_ROWS}
+            />
           </div>
-          <HelpListSection title="History and Leaderboard" items={TRACKING_POINTS} />
+          <div className="helpGrid">
+            <HelpListSection title="Profile and Achievements" items={PROFILE_POINTS} />
+            <HelpListSection title="History and Leaderboard" items={TRACKING_POINTS} />
+          </div>
         </section>
 
         <section id="faq" className="helpTopicGroup" aria-label="Frequently asked questions">
-          <h2 className="helpGroupTitle">| FAQ</h2>
+          <div className="helpGroupHeader">
+            <h2 className="helpGroupTitle">FAQ</h2>
+          </div>
           <HelpFaqSection faqItems={FAQ_ITEMS} showTitle={false} />
         </section>
       </section>

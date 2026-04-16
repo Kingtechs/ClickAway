@@ -35,26 +35,22 @@
 .profileHero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
-    gap: 18px;
+    gap: 28px;
     align-items: stretch;
 }
 
 .profileHeroMain {
-    border: 1px solid var(--profile-border-soft);
-    border-radius: 18px;
-    padding: clamp(16px, 2.7vw, 22px);
-    background:
-        linear-gradient(165deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-        radial-gradient(circle at 100% 0%, rgba(105, 197, 255, 0.11), rgba(105, 197, 255, 0) 45%);
+    padding-right: 24px;
+    border-right: 1px solid var(--profile-border-soft);
 }
 
 .profileEyebrow {
     margin: 0;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.56px;
+    letter-spacing: 1.2px;
     text-transform: uppercase;
-    color: rgba(204, 225, 250, 0.86);
+    color: rgba(74, 168, 255, 0.6);
 }
 
 .profileTitle {
@@ -70,13 +66,15 @@
 }
 
 .profileAvatar {
-    width: 56px;
-    height: 56px;
+    width: 72px;
+    height: 72px;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    box-shadow: 0 8px 18px rgba(6, 14, 28, 0.36);
+    border: 1px solid rgba(74, 168, 255, 0.36);
+    box-shadow:
+        0 0 0 1px rgba(74, 168, 255, 0.18),
+        0 8px 18px rgba(6, 14, 28, 0.36);
     font-family: "Space Grotesk", "Verdana", sans-serif;
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 700;
     color: #f8fcff;
     display: grid;
@@ -170,16 +168,18 @@
 .profileLevelProgressLabel {
     font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.46px;
-    color: rgba(207, 223, 244, 0.84);
+    letter-spacing: 1.2px;
+    color: rgba(74, 168, 255, 0.6);
     font-weight: 700;
 }
 
 .profileLevelProgressPercent {
     font-family: "Space Grotesk", "Verdana", sans-serif;
     font-size: 28px;
+    font-weight: 700;
     line-height: 1;
     color: #f3f9ff;
+    font-variant-numeric: tabular-nums;
 }
 
 .profileLevelProgressXpSummary {
@@ -322,6 +322,7 @@
     font-size: 13px;
     color: var(--rank-meta-color);
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
 .profileRankInsights {
@@ -390,6 +391,70 @@
     --rank-insight-bg: rgba(73, 48, 9, 0.35);
 }
 
+.profileRankShowcase.rank-platinum {
+    --rank-card-border: rgba(113, 223, 214, 0.62);
+    --rank-card-highlight: rgba(206, 255, 251, 0.3);
+    --rank-card-fill-top: rgba(86, 196, 190, 0.22);
+    --rank-card-fill-bottom: rgba(23, 87, 96, 0.28);
+    --rank-crest-border: rgba(171, 255, 244, 0.7);
+    --rank-crest-top: rgba(230, 255, 252, 0.48);
+    --rank-crest-start: rgba(108, 221, 214, 0.54);
+    --rank-crest-end: rgba(48, 132, 149, 0.36);
+    --rank-label-color: rgba(214, 255, 249, 0.9);
+    --rank-title-color: #dffffa;
+    --rank-meta-color: rgba(214, 248, 246, 0.94);
+    --rank-insight-border: rgba(132, 223, 214, 0.34);
+    --rank-insight-bg: rgba(14, 53, 59, 0.34);
+}
+
+.profileRankShowcase.rank-diamond {
+    --rank-card-border: rgba(140, 178, 255, 0.66);
+    --rank-card-highlight: rgba(214, 226, 255, 0.34);
+    --rank-card-fill-top: rgba(99, 146, 255, 0.22);
+    --rank-card-fill-bottom: rgba(36, 54, 113, 0.3);
+    --rank-crest-border: rgba(186, 210, 255, 0.74);
+    --rank-crest-top: rgba(242, 247, 255, 0.5);
+    --rank-crest-start: rgba(126, 168, 255, 0.56);
+    --rank-crest-end: rgba(70, 96, 182, 0.4);
+    --rank-label-color: rgba(225, 234, 255, 0.92);
+    --rank-title-color: #edf3ff;
+    --rank-meta-color: rgba(223, 233, 255, 0.95);
+    --rank-insight-border: rgba(146, 181, 255, 0.34);
+    --rank-insight-bg: rgba(21, 33, 73, 0.36);
+}
+
+.profileRankShowcase.rank-deadeye {
+    --rank-card-border: rgba(255, 122, 109, 0.7);
+    --rank-card-highlight: rgba(255, 209, 155, 0.34);
+    --rank-card-fill-top: rgba(255, 104, 104, 0.24);
+    --rank-card-fill-bottom: rgba(121, 38, 21, 0.32);
+    --rank-crest-border: rgba(255, 190, 121, 0.76);
+    --rank-crest-top: rgba(255, 242, 225, 0.5);
+    --rank-crest-start: rgba(255, 125, 125, 0.58);
+    --rank-crest-end: rgba(232, 136, 52, 0.42);
+    --rank-label-color: rgba(255, 231, 208, 0.94);
+    --rank-title-color: #fff1df;
+    --rank-meta-color: rgba(255, 226, 194, 0.96);
+    --rank-insight-border: rgba(255, 164, 110, 0.36);
+    --rank-insight-bg: rgba(79, 28, 14, 0.38);
+}
+
+.profileRankShowcase.rank-placement {
+    --rank-card-border: rgba(127, 195, 255, 0.54);
+    --rank-card-highlight: rgba(214, 238, 255, 0.3);
+    --rank-card-fill-top: rgba(76, 158, 255, 0.18);
+    --rank-card-fill-bottom: rgba(24, 54, 108, 0.28);
+    --rank-crest-border: rgba(167, 219, 255, 0.64);
+    --rank-crest-top: rgba(239, 247, 255, 0.42);
+    --rank-crest-start: rgba(93, 176, 255, 0.48);
+    --rank-crest-end: rgba(56, 108, 209, 0.34);
+    --rank-label-color: rgba(220, 236, 255, 0.88);
+    --rank-title-color: #f2f8ff;
+    --rank-meta-color: rgba(220, 233, 252, 0.9);
+    --rank-insight-border: rgba(144, 203, 255, 0.3);
+    --rank-insight-bg: rgba(14, 29, 61, 0.32);
+}
+
 .profileRankInsightLabel {
     font-size: 9px;
     font-weight: 700;
@@ -403,6 +468,7 @@
     font-size: 15px;
     line-height: 1;
     color: rgba(237, 247, 255, 0.75);
+    font-variant-numeric: tabular-nums;
 }
 
 .profileRankActionsDivider {
@@ -418,33 +484,31 @@
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 
-.profileStatsGrid.isFiveColumns {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+.profileStatsGrid.isSummaryGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .profileStatsSections {
-    margin-top: 18px;
+    margin-top: 28px;
     display: grid;
-    gap: 10px;
+    gap: 0;
 }
 
 .profileStatsSection {
-    border: 1px solid rgba(167, 204, 244, 0.18);
-    border-radius: 14px;
-    padding: 9px;
-    background: rgba(9, 16, 31, 0.3);
+    padding: 22px 0 0;
+    border-top: 1px solid rgba(167, 204, 244, 0.1);
 }
 
 .profileStatsSectionHeader {
-    margin-bottom: 11px;
+    margin-bottom: 14px;
     display: grid;
-    gap: 2px;
+    gap: 3px;
 }
 
 .profileStatsSectionTitle {
     margin: 0;
     font-family: "Space Grotesk", "Verdana", sans-serif;
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1.1;
     color: #f3f9ff;
 }
@@ -452,7 +516,7 @@
 .profileStatsSectionDescription {
     margin: 0;
     font-size: 12px;
-    color: rgba(196, 215, 239, 0.64);
+    color: rgba(196, 215, 239, 0.56);
 }
 
 .profileStatCard {
@@ -574,14 +638,24 @@
     font-weight: 800;
     color: #f6fbff;
     line-height: 1.1;
+    font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 900px) {
     .profileHero {
         grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .profileHeroMain {
+        padding-right: 0;
+        padding-bottom: 24px;
+        border-right: none;
+        border-bottom: 1px solid var(--profile-border-soft);
     }
 
     .profileRankShowcase {
+        margin-top: 24px;
         align-items: flex-start;
         text-align: left;
     }
@@ -600,11 +674,6 @@
 
     .profilePlayerName {
         font-size: 21px;
-    }
-
-    .profileHeroMain,
-    .profileRankShowcase {
-        border-radius: 14px;
     }
 
     .profileHeroChip {
@@ -626,12 +695,8 @@
         min-height: 120px;
     }
 
-    .profileStatsGrid.isFiveColumns {
+    .profileStatsGrid.isSummaryGrid {
         grid-template-columns: 1fr;
-    }
-
-    .profileStatsSection {
-        padding: 10px;
     }
 }
 

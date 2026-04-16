@@ -9,6 +9,10 @@ import {
 
 const STREAK_ATMOSPHERE_MIN_STREAKS = [0, 4, 8, 12, 18]
 
+function clampPercentage(value) {
+  return Math.max(0, Math.min(100, value))
+}
+
 function clampToArena(arenaSize, itemSize) {
   return Math.max(0, arenaSize - itemSize)
 }
@@ -66,15 +70,54 @@ export function getComboMultiplier(streak, comboStep = 5) {
 }
 
 /**
+ * Normalizes a percentage-like value into a 0-100 number.
+ * @param {number|string} value
+ * @returns {number}
+ */
+export function normalizePercentValue(value) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return clampPercentage(value)
+  }
+
+  const parsedValue = Number.parseFloat(String(value ?? "").replace("%", ""))
+  return Number.isFinite(parsedValue) ? clampPercentage(parsedValue) : 0
+}
+
+/**
+ * Formats a percentage-like value as a rounded percentage string.
+ * @param {number|string} value
+ * @returns {string}
+ */
+export function formatPercent(value) {
+  return `${Math.round(normalizePercentValue(value))}%`
+}
+
+/**
+ * Calculates hit accuracy as a percentage.
+ * @param {number} hits
+ * @param {number} misses
+ * @returns {number}
+ */
+export function calculateAccuracyPercent(hits, misses) {
+  const normalizedHits = Math.max(0, Number(hits) || 0)
+  const normalizedMisses = Math.max(0, Number(misses) || 0)
+  const totalAttempts = normalizedHits + normalizedMisses
+
+  if (totalAttempts === 0) {
+    return 0
+  }
+
+  return clampPercentage((normalizedHits / totalAttempts) * 100)
+}
+
+/**
  * Formats hit accuracy as a percentage string.
  * @param {number} hits
  * @param {number} misses
  * @returns {string}
  */
 export function formatAccuracy(hits, misses) {
-  const totalAttempts = hits + misses
-  if (totalAttempts === 0) return "0%"
-  return `${Math.round((hits / totalAttempts) * 100)}%`
+  return formatPercent(calculateAccuracyPercent(hits, misses))
 }
 
 /**

@@ -1,19 +1,116 @@
 import { MAX_HISTORY_ENTRIES } from "../constants/historyConstants.js"
-import { formatAccuracy } from "./gameMath.js"
+import {
+  calculateAccuracyPercent,
+  normalizePercentValue,
+} from "./gameMath.js"
 
-function formatTimeOnly(date) {
-  return date.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  })
+function normalizeLoadoutSnapshot(snapshot = {}) {
+  const candidateSnapshot = snapshot?.loadoutId || snapshot?.loadoutName
+    ? snapshot
+    : {
+        loadoutId: snapshot.loadoutId ?? snapshot.id ?? "",
+        loadoutName: snapshot.loadoutName ?? snapshot.name ?? "",
+        moduleIds: snapshot.moduleIds,
+        powerupIds: snapshot.powerupIds,
+      }
+  const nextModuleIds = candidateSnapshot?.moduleIds ?? {}
+  const nextPowerupIds = Array.isArray(candidateSnapshot?.powerupIds)
+    ? candidateSnapshot.powerupIds
+        .map((powerupId) => String(powerupId || "").trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : []
+
+  const loadoutId = String(candidateSnapshot?.loadoutId || "")
+  const loadoutName = String(candidateSnapshot?.loadoutName || "").trim()
+
+  if (!loadoutId && !loadoutName && !nextPowerupIds.length) {
+    return null
+  }
+
+  return {
+    loadoutId,
+    loadoutName: loadoutName || "Loadout",
+    moduleIds: {
+      tempoCoreId: String(nextModuleIds.tempoCoreId || ""),
+      streakLensId: String(nextModuleIds.streakLensId || ""),
+      powerRigId: String(nextModuleIds.powerRigId || ""),
+    },
+    powerupIds: nextPowerupIds,
+  }
 }
 
-function isSameDay(firstDate, secondDate) {
-  return (
-    firstDate.getFullYear() === secondDate.getFullYear() &&
-    firstDate.getMonth() === secondDate.getMonth() &&
-    firstDate.getDate() === secondDate.getDate()
+function formatRelativeTime(value, unit) {
+  const normalizedValue = Math.max(1, Math.floor(value))
+  const suffix = normalizedValue === 1 ? "" : "s"
+  return `${normalizedValue} ${unit}${suffix} ago`
+}
+
+function normalizeReactionMetric(value) {
+  const numericValue = Number(value)
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return null
+  }
+
+  return Math.round(numericValue)
+}
+
+function normalizeNonNegativeNumber(value) {
+  return Math.max(0, Number(value) || 0)
+}
+
+function normalizePlayedAtIso(value, fallbackDate = new Date()) {
+  const parsedDate = value ? new Date(value) : fallbackDate
+  return Number.isNaN(parsedDate.getTime())
+    ? fallbackDate.toISOString()
+    : parsedDate.toISOString()
+}
+
+export function normalizeHistoryEntry(entry = {}, index = 0) {
+  const fallbackDate = new Date(Date.now() - index)
+  const playedAtIso = normalizePlayedAtIso(
+    entry.playedAtIso ?? entry.playedAt,
+    fallbackDate
   )
+  const hits = normalizeNonNegativeNumber(entry.hits)
+  const misses = normalizeNonNegativeNumber(entry.misses)
+  const loadoutSnapshot = normalizeLoadoutSnapshot(
+    entry.loadoutSnapshot ?? {
+      loadoutId: entry.loadoutId,
+      loadoutName: entry.loadoutName,
+      moduleIds: {
+        tempoCoreId: entry.tempoCoreId,
+        streakLensId: entry.streakLensId,
+        powerRigId: entry.powerRigId,
+      },
+      powerupIds: [
+        entry.powerupSlot1Id,
+        entry.powerupSlot2Id,
+        entry.powerupSlot3Id,
+      ],
+    }
+  )
+
+  return {
+    id: String(entry.id || `r-${Date.parse(playedAtIso)}-${index}`),
+    playedAtIso,
+    score: normalizeNonNegativeNumber(entry.score),
+    hits,
+    misses,
+    bestStreak: normalizeNonNegativeNumber(entry.bestStreak),
+    accuracyPercent: normalizePercentValue(
+      entry.accuracyPercent ?? calculateAccuracyPercent(hits, misses)
+    ),
+    avgReactionMs: normalizeReactionMetric(entry.avgReactionMs),
+    bestReactionMs: normalizeReactionMetric(entry.bestReactionMs),
+    coinsEarned: normalizeNonNegativeNumber(entry.coinsEarned),
+    modeId: String(entry.modeId || entry.difficultyId || ""),
+    difficultyId: String(entry.modeId || entry.difficultyId || ""),
+    progressionMode: String(entry.progressionMode || ""),
+    xpEarned: normalizeNonNegativeNumber(entry.xpEarned),
+    rankDelta: Number.isFinite(Number(entry.rankDelta)) ? Number(entry.rankDelta) : 0,
+    loadoutSnapshot,
+  }
 }
 
 /**
@@ -23,24 +120,24 @@ function isSameDay(firstDate, secondDate) {
  */
 export function formatPlayedAtLabel(playedDate) {
   const now = new Date()
-  const yesterday = new Date(now)
-  yesterday.setDate(now.getDate() - 1)
+  const elapsedMs = Math.max(0, now.getTime() - playedDate.getTime())
+  const elapsedHours = elapsedMs / (1000 * 60 * 60)
 
-  if (isSameDay(playedDate, now)) {
-    return `Today, ${formatTimeOnly(playedDate)}`
+  if (elapsedHours < 24) {
+    return formatRelativeTime(elapsedHours, "hour")
   }
 
-  if (isSameDay(playedDate, yesterday)) {
-    return `Yesterday, ${formatTimeOnly(playedDate)}`
+  const elapsedDays = elapsedHours / 24
+  if (elapsedDays < 30) {
+    return formatRelativeTime(elapsedDays, "day")
   }
 
-  return playedDate.toLocaleString([], {
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  })
+  const elapsedMonths = elapsedDays / 30
+  if (elapsedMonths < 12) {
+    return formatRelativeTime(elapsedMonths, "month")
+  }
+
+  return formatRelativeTime(elapsedDays / 365, "year")
 }
 
 /**
@@ -60,32 +157,37 @@ export function createHistoryEntry({
   hits = 0,
   misses = 0,
   bestStreak = 0,
+  avgReactionMs = null,
+  bestReactionMs = null,
   coinsEarned = 0,
   modeId = "",
   difficultyId = "",
   progressionMode = "",
   xpEarned = 0,
   rankDelta = 0,
+  loadoutSnapshot = null,
 }) {
   const playedDate = new Date()
   const resolvedModeId = modeId || difficultyId
 
-  return {
+  return normalizeHistoryEntry({
     id: `r-${playedDate.getTime()}-${Math.random().toString(16).slice(2, 6)}`,
-    playedAt: formatPlayedAtLabel(playedDate),
     playedAtIso: playedDate.toISOString(),
     score,
     hits,
     misses,
     bestStreak,
-    accuracy: formatAccuracy(hits, misses),
+    accuracyPercent: calculateAccuracyPercent(hits, misses),
+    avgReactionMs: normalizeReactionMetric(avgReactionMs),
+    bestReactionMs: normalizeReactionMetric(bestReactionMs),
     coinsEarned,
     modeId: resolvedModeId,
     difficultyId: resolvedModeId,
     progressionMode,
     xpEarned,
     rankDelta,
-  }
+    loadoutSnapshot,
+  })
 }
 
 /**
@@ -101,14 +203,14 @@ export function appendHistoryEntry(currentHistory, nextEntry) {
 /**
  * Creates leaderboard values from saved round history.
  * @param {Object[]} historyEntries
- * @returns {{bestScore: number, bestStreak: number, accuracy: string}}
+ * @returns {{bestScore: number, bestStreak: number, accuracyPercent: number}}
  */
 export function buildPlayerLeaderboardStats(historyEntries) {
   if (!historyEntries.length) {
     return {
       bestScore: 0,
       bestStreak: 0,
-      accuracy: "0%",
+      accuracyPercent: 0,
     }
   }
 
@@ -127,6 +229,36 @@ export function buildPlayerLeaderboardStats(historyEntries) {
   return {
     bestScore,
     bestStreak,
-    accuracy: formatAccuracy(totalHits, totalMisses),
+    accuracyPercent: calculateAccuracyPercent(totalHits, totalMisses),
+  }
+}
+
+export function buildCareerReactionStats(historyEntries = []) {
+  const rows = Array.isArray(historyEntries) ? historyEntries : []
+  let reactionRounds = 0
+  let totalAverageReactionMs = 0
+  let bestReactionMs = null
+
+  rows.forEach((entry) => {
+    const entryAverageReactionMs = normalizeReactionMetric(entry?.avgReactionMs)
+    const entryBestReactionMs = normalizeReactionMetric(entry?.bestReactionMs)
+
+    if (entryAverageReactionMs !== null) {
+      reactionRounds += 1
+      totalAverageReactionMs += entryAverageReactionMs
+    }
+
+    if (entryBestReactionMs !== null) {
+      bestReactionMs = bestReactionMs === null
+        ? entryBestReactionMs
+        : Math.min(bestReactionMs, entryBestReactionMs)
+    }
+  })
+
+  return {
+    avgReactionMs: reactionRounds > 0
+      ? Math.round(totalAverageReactionMs / reactionRounds)
+      : null,
+    bestReactionMs,
   }
 }

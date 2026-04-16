@@ -18,18 +18,88 @@
     display: flex;
 }
 
+.mainContent.armoryMain {
+    padding: 12px;
+    display: flex;
+}
+
+.mainContent.armoryMain > * {
+    flex: 1;
+}
+
 .mainContent.gameMain > * {
     flex: 1;
+}
+
+/* Route change: subtle enter only (CSS; avoids AnimatePresence exit/sync issues). */
+.routeOutlet {
+    animation: routeOutletEnter 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes routeOutletEnter {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mainContent.gameMain > .routeOutlet {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.mainContent.armoryMain > .routeOutlet {
+    min-height: 0;
+    min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .routeOutlet {
+        animation: none;
+    }
+}
+
+.routeFallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: min(200px, 36dvh);
+}
+
+.routeFallbackText {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(220, 230, 255, 0.55);
+    letter-spacing: 0.02em;
+}
+
+.mainContent.gameMain > .routeOutlet > .routeFallback {
+    flex: 1;
+    min-height: 0;
+}
+
+.mainContent.armoryMain > .routeOutlet > .routeFallback {
+    flex: 1;
+    min-height: 0;
 }
 
 .gameRouteActive {
     overflow: hidden;
 }
 
+.armoryRouteActive {
+    overflow: hidden;
+}
+
 .topbar {
     position: sticky;
     top: 0;
-    z-index: 40;
+    z-index: var(--z-sticky);
     display: flex;
     align-items: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.16);
@@ -48,6 +118,22 @@
     align-items: center;
     column-gap: 14px;
     row-gap: 8px;
+}
+
+.topbar.topbarArmory {
+    border-bottom-color: rgba(173, 210, 248, 0.12);
+    background:
+        linear-gradient(180deg, rgba(11, 17, 31, 0.94), rgba(10, 15, 28, 0.9)),
+        radial-gradient(circle at 8% -10%, rgba(95, 173, 255, 0.16), rgba(95, 173, 255, 0) 48%);
+}
+
+.topbar.topbarArmory .topbarInner {
+    width: min(1360px, 100%);
+    padding-block: 10px;
+}
+
+.topbar.topbarArmory .brandTag {
+    display: none;
 }
 
 .brandCluster {
@@ -142,10 +228,11 @@
     border-radius: var(--radius-sm);
     min-height: var(--nav-pill-height);
     height: var(--nav-pill-height);
-    padding: 0 14px;
+    padding: 0 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 5px;
     color: #ffffff;
     text-decoration: none;
     font-size: 13px;
@@ -154,7 +241,17 @@
     letter-spacing: 0.3px;
     opacity: 0.9;
     background: rgba(255, 255, 255, 0.02);
-    transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        transform var(--dur-fast) ease,
+        opacity var(--dur-fast) ease,
+        background-color var(--dur-fast) ease,
+        box-shadow var(--dur-fast) ease,
+        border-color var(--dur-fast) ease;
+}
+
+.navItemIcon {
+    flex-shrink: 0;
+    display: block;
 }
 
 .navButton {
@@ -166,8 +263,9 @@
 
 .navButton.active {
     opacity: 1;
-    background: linear-gradient(135deg, rgba(88, 188, 255, 0.95), rgba(51, 127, 255, 0.95));
-    box-shadow: 0 4px 14px rgba(48, 122, 255, 0.4);
+    background: rgba(74, 168, 255, 0.22);
+    border-color: rgba(74, 168, 255, 0.4);
+    box-shadow: none;
 }
 
 .navItem:hover,
@@ -179,8 +277,15 @@
 
 .navItem.active {
     opacity: 1;
-    background: linear-gradient(135deg, rgba(88, 188, 255, 0.95), rgba(51, 127, 255, 0.95));
-    box-shadow: 0 4px 14px rgba(48, 122, 255, 0.4);
+    background: rgba(74, 168, 255, 0.22);
+    border: 1px solid rgba(74, 168, 255, 0.4);
+    box-shadow: 0 0 10px rgba(74, 168, 255, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    animation: navActiveGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes navActiveGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(74, 168, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+    50% { box-shadow: 0 0 16px rgba(74, 168, 255, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.14); }
 }
 
 .navItem:focus-visible,
@@ -210,7 +315,7 @@
     position: absolute;
     right: 0;
     top: calc(100% + 8px);
-    z-index: 45;
+    z-index: var(--z-overlay);
     min-width: 220px;
     padding: 8px;
     border-radius: 12px;
@@ -222,7 +327,7 @@
     opacity: 0;
     transform: translateY(-4px);
     pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition: opacity var(--dur-fast) ease, transform var(--dur-fast) ease;
 }
 
 .profileHoverWrap:hover .profileHoverCard {
@@ -318,10 +423,11 @@
     font-size: 12px;
     font-weight: 600;
     color: rgba(223, 236, 252, 0.88);
+    font-variant-numeric: tabular-nums;
 }
 
 .profileHoverStatRow.tone-coins .profileHoverStatValue {
-    color: rgba(230, 222, 190, 0.9);
+    color: var(--gold);
 }
 
 .profileHoverStatRow.tone-level .profileHoverStatValue {
@@ -342,12 +448,22 @@
 
 .card,
 .cardWide {
-    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-strong) 100%);
+    background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-3) 100%);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-soft);
     padding: clamp(20px, 3vw, 34px);
     backdrop-filter: blur(8px);
+    transition: box-shadow var(--dur-quick) ease, border-color var(--dur-quick) ease;
+}
+
+.card:hover,
+.cardWide:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow:
+        var(--shadow-soft),
+        0 0 0 1px rgba(74, 168, 255, 0.06),
+        0 24px 56px rgba(4, 8, 20, 0.48);
 }
 
 .card {
@@ -360,11 +476,14 @@
 
 .cardTitle {
     margin: 0 0 14px;
-    color: #f2f6ff;
     font-family: "Space Grotesk", "Verdana", sans-serif;
     font-size: clamp(30px, 3.8vw, 44px);
     font-weight: 700;
     letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #f7fbff 0%, #c2d9f0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .cardH2 {
@@ -389,7 +508,12 @@
     background: linear-gradient(135deg, var(--brand), var(--brand-strong));
     box-shadow: 0 8px 20px rgba(44, 118, 232, 0.34);
     cursor: pointer;
-    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        transform var(--dur-fast) ease,
+        filter var(--dur-fast) ease,
+        box-shadow var(--dur-fast) ease,
+        background-color var(--dur-fast) ease,
+        border-color var(--dur-fast) ease;
 }
 
 .primaryButton:hover {
@@ -399,7 +523,7 @@
 }
 
 .primaryButton:active {
-    transform: translateY(1px);
+    transform: scale(0.97);
 }
 
 .secondaryButton {
@@ -416,7 +540,11 @@
     text-decoration: none;
     background: rgba(255, 255, 255, 0.09);
     cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+    transition:
+        transform var(--dur-fast) ease,
+        border-color var(--dur-fast) ease,
+        background-color var(--dur-fast) ease,
+        color var(--dur-fast) ease;
 }
 
 .secondaryButton:hover {
@@ -426,216 +554,214 @@
 }
 
 .secondaryButton:active {
-    transform: translateY(1px);
+    transform: scale(0.97);
 }
 
-.helpDoc {
-    width: min(1020px, 100%);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.helpIntro {
-    margin: 0;
-    max-width: 860px;
-    line-height: 1.5;
-    color: #c7d8f4;
-}
-
-.helpGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 14px;
-}
-
-.helpQuickNav {
-    margin-top: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 12px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.helpQuickNavLabel {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.35px;
-    text-transform: uppercase;
-    color: rgba(205, 222, 246, 0.86);
-}
-
-.helpQuickNavLinks {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.helpQuickNavLink {
-    border: 1px solid rgba(170, 207, 246, 0.34);
-    border-radius: 999px;
-    padding: 6px 10px;
-    text-decoration: none;
-    font-size: 11px;
-    font-weight: 700;
-    color: rgba(230, 243, 255, 0.94);
-    background: linear-gradient(135deg, rgba(105, 197, 255, 0.16), rgba(105, 197, 255, 0.08));
-}
-
-.helpQuickNavLink:hover {
-    border-color: rgba(193, 225, 255, 0.52);
-    background: linear-gradient(135deg, rgba(116, 206, 255, 0.24), rgba(116, 206, 255, 0.12));
-}
-
-.helpTopicGroup {
-    margin-top: 6px;
-    scroll-margin-top: 96px;
-}
-
-.helpGroupTitle {
-    font-family: "Space Grotesk", "Verdana", sans-serif;
-    font-size: clamp(20px, 2.3vw, 30px);
-    color: #72afff;
-    text-transform: uppercase;
-    letter-spacing: 0.75px;
-}
-
-.helpBlock {
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 14px;
-    background: linear-gradient(170deg, rgba(18, 28, 48, 0.9), rgba(23, 36, 60, 0.82));
-    margin-top: 16px;
-}
-
-.helpBlock .cardH2 {
-    margin-top: 0;
-}
-
-.quickStartFeature {
-    padding: 16px;
-    background:
-        radial-gradient(circle at 100% 0%, rgba(105, 197, 255, 0.16), rgba(105, 197, 255, 0) 42%),
-        linear-gradient(170deg, rgba(21, 34, 58, 0.94), rgba(16, 26, 46, 0.9));
-}
-
-.quickStartHeader {
-    display: grid;
-    gap: 6px;
-}
-
-.quickStartTitle {
-    margin: 0;
-}
-
-.quickStartLead {
-    margin: 0;
+.primaryButton-sm,
+.secondaryButton-sm {
+    min-height: 34px;
+    padding: 7px 13px;
     font-size: 12px;
-    line-height: 1.45;
-    color: rgba(214, 231, 252, 0.9);
 }
 
-.quickStartBody {
-    margin-top: 12px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
-    align-items: start;
+.primaryButton-lg,
+.secondaryButton-lg {
+    min-height: 48px;
+    padding: 13px 26px;
+    font-size: 16px;
 }
 
-.quickStartList {
-    margin-top: 0;
-    padding-left: 20px;
+@keyframes primaryCtaGlow {
+    0%, 100% { box-shadow: 0 8px 20px rgba(44, 118, 232, 0.34); }
+    50% { box-shadow: 0 8px 26px rgba(74, 148, 255, 0.54), 0 0 12px rgba(74, 148, 255, 0.2); }
 }
 
-.quickStartList li {
-    margin: 8px 0;
-    line-height: 1.4;
+.primaryButton.primaryButton-lg {
+    animation: primaryCtaGlow 2.2s ease-in-out infinite;
 }
 
-.helpList {
-    margin: 8px 0 0;
-    padding-left: 20px;
-    color: #d7e3f8;
-}
-
-.helpList li {
-    margin: 6px 0;
-    line-height: 1.35;
-}
-
-.helpTable {
-    margin-top: 10px;
-}
-
-.rankTierGrid {
-    margin-top: 20px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-}
-
-.rankTierCard {
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 12px;
-    padding: 10px 8px;
-    background: linear-gradient(170deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
-    display: grid;
-    justify-items: center;
-    gap: 7px;
-    text-align: center;
-}
-
-.rankTierLabel {
-    margin: 10px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.35px;
-    color: rgba(225, 238, 255, 0.88);
-}
-
-.rankTierEmblemWrap {
-    width: 74px;
-    height: 74px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background:
-        radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0) 52%),
-        linear-gradient(150deg, rgba(102, 172, 255, 0.2), rgba(80, 122, 216, 0.12));
-    display: grid;
-    place-items: center;
-}
-
-.rankTierEmblem {
-    width: 80%;
-    height: 80%;
-    object-fit: contain;
-}
-
-.rankTierRange {
-    margin: 15px;
-    font-size: 11px;
-    font-weight: 700;
-    color: rgba(216, 231, 250, 0.86);
-}
+/* Help page styles live in src/styles/components/help.css */
 
 .leaderboardTable {
     border-collapse: separate;
     border-spacing: 0;
 }
 
+.leaderboardSectionEyebrow {
+    margin: 0;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: rgba(137, 197, 255, 0.84);
+}
+
+.leaderboardStandingPanel {
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid rgba(166, 207, 248, 0.24);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(255, 210, 107, 0.12), rgba(255, 210, 107, 0) 30%),
+        radial-gradient(circle at 0% 100%, rgba(105, 197, 255, 0.12), rgba(105, 197, 255, 0) 34%),
+        linear-gradient(160deg, rgba(17, 27, 48, 0.92), rgba(11, 19, 35, 0.94));
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 12px 26px rgba(4, 10, 20, 0.22);
+}
+
+.leaderboardStandingMain {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+}
+
+.leaderboardStandingText {
+    display: grid;
+    gap: 10px;
+}
+
+.leaderboardStandingHeading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.leaderboardStandingTitleGroup {
+    min-width: 0;
+}
+
+.leaderboardStandingTitle {
+    margin: 0;
+}
+
+.leaderboardStandingLead {
+    margin: 7px 0 0;
+    max-width: 620px;
+    color: rgba(220, 232, 248, 0.9);
+    line-height: 1.5;
+}
+
+.leaderboardStandingTierBadge {
+    flex-shrink: 0;
+}
+
+.leaderboardStandingSpotlight {
+    min-width: 136px;
+    padding: 14px 16px;
+    border: 1px solid rgba(242, 207, 124, 0.32);
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 239, 188, 0.16), rgba(255, 239, 188, 0) 46%),
+        linear-gradient(180deg, rgba(255, 220, 129, 0.12), rgba(255, 220, 129, 0.04));
+    text-align: center;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.leaderboardStandingSpotlightLabel {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.85px;
+    text-transform: uppercase;
+    color: rgba(255, 229, 171, 0.78);
+}
+
+.leaderboardStandingSpotlightValue {
+    display: block;
+    margin-top: 8px;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: clamp(24px, 4vw, 34px);
+    line-height: 1;
+    color: #fff7df;
+    text-shadow: 0 0 18px rgba(255, 204, 95, 0.18);
+}
+
+.leaderboardStandingStats {
+    margin-top: 16px;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.leaderboardStandingStat {
+    padding: 11px 12px;
+    border: 1px solid rgba(165, 205, 246, 0.16);
+    border-radius: 14px;
+    background:
+        linear-gradient(165deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+        radial-gradient(circle at 100% 0%, rgba(105, 197, 255, 0.09), rgba(105, 197, 255, 0) 48%);
+}
+
+.leaderboardStandingStatLabel {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: rgba(189, 208, 231, 0.72);
+}
+
+.leaderboardStandingStatValue {
+    display: block;
+    margin-top: 8px;
+    font-family: "Space Grotesk", "Verdana", sans-serif;
+    font-size: clamp(18px, 2.2vw, 23px);
+    line-height: 1;
+    color: #f5faff;
+    font-variant-numeric: tabular-nums;
+}
+
+.leaderboardTableIntro {
+    margin-top: 18px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.leaderboardTableIntroText {
+    display: grid;
+    gap: 5px;
+}
+
+.leaderboardTableIntroLead {
+    margin: 0;
+    color: rgba(213, 228, 246, 0.84);
+}
+
+.leaderboardSortContextBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(176, 209, 245, 0.34);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16px;
+    color: rgba(233, 243, 255, 0.94);
+    background: rgba(107, 156, 212, 0.14);
+    white-space: nowrap;
+}
+
+.leaderboardSortContextBadge.isDefault {
+    border-color: rgba(241, 211, 132, 0.28);
+    color: rgba(255, 236, 188, 0.94);
+    background: rgba(241, 211, 132, 0.1);
+}
+
+.leaderboardSortContextNote {
+    margin: 10px 0 0;
+    color: rgba(204, 221, 241, 0.74);
+    font-size: 12px;
+}
+
 .leaderboardStatusCard {
     margin-top: 16px;
-    border: 1px solid rgba(174, 206, 243, 0.22);
-    border-radius: 16px;
-    padding: 18px;
-    background: rgba(20, 32, 53, 0.58);
+    padding: 18px 0;
 }
 
 .leaderboardStatusTitle {
@@ -664,6 +790,35 @@
 .leaderboardRetryButton:focus-visible {
     outline: 2px solid rgba(148, 211, 255, 0.8);
     outline-offset: 2px;
+}
+
+.leaderboardSkeletonWrap {
+    margin-top: 18px;
+}
+
+.leaderboardSkeletonIntro {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.leaderboardSkeletonIntro .skeletonBlock--pill {
+    max-width: 220px;
+}
+
+.leaderboardSkeletonTable .leaderboardSkeletonRow td {
+    vertical-align: middle;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.leaderboardSkeletonTable .leaderboardSkeletonRow {
+    pointer-events: none;
+}
+
+.leaderboardSkeletonTable .leaderboardSkeletonPlayer {
+    width: 100%;
+    max-width: 140px;
 }
 
 .leaderboardTable .leaderboardNumeric {
@@ -708,17 +863,49 @@
     color: rgba(226, 242, 255, 0.96);
 }
 
-.leaderboardTableRow {
-    cursor: pointer;
-}
-
 .leaderboardTableRow td {
     transition: background-color 0.14s ease;
+    cursor: default;
+}
+
+.leaderboardTableRow.isPodium td {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.leaderboardTableRow.isRank1 td {
+    background:
+        linear-gradient(90deg, rgba(255, 215, 120, 0.15), rgba(255, 255, 255, 0.02));
+}
+
+.leaderboardTableRow.isRank2 td {
+    background:
+        linear-gradient(90deg, rgba(220, 230, 245, 0.13), rgba(255, 255, 255, 0.02));
+}
+
+.leaderboardTableRow.isRank3 td {
+    background:
+        linear-gradient(90deg, rgba(217, 163, 120, 0.12), rgba(255, 255, 255, 0.02));
+}
+
+.leaderboardTableRow.isPodium .leaderboardPlayerName {
+    font-weight: 700;
+    color: #f4f9ff;
+}
+
+.leaderboardTableRow.isPodium .tierBadge {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.leaderboardTableRow.isInteractive {
     cursor: pointer;
 }
 
-.leaderboardTableRow:hover td,
-.leaderboardTableRow:focus-visible td {
+.leaderboardTableRow.isInteractive td {
+    cursor: pointer;
+}
+
+.leaderboardTableRow.isInteractive:hover td,
+.leaderboardTableRow.isInteractive:focus-visible td {
     background: rgba(128, 176, 231, 0.16);
 }
 
@@ -738,7 +925,7 @@
     bottom: 0;
     width: 3px;
     border-radius: 2px;
-    background: rgba(161, 214, 255, 0.72);
+    background: linear-gradient(180deg, rgba(74, 168, 255, 0.98), rgba(74, 168, 255, 0.18));
 }
 
 .leaderboardTableRow.isCurrentUser:hover td,
@@ -758,10 +945,52 @@
     z-index: 2;
 }
 
+.leaderboardEntryHoverWrap:hover {
+    z-index: 2;
+}
+
 .leaderboardPlayerName {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+}
+
+.leaderboardRankText {
+    font-variant-numeric: tabular-nums;
+}
+
+.leaderboardRankBadge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    color: rgba(13, 19, 31, 0.94);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.leaderboardTableRow.isPodium .leaderboardRankBadge {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.34),
+        0 6px 14px rgba(4, 10, 20, 0.22);
+}
+
+.leaderboardRankBadge.is-rank1 {
+    background: linear-gradient(180deg, rgba(255, 221, 124, 0.98), rgba(233, 184, 55, 0.96));
+}
+
+.leaderboardRankBadge.is-rank2 {
+    background: linear-gradient(180deg, rgba(228, 236, 247, 0.98), rgba(181, 194, 212, 0.96));
+}
+
+.leaderboardRankBadge.is-rank3 {
+    background: linear-gradient(180deg, rgba(226, 187, 157, 0.98), rgba(186, 127, 82, 0.96));
 }
 
 .leaderboardYouBadge {
@@ -778,7 +1007,7 @@
     background: rgba(112, 170, 229, 0.24);
 }
 
-.leaderboardTierBadge {
+.tierBadge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -792,38 +1021,64 @@
     background: rgba(113, 150, 191, 0.12);
 }
 
-.leaderboardTierBadgeIcon {
+.tierBadgeIcon {
     width: 14px;
     height: 14px;
     object-fit: contain;
 }
 
-.leaderboardTierBadge.is-gold {
+.tierBadge.is-gold {
     border-color: rgba(239, 207, 128, 0.45);
     background: rgba(239, 207, 128, 0.14);
 }
 
-.leaderboardTierBadge.is-silver {
+.tierBadge.is-platinum {
+    border-color: rgba(131, 226, 220, 0.46);
+    background: rgba(96, 211, 205, 0.14);
+}
+
+.tierBadge.is-diamond {
+    border-color: rgba(144, 183, 255, 0.52);
+    background: rgba(109, 153, 255, 0.16);
+}
+
+.tierBadge.is-deadeye {
+    border-color: rgba(255, 117, 117, 0.5);
+    background:
+        linear-gradient(135deg, rgba(255, 117, 117, 0.18), rgba(255, 185, 82, 0.12));
+}
+
+.tierBadge.is-silver {
     border-color: rgba(194, 210, 230, 0.48);
     background: rgba(194, 210, 230, 0.14);
 }
 
-.leaderboardTierBadge.is-bronze {
+.tierBadge.is-bronze {
     border-color: rgba(206, 162, 125, 0.48);
     background: rgba(206, 162, 125, 0.14);
+}
+
+.tierBadge.is-placement {
+    border-color: rgba(134, 202, 255, 0.48);
+    background: rgba(110, 180, 255, 0.14);
 }
 
 .leaderboardEntryHoverCard .profileHoverCard {
     left: calc(100% + 10px);
     right: auto;
     top: 50%;
-    z-index: 65;
+    z-index: var(--z-tooltip);
     opacity: 0;
     transform: translateY(-50%) translateX(-6px);
     pointer-events: none;
 }
 
 .leaderboardTableRow:hover .leaderboardEntryHoverCard .profileHoverCard {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+.leaderboardEntryHoverWrap:hover .leaderboardEntryHoverCard .profileHoverCard {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
 }
@@ -924,19 +1179,45 @@
     }
 }
 
-@media (max-width: 700px) {
-    .helpQuickNav {
+@media (max-width: 900px) {
+    .leaderboardStandingMain,
+    .leaderboardTableIntro {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .leaderboardTableIntro {
+        display: grid;
+    }
+
+    .leaderboardStandingHeading {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .helpQuickNavLinks {
-        justify-content: flex-start;
+    .leaderboardStandingSpotlight {
+        min-width: 0;
     }
 
-    .rankTierGrid {
-        grid-template-columns: 1fr;
+    .leaderboardStandingStats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+@media (max-width: 620px) {
+    .leaderboardStandingPanel {
+        padding: 16px;
+    }
+
+    .leaderboardStandingStats {
+        grid-template-columns: 1fr;
+    }
+
+    .leaderboardSortContextBadge {
+        white-space: normal;
+        text-align: center;
+    }
+}
+
 
 

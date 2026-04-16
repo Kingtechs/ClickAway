@@ -1,4 +1,4 @@
-import "dotenv/config"
+﻿import "dotenv/config"
 
 import bcrypt from "bcryptjs"
 import cors from "cors"
@@ -122,8 +122,11 @@ function normalizeProgressPayload(body = {}) {
     equippedButtonSkinId: body.equippedButtonSkinId,
     equippedArenaThemeId: body.equippedArenaThemeId,
     equippedProfileImageId: body.equippedProfileImageId,
+    activeLoadoutId: body.activeLoadoutId,
+    savedLoadouts: body.savedLoadouts,
     selectedModeId: body.selectedModeId,
     unlockedAchievementIds: body.unlockedAchievementIds,
+    buildWalkthrough: body.buildWalkthrough,
   }
 }
 

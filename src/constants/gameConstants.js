@@ -13,7 +13,7 @@ export const MAX_TIME_BUFFER_SECONDS = 30
 export const READY_COUNTDOWN_START = 3
 export const SHAKE_STREAK_MILESTONE = 10
 export const SHAKE_DURATION_MS = 260
-export const FREEZE_MOVEMENT_DURATION_MS = 1000
+export const ROUND_END_SETTLE_MS = 260
 
 export const ROUND_PHASE = {
   READY: "ready",
@@ -53,10 +53,3 @@ export const POWERUP_BY_KEY = POWERUPS.reduce((powerupsByKey, powerup) => {
   powerupsByKey[powerup.key] = powerup
   return powerupsByKey
 }, {})
-
-export function buildInitialPowerupCharges() {
-  return POWERUPS.reduce((chargesById, powerup) => {
-    chargesById[powerup.id] = 0
-    return chargesById
-  }, {})
-}

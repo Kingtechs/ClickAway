@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react"
+
 import ProgressBar from "./ProgressBar.jsx"
 
 function AchievementIcon({ iconKey = "default" }) {
@@ -113,6 +115,44 @@ function AchievementIcon({ iconKey = "default" }) {
 export default function AchievementTile({ achievement, variant = "default" }) {
   const isFeaturedVariant = variant === "featured"
   const isFeaturedBannerVariant = variant === "featuredBanner"
+  const achievementId = achievement?.id ?? ""
+  const isUnlocked = achievement?.isUnlocked === true
+  const previousAchievementIdRef = useRef(achievementId)
+  const previousUnlockedRef = useRef(isUnlocked)
+  const [isUnlocking, setIsUnlocking] = useState(false)
+
+  const isCategoryMaster =
+    achievement?.isCategoryMaster === true || achievement?.type === "categoryMaster"
+  const isMasterOfMasters = achievement?.type === "masterOfMasters"
+  const cardClassName = `achievementTile ${isUnlocked ? "isUnlocked" : "isLocked"} ${isUnlocking ? "isUnlocking" : ""} ${isCategoryMaster ? "isCategoryMaster" : ""} ${isMasterOfMasters ? "isMasterOfMasters" : ""} ${isFeaturedVariant ? "isFeatured" : ""} ${isFeaturedBannerVariant ? "isFeaturedBanner" : ""}`
+  const stateClassName = `achievementState ${isUnlocked ? "isUnlocked" : "isLocked"} ${isCategoryMaster ? "isCategoryMaster" : ""} ${isMasterOfMasters ? "isMasterOfMasters" : ""}`
+  const iconWrapClassName = `achievementIconWrap ${isCategoryMaster ? "isCategoryMaster" : ""} ${isMasterOfMasters ? "isMasterOfMasters" : ""}`
+
+  useEffect(() => {
+    const wasSameAchievement = previousAchievementIdRef.current === achievementId
+    const didJustUnlock = wasSameAchievement && !previousUnlockedRef.current && isUnlocked
+
+    previousAchievementIdRef.current = achievementId
+    previousUnlockedRef.current = isUnlocked
+
+    if (!didJustUnlock) {
+      return undefined
+    }
+
+    let timeoutId = 0
+    const animationFrameId = window.requestAnimationFrame(() => {
+      setIsUnlocking(true)
+
+      timeoutId = window.setTimeout(() => {
+        setIsUnlocking(false)
+      }, 420)
+    })
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId)
+      window.clearTimeout(timeoutId)
+    }
+  }, [achievementId, isUnlocked])
 
   if (!achievement) {
     return (
@@ -128,17 +168,10 @@ export default function AchievementTile({ achievement, variant = "default" }) {
     description,
     iconKey,
     percent,
-    isUnlocked,
     isProgressAvailable,
     progressText,
     percentText,
   } = achievement
-  const isCategoryMaster =
-    achievement?.isCategoryMaster === true || achievement?.type === "categoryMaster"
-  const isMasterOfMasters = achievement?.type === "masterOfMasters"
-  const cardClassName = `achievementTile ${isUnlocked ? "isUnlocked" : "isLocked"} ${isCategoryMaster ? "isCategoryMaster" : ""} ${isMasterOfMasters ? "isMasterOfMasters" : ""} ${isFeaturedVariant ? "isFeatured" : ""} ${isFeaturedBannerVariant ? "isFeaturedBanner" : ""}`
-  const stateClassName = `achievementState ${isUnlocked ? "isUnlocked" : "isLocked"} ${isCategoryMaster ? "isCategoryMaster" : ""} ${isMasterOfMasters ? "isMasterOfMasters" : ""}`
-  const iconWrapClassName = `achievementIconWrap ${isCategoryMaster ? "isCategoryMaster" : ""} ${isMasterOfMasters ? "isMasterOfMasters" : ""}`
 
   if (isFeaturedBannerVariant) {
     return (

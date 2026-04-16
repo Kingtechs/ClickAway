@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"navItem\\\\|navButton\\\\|topbar\" /c/Users/Quinlan/Clickaway/src/styles/components/*.css)",
+      "Bash(xargs grep:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)"
+    ]
+  }
+}

@@ -1,4 +1,72 @@
 /* Shared keyframes used across the app. */
+@keyframes pageEnter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes achievementUnlock {
+    0% {
+        box-shadow: 0 0 0 0 rgba(192, 132, 252, 0);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(192, 132, 252, 0.3);
+        transform: scale(1.03);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(192, 132, 252, 0);
+        transform: scale(1);
+    }
+}
+
+@keyframes timerPulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.72;
+    }
+}
+
+@keyframes shimmer {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes promotionCelebrate {
+    0% {
+        transform: translateY(4px) scale(0.98);
+        opacity: 0;
+    }
+
+    60% {
+        transform: translateY(0) scale(1.01);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+
 @keyframes clickFeedbackFloat {
     from {
         opacity: 1;
@@ -109,4 +177,124 @@
     80% {
         transform: translate(1px, 1px);
     }
+}
+
+/* Pop animation re-triggered via React key change whenever a HUD stat value updates. */
+@keyframes statValuePop {
+    0% {
+        transform: scale(0.72);
+        opacity: 0.5;
+    }
+
+    55% {
+        transform: scale(1.18);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Glow burst fired once when a powerup card transitions to the "ready" state. */
+@keyframes powerupReadyBurst {
+    0% {
+        box-shadow: 0 0 0 0 rgba(110, 235, 191, 0);
+    }
+
+    30% {
+        box-shadow: 0 0 20px 2px rgba(110, 235, 191, 0.52), 0 0 6px rgba(110, 235, 191, 0.28);
+    }
+
+    100% {
+        box-shadow: 0 0 10px rgba(110, 235, 191, 0.12);
+    }
+}
+
+/* Positive hit: scales up and floats higher — energetic, rewarding. */
+@keyframes clickFeedbackHit {
+    from {
+        opacity: 1;
+        transform: translate(0, 0) scale(1.12);
+    }
+
+    to {
+        opacity: 0;
+        transform: translate(10px, -32px) scale(1.22);
+    }
+}
+
+/* Negative miss: smaller, deflates downward — distinct from a hit. */
+@keyframes clickFeedbackMiss {
+    from {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translate(-6px, -14px) scale(0.8);
+    }
+}
+
+/* --- Loading skeletons (shimmer reuses @keyframes shimmer) --- */
+.skeletonBlock {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.065);
+}
+
+.skeletonBlock::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeletonBlock::after {
+        animation: none;
+    }
+}
+
+.skeletonBlock--sm {
+    height: 12px;
+}
+
+.skeletonBlock--md {
+    height: 14px;
+}
+
+.skeletonBlock--lg {
+    height: 18px;
+}
+
+.skeletonBlock--pill {
+    width: 100%;
+    max-width: 160px;
+    height: 22px;
+    border-radius: 999px;
+}
+
+.skeletonBlock--tier {
+    width: 100%;
+    max-width: 72px;
+    height: 22px;
+    border-radius: 999px;
+}
+
+.skeletonBlock--rank {
+    width: 100%;
+    max-width: 36px;
+    height: 18px;
+}
+
+.skeletonBlock--num {
+    width: 100%;
+    max-width: 56px;
+    height: 14px;
+    margin-left: auto;
 }
