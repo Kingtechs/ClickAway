@@ -846,8 +846,6 @@ export function useGameScreenController({
     powerupTrayProps: {
       powerupSlots,
       streak,
-      isPlaying,
-      onUsePowerup: handleUsePowerup,
     },
     readyOverlayProps: {
       onStart: startRoundWithCountdown,
