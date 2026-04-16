@@ -156,43 +156,51 @@ export async function initializeSchema() {
     INSERT IGNORE INTO \`profile_images\` (\`id\`) VALUES (1),(2),(3),(4),(5),(6),(7);
   `)
 
-  // Migrations: add columns that may be missing from older deployments
-  const migrations = [
-    `ALTER TABLE \`users\` ADD COLUMN IF NOT EXISTS \`role\` varchar(20) NOT NULL DEFAULT 'player'`,
-    `ALTER TABLE \`users\` ADD COLUMN IF NOT EXISTS \`rank_system_version\` int(11) NOT NULL DEFAULT 0`,
-    `ALTER TABLE \`users\` ADD COLUMN IF NOT EXISTS \`placement_matches_played\` int(11) NOT NULL DEFAULT 0`,
-    `ALTER TABLE \`users\` ADD COLUMN IF NOT EXISTS \`demotion_protection_rounds\` int(11) NOT NULL DEFAULT 0`,
-    `ALTER TABLE \`users\` ADD COLUMN IF NOT EXISTS \`active_loadout_slot\` varchar(60) DEFAULT NULL`,
-    `ALTER TABLE \`users\` ADD COLUMN IF NOT EXISTS \`build_walkthrough_status\` varchar(60) NOT NULL DEFAULT 'not_started'`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`avg_reaction_ms\` int(11) DEFAULT NULL`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`best_reaction_ms\` int(11) DEFAULT NULL`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`loadout_name\` varchar(100) DEFAULT NULL`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`loadout_id\` varchar(60) DEFAULT NULL`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`tempo_core_id\` varchar(60) DEFAULT NULL`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`streak_lens_id\` varchar(60) DEFAULT NULL`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`power_rig_id\` varchar(60) DEFAULT NULL`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`powerup_slot_1_id\` varchar(60) DEFAULT NULL`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`powerup_slot_2_id\` varchar(60) DEFAULT NULL`,
-    `ALTER TABLE \`round_history\` ADD COLUMN IF NOT EXISTS \`powerup_slot_3_id\` varchar(60) DEFAULT NULL`,
-    `CREATE TABLE IF NOT EXISTS \`user_loadouts\` (
-      \`slot_id\` varchar(60) NOT NULL,
-      \`user_id\` bigint(20) UNSIGNED NOT NULL,
-      \`name\` varchar(100) NOT NULL DEFAULT '',
-      \`tempo_core_id\` varchar(60) DEFAULT NULL,
-      \`streak_lens_id\` varchar(60) DEFAULT NULL,
-      \`power_rig_id\` varchar(60) DEFAULT NULL,
-      \`powerup_slot_1_id\` varchar(60) DEFAULT NULL,
-      \`powerup_slot_2_id\` varchar(60) DEFAULT NULL,
-      \`powerup_slot_3_id\` varchar(60) DEFAULT NULL,
-      PRIMARY KEY (\`slot_id\`, \`user_id\`),
-      CONSTRAINT \`fk_loadout_user\`
-        FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci`,
-  ]
-
-  for (const migration of migrations) {
-    await pool.query(migration)
+  // Migrations: add columns that may be missing from older deployments.
+  // MySQL 5.7 does not support ALTER TABLE ADD COLUMN IF NOT EXISTS,
+  // so we check information_schema first and skip columns that already exist.
+  async function addColumnIfMissing(table, column, definition) {
+    const [rows] = await pool.query(
+      `SELECT COUNT(*) AS cnt FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [table, column]
+    )
+    if (rows[0].cnt === 0) {
+      await pool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`)
+    }
   }
+
+  await addColumnIfMissing("users", "role", "varchar(20) NOT NULL DEFAULT 'player'")
+  await addColumnIfMissing("users", "rank_system_version", "int(11) NOT NULL DEFAULT 0")
+  await addColumnIfMissing("users", "placement_matches_played", "int(11) NOT NULL DEFAULT 0")
+  await addColumnIfMissing("users", "demotion_protection_rounds", "int(11) NOT NULL DEFAULT 0")
+  await addColumnIfMissing("users", "active_loadout_slot", "varchar(60) DEFAULT NULL")
+  await addColumnIfMissing("users", "build_walkthrough_status", "varchar(60) NOT NULL DEFAULT 'not_started'")
+  await addColumnIfMissing("round_history", "avg_reaction_ms", "int(11) DEFAULT NULL")
+  await addColumnIfMissing("round_history", "best_reaction_ms", "int(11) DEFAULT NULL")
+  await addColumnIfMissing("round_history", "loadout_name", "varchar(100) DEFAULT NULL")
+  await addColumnIfMissing("round_history", "loadout_id", "varchar(60) DEFAULT NULL")
+  await addColumnIfMissing("round_history", "tempo_core_id", "varchar(60) DEFAULT NULL")
+  await addColumnIfMissing("round_history", "streak_lens_id", "varchar(60) DEFAULT NULL")
+  await addColumnIfMissing("round_history", "power_rig_id", "varchar(60) DEFAULT NULL")
+  await addColumnIfMissing("round_history", "powerup_slot_1_id", "varchar(60) DEFAULT NULL")
+  await addColumnIfMissing("round_history", "powerup_slot_2_id", "varchar(60) DEFAULT NULL")
+  await addColumnIfMissing("round_history", "powerup_slot_3_id", "varchar(60) DEFAULT NULL")
+
+  await pool.query(`CREATE TABLE IF NOT EXISTS \`user_loadouts\` (
+    \`slot_id\` varchar(60) NOT NULL,
+    \`user_id\` bigint(20) UNSIGNED NOT NULL,
+    \`name\` varchar(100) NOT NULL DEFAULT '',
+    \`tempo_core_id\` varchar(60) DEFAULT NULL,
+    \`streak_lens_id\` varchar(60) DEFAULT NULL,
+    \`power_rig_id\` varchar(60) DEFAULT NULL,
+    \`powerup_slot_1_id\` varchar(60) DEFAULT NULL,
+    \`powerup_slot_2_id\` varchar(60) DEFAULT NULL,
+    \`powerup_slot_3_id\` varchar(60) DEFAULT NULL,
+    PRIMARY KEY (\`slot_id\`, \`user_id\`),
+    CONSTRAINT \`fk_loadout_user\`
+      FOREIGN KEY (\`user_id\`) REFERENCES \`users\` (\`id\`) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci`)
 
   console.log("Database schema initialized.")
 }
