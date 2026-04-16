@@ -579,6 +579,24 @@ export function useGameScreenController({
     }))
   }, [applyPowerup, isPlaying, powerupCharges, roundMode.equippedPowerups])
 
+  const handleUsePowerup = useCallback((powerupId) => {
+    if (!isPlaying) return
+
+    const powerup = roundMode.equippedPowerups.find((item) => item.id === powerupId)
+    if (!powerup) return
+
+    const availableCharges = powerupCharges[powerup.id] ?? 0
+    if (availableCharges <= 0) return
+
+    const wasApplied = applyPowerup(powerup)
+    if (!wasApplied) return
+
+    setPowerupCharges((currentCharges) => ({
+      ...currentCharges,
+      [powerup.id]: Math.max(0, (currentCharges[powerup.id] ?? 0) - 1),
+    }))
+  }, [applyPowerup, isPlaying, powerupCharges, roundMode.equippedPowerups])
+
   const handleButtonClick = useCallback((event) => {
     event.stopPropagation()
     if (!isPlaying) return
@@ -846,6 +864,7 @@ export function useGameScreenController({
     powerupTrayProps: {
       powerupSlots,
       streak,
+      onUsePowerup: handleUsePowerup,
     },
     readyOverlayProps: {
       onStart: startRoundWithCountdown,
