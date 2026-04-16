@@ -28,6 +28,7 @@ import { calculateRewards, simulateRound } from "./roundRewards.js"
 import { createPlayerStateStore, PlayerStateError } from "./playerStateStore.js"
 
 const app = express()
+app.set("trust proxy", 1)
 const playerStateStore = createPlayerStateStore()
 
 const PORT = Number(process.env.PORT || 4000)
