@@ -1,6 +1,6 @@
 import { useCallback } from "react"
 
-import { submitRound } from "../services/api.js"
+import { submitRound } from "../services/clickAwayHttpApiClient.js"
 
 export function usePlayerProgressionUpdates({
   authToken,
