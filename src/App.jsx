@@ -205,7 +205,8 @@ export default function App() {
           (t) => (
             <div style={PROGRESS_ERROR_TOAST_STYLE}>
               <span style={{ flex: "1 1 auto", lineHeight: 1.35 }}>
-                Couldn&apos;t save progress. Check your connection.
+                Couldn&apos;t save progress.
+                {error?.message ? ` ${error.message}` : " Check your connection."}
               </span>
               <button
                 type="button"
