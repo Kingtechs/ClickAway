@@ -180,7 +180,7 @@
 .armoryRailStepButton {
     border: 1px solid rgba(176, 206, 240, 0.12);
     border-radius: 16px;
-    padding: 11px 12px;
+    padding: 8px 12px;
     background: rgba(255, 255, 255, 0.03);
     color: #eef6ff;
     font: inherit;
@@ -276,8 +276,6 @@
 
 .armoryRailSection {
     min-height: 0;
-    overflow-y: auto;
-    scrollbar-gutter: stable;
     display: grid;
     align-content: start;
     gap: 10px;
@@ -291,7 +289,7 @@
 .armorySlotRailButton {
     border: 1px solid rgba(176, 206, 240, 0.12);
     border-radius: 16px;
-    padding: 10px 11px;
+    padding: 7px 11px;
     background: rgba(255, 255, 255, 0.035);
     color: #eef6ff;
     font: inherit;
