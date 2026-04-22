@@ -81,8 +81,19 @@ export const SHOP_CATEGORIES = [
     id: "button_skins",
     title: "Button Skins",
     description: "Cosmetic styles for the main click target.",
-    items: [
-      ...applyIncrementalCosts([
+    items: (([first, ...rest]) => [
+      first,
+      createButtonSkinItem({
+        id: "skin_nickel",
+        name: "James Nichols",
+        cost: 5,
+        imageSrc: "/nickel.png",
+        gameImageScale: 110,
+        shopImageScale: 100,
+        description: "Hack away at the buttons",
+      }),
+      ...rest,
+    ])(applyIncrementalCosts([
       createButtonSkinItem({
         id: "skin_button",
         name: "Classic",
@@ -213,17 +224,7 @@ export const SHOP_CATEGORIES = [
         shopImageScale: 130,
         description: "8 ball’s loud cousin.",
       }),
-      ]),
-      createButtonSkinItem({
-        id: "skin_nickel",
-        name: "James Nichols",
-        cost: 5,
-        imageSrc: "/nickel.png",
-        gameImageScale: 110,
-        shopImageScale: 100,
-        description: "Hack away at the buttons",
-      }),
-    ],
+    ])),
   },
   {
     id: "arena_themes",
