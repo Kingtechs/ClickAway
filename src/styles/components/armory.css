@@ -24,10 +24,10 @@
 
 .armoryRail {
     min-height: 0;
-    padding: 20px 18px;
+    padding: 16px 18px;
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr) auto;
-    gap: 18px;
+    gap: 14px;
     border-right: 1px solid rgba(176, 206, 240, 0.1);
     background:
         radial-gradient(circle at 0% 0%, rgba(98, 173, 255, 0.15), rgba(98, 173, 255, 0) 40%),
@@ -171,6 +171,9 @@
 
 .armoryRailHint {
     font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .armoryRailProgress {
@@ -276,6 +279,7 @@
 
 .armoryRailSection {
     min-height: 0;
+    overflow: hidden;
     display: grid;
     align-content: start;
     gap: 10px;
