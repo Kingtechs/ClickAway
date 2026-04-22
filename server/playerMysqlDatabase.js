@@ -151,7 +151,7 @@ export async function initializeSchema() {
     INSERT IGNORE INTO \`arena_themes\` (\`id\`) VALUES (1),(2),(3),(4);
 
     INSERT IGNORE INTO \`button_skins\` (\`id\`) VALUES
-      (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16);
+      (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16),(17);
 
     INSERT IGNORE INTO \`profile_images\` (\`id\`) VALUES (1),(2),(3),(4),(5),(6),(7);
   `)

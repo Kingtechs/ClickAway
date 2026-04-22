@@ -41,6 +41,7 @@ const MYSQL_ITEM_IDS_BY_FRONTEND_ID = {
   skin_eye: 14,
   skin_disco: 15,
   skin_poolball: 16,
+  skin_nickel: 17,
   theme_default: 1,
   theme_sunset: 2,
   theme_forest: 3,
