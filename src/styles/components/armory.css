@@ -276,6 +276,8 @@
 
 .armoryRailSection {
     min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
     display: grid;
     align-content: start;
     gap: 10px;
