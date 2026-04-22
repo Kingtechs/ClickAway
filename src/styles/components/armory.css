@@ -84,10 +84,10 @@
 
 .armoryRailIdentity {
     display: grid;
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: 56px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
-    padding: 14px;
+    padding: 10px 14px;
     border-radius: 18px;
     border: 1px solid rgba(176, 206, 240, 0.12);
     background:
@@ -96,8 +96,8 @@
 }
 
 .armoryRailIdentityGlyph {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     border-radius: 20px;
     border: 1px solid rgba(176, 206, 240, 0.14);
     background:
@@ -183,7 +183,7 @@
 .armoryRailStepButton {
     border: 1px solid rgba(176, 206, 240, 0.12);
     border-radius: 16px;
-    padding: 8px 12px;
+    padding: 6px 12px;
     background: rgba(255, 255, 255, 0.03);
     color: #eef6ff;
     font: inherit;
