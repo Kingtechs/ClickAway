@@ -84,7 +84,7 @@
 
 .armoryRailIdentity {
     display: grid;
-    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-columns: 64px minmax(0, 1fr);
     align-items: center;
     gap: 12px;
     padding: 10px 14px;
@@ -96,8 +96,8 @@
 }
 
 .armoryRailIdentityGlyph {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 20px;
     border: 1px solid rgba(176, 206, 240, 0.14);
     background:
