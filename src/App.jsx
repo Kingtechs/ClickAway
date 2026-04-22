@@ -172,6 +172,8 @@ export default function App() {
     unlockedAchievementIds,
   ])
 
+  const persistDebounceTimerRef = useRef(null)
+
   const persistProgress = useCallback((nextProgress = {}) => {
     if (!authToken) {
       return Promise.resolve(null)
@@ -188,44 +190,52 @@ export default function App() {
 
     progressSnapshotRef.current = progressPayload
 
-    persistQueueRef.current = persistQueueRef.current
-      .catch(() => null)
-      .then(async () => {
-        const response = await updatePlayerProgress(authToken, progressPayload)
-        if (activeAuthTokenRef.current !== authToken) {
-          return null
-        }
-        toast.dismiss(PROGRESS_SYNC_TOAST_ID)
-        applyProgress(response.progress)
-        return response.progress
-      })
-      .catch((error) => {
-        console.error("Unable to sync player progress:", error)
-        toast.custom(
-          (t) => (
-            <div style={PROGRESS_ERROR_TOAST_STYLE}>
-              <span style={{ flex: "1 1 auto", lineHeight: 1.35 }}>
-                Couldn&apos;t save progress.
-                {error?.message ? ` ${error.message}` : " Check your connection."}
-              </span>
-              <button
-                type="button"
-                className="primaryButton primaryButton-sm"
-                onClick={() => {
-                  toast.dismiss(t.id)
-                  void persistProgressRef.current?.({})
-                }}
-              >
-                Retry
-              </button>
-            </div>
-          ),
-          { id: PROGRESS_SYNC_TOAST_ID, duration: Infinity },
-        )
-        return null
-      })
+    // Debounce: cancel previous timer and schedule a new one
+    if (persistDebounceTimerRef.current) {
+      clearTimeout(persistDebounceTimerRef.current)
+    }
 
-    return persistQueueRef.current
+    return new Promise((resolve) => {
+      persistDebounceTimerRef.current = setTimeout(() => {
+        persistQueueRef.current = persistQueueRef.current
+          .catch(() => null)
+          .then(async () => {
+            const response = await updatePlayerProgress(authToken, progressPayload)
+            if (activeAuthTokenRef.current !== authToken) {
+              return null
+            }
+            toast.dismiss(PROGRESS_SYNC_TOAST_ID)
+            applyProgress(response.progress)
+            return response.progress
+          })
+          .catch((error) => {
+            console.error("Unable to sync player progress:", error)
+            toast.custom(
+              (t) => (
+                <div style={PROGRESS_ERROR_TOAST_STYLE}>
+                  <span style={{ flex: "1 1 auto", lineHeight: 1.35 }}>
+                    Couldn&apos;t save progress.
+                    {error?.message ? ` ${error.message}` : " Check your connection."}
+                  </span>
+                  <button
+                    type="button"
+                    className="primaryButton primaryButton-sm"
+                    onClick={() => {
+                      toast.dismiss(t.id)
+                      void persistProgressRef.current?.({})
+                    }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ),
+              { id: PROGRESS_SYNC_TOAST_ID, duration: Infinity },
+            )
+            return null
+          })
+        resolve(persistQueueRef.current)
+      }, 250) // Debounce for 250ms
+    })
   }, [applyProgress, authToken, buildWalkthrough])
 
   useEffect(() => {
